@@ -1,11 +1,4 @@
-from fastmcp.contrib.fastapi import serve
-from boomi_mcp.tools import mcp
-
-
-def main() -> None:
-    """Launch the MCP server."""
-    serve(mcp, host="0.0.0.0", port=8080)
-
+from boomi_mcp.server import main
 
 if __name__ == "__main__":
     main()
