@@ -7,11 +7,12 @@ license = { file = "LICENSE" }
 authors = [{ name = "Glebuar" }]
 requires-python = ">=3.10"
 
-[project.dependencies]
-boomi = "*"
-fastmcp = "*"
-pydantic = "*"
-python-dotenv = "*"
+dependencies = [
+    "boomi",
+    "uvicorn",
+    "pydantic",
+    "python-dotenv",
+]
 
 [project.scripts]
 boomi-mcp = "server:main"
