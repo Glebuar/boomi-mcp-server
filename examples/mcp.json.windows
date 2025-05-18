@@ -1,0 +1,15 @@
+// Replace with the absolute path to your cloned boomi-mcp-server repository.
+// If 'uv' is not in PATH, use the full path from 'where uv' or 'which uv'.
+{
+    "mcpServers": {
+        "boomi": {
+            "command": "uv",
+            "args": [
+                "--directory",
+                "C:\\ABSOLUTE\\PATH\\TO\\boomi-mcp-server",
+                "run",
+                "src/server.py"
+            ]
+        }
+    }
+}
