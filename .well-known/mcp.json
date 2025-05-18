@@ -1,27 +1,520 @@
 {
   "tools": [
     {
-      "name": "create_component",
+      "annotations": null,
       "description": "Create a Boomi component from an XML file.",
-      "input_schema": {
-        "type": "object",
+      "inputSchema": {
         "properties": {
-          "xml_path": { "type": "string", "description": "Path to the XML file" }
+          "xml_path": {
+            "title": "Xml Path",
+            "type": "string"
+          }
         },
-        "required": ["xml_path"]
-      }
+        "required": [
+          "xml_path"
+        ],
+        "type": "object"
+      },
+      "name": "create_component"
     },
     {
-      "name": "deploy_package",
-      "description": "Deploy a Boomi package to an environment.",
-      "input_schema": {
-        "type": "object",
+      "annotations": null,
+      "description": "Update a component's XML.",
+      "inputSchema": {
         "properties": {
-          "environment_id": { "type": "string" },
-          "package_id": { "type": "string" }
+          "component_id": {
+            "title": "Component Id",
+            "type": "string"
+          },
+          "xml": {
+            "title": "Xml",
+            "type": "string"
+          }
         },
-        "required": ["environment_id", "package_id"]
-      }
+        "required": [
+          "component_id",
+          "xml"
+        ],
+        "type": "object"
+      },
+      "name": "update_component"
+    },
+    {
+      "annotations": null,
+      "description": "Delete a component by ID.",
+      "inputSchema": {
+        "properties": {
+          "component_id": {
+            "title": "Component Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id"
+        ],
+        "type": "object"
+      },
+      "name": "delete_component"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch a component by its Boomi ID.",
+      "inputSchema": {
+        "properties": {
+          "component_id": {
+            "title": "Component Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "component_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_component"
+    },
+    {
+      "annotations": null,
+      "description": "Create a package from a component.",
+      "inputSchema": {
+        "properties": {
+          "component_id": {
+            "title": "Component Id",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Notes"
+          },
+          "package_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Package Version"
+          }
+        },
+        "required": [
+          "component_id"
+        ],
+        "type": "object"
+      },
+      "name": "create_package"
+    },
+    {
+      "annotations": null,
+      "description": "Deploy an existing package to a target environment.",
+      "inputSchema": {
+        "properties": {
+          "environment_id": {
+            "title": "Environment Id",
+            "type": "string"
+          },
+          "package_id": {
+            "title": "Package Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "environment_id",
+          "package_id"
+        ],
+        "type": "object"
+      },
+      "name": "deploy_package"
+    },
+    {
+      "annotations": null,
+      "description": "Create a folder.",
+      "inputSchema": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Parent Id"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "create_folder"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch a folder by ID.",
+      "inputSchema": {
+        "properties": {
+          "folder_id": {
+            "title": "Folder Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "folder_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_folder"
+    },
+    {
+      "annotations": null,
+      "description": "Delete a folder.",
+      "inputSchema": {
+        "properties": {
+          "folder_id": {
+            "title": "Folder Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "folder_id"
+        ],
+        "type": "object"
+      },
+      "name": "delete_folder"
+    },
+    {
+      "annotations": null,
+      "description": "List available atoms.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "list_atoms"
+    },
+    {
+      "annotations": null,
+      "description": "List environments.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "list_environments"
+    },
+    {
+      "annotations": null,
+      "description": "Query execution records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_runs"
+    },
+    {
+      "annotations": null,
+      "description": "Get a URL to the execution log.",
+      "inputSchema": {
+        "properties": {
+          "execution_id": {
+            "title": "Execution Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "execution_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_run_log"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch schedule info.",
+      "inputSchema": {
+        "properties": {
+          "schedule_id": {
+            "title": "Schedule Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schedule_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_schedule"
+    },
+    {
+      "annotations": null,
+      "description": "Update a schedule.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "additionalProperties": true,
+            "title": "Body",
+            "type": "object"
+          },
+          "schedule_id": {
+            "title": "Schedule Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schedule_id",
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "update_schedule"
+    },
+    {
+      "annotations": null,
+      "description": "Query schedules.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_schedules"
+    },
+    {
+      "annotations": null,
+      "description": "Get schedules in bulk.",
+      "inputSchema": {
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ids"
+        ],
+        "type": "object"
+      },
+      "name": "bulk_schedules"
+    },
+    {
+      "annotations": null,
+      "description": "Get environment extensions.",
+      "inputSchema": {
+        "properties": {
+          "environment_id": {
+            "title": "Environment Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "environment_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_extensions"
+    },
+    {
+      "annotations": null,
+      "description": "Update environment extensions.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "additionalProperties": true,
+            "title": "Body",
+            "type": "object"
+          },
+          "environment_id": {
+            "title": "Environment Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "environment_id",
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "update_extensions"
+    },
+    {
+      "annotations": null,
+      "description": "Query extensions.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_extensions"
+    },
+    {
+      "annotations": null,
+      "description": "Query connection field extension summary.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_extension_field_summary"
+    },
+    {
+      "annotations": null,
+      "description": "Create a runtime release schedule.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "additionalProperties": true,
+            "title": "Body",
+            "type": "object"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "create_runtime_release"
+    },
+    {
+      "annotations": null,
+      "description": "Get runtime release details.",
+      "inputSchema": {
+        "properties": {
+          "cid": {
+            "title": "Cid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cid"
+        ],
+        "type": "object"
+      },
+      "name": "get_runtime_release"
+    },
+    {
+      "annotations": null,
+      "description": "Update runtime release.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "additionalProperties": true,
+            "title": "Body",
+            "type": "object"
+          },
+          "cid": {
+            "title": "Cid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cid",
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "update_runtime_release"
+    },
+    {
+      "annotations": null,
+      "description": "Delete runtime release.",
+      "inputSchema": {
+        "properties": {
+          "cid": {
+            "title": "Cid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cid"
+        ],
+        "type": "object"
+      },
+      "name": "delete_runtime_release"
+    },
+    {
+      "annotations": null,
+      "description": "Execute a process.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "additionalProperties": true,
+            "title": "Body",
+            "type": "object"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "execute_process"
+    },
+    {
+      "annotations": null,
+      "description": "Cancel an execution.",
+      "inputSchema": {
+        "properties": {
+          "execution_id": {
+            "title": "Execution Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "execution_id"
+        ],
+        "type": "object"
+      },
+      "name": "cancel_execution"
     }
   ]
 }
