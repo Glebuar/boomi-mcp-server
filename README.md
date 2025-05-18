@@ -11,7 +11,25 @@ This repository provides a simple [Model Context Protocol](https://modelcontextp
 - Python 3.10+
 - Access credentials for the Boomi API
 
-Install the server and the `uv` launcher from PyPI:
+## Quick start
+
+Clone the repository and set up a local environment using [`uv`](https://github.com/astral-sh/uv):
+
+```bash
+git clone https://github.com/glebuar/boomi-mcp-server.git
+cd boomi-mcp-server
+
+# Install uv if it is not already available
+curl -LsSf https://astral.sh/uv/install.sh | sh       # macOS/Linux
+# powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"  # Windows
+
+# Create a virtual environment and lock dependencies
+uv venv
+source .venv/bin/activate     # or .venv\Scripts\activate on Windows
+uv lock
+```
+
+You can also install the server directly from PyPI:
 
 ```bash
 pip install boomi-mcp-server uv
@@ -109,3 +127,13 @@ Run `tools/list` against the server to see the full list.
 A discovery file is available at `.well-known/mcp.json`. See
 [docs/cursor_setup.md](docs/cursor_setup.md) for instructions on using it
 with Cursor.
+
+## Running tests
+
+This repository contains unit tests for the server. Install the development
+dependencies and run them with `pytest`:
+
+```bash
+pip install -e .[dev]      # or `uv pip install -e .[dev]`
+pytest
+```
