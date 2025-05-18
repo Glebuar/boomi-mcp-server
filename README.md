@@ -13,6 +13,10 @@ Install dependencies with `pip` or any PEP 517 build frontend:
 pip install -e .
 ```
 
+The server depends on the `boomi` and `fastmcp` packages from PyPI. If your
+environment lacks internet access, pre-build wheels or vendor these
+dependencies before running the installation command.
+
 ## Usage
 
 Set your Boomi credentials as environment variables:
