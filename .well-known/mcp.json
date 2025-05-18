@@ -254,6 +254,706 @@
     },
     {
       "annotations": null,
+      "description": "Fetch additional execution records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_runs_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query execution summary records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_run_summary"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional summary records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_run_summary_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query execution connector records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_run_connectors"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional connector records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_run_connectors_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query execution count by account.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_execution_count_account"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional account counts using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_execution_count_account_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query execution count by account group.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_execution_count_group"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional group counts using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_execution_count_group_more"
+    },
+    {
+      "annotations": null,
+      "description": "Get a URL to execution artifacts.",
+      "inputSchema": {
+        "properties": {
+          "execution_id": {
+            "title": "Execution Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "execution_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_run_artifacts"
+    },
+    {
+      "annotations": null,
+      "description": "Submit an execution request.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "additionalProperties": true,
+            "title": "Body",
+            "type": "object"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "request_execution"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch a generic connector record by ID.",
+      "inputSchema": {
+        "properties": {
+          "generic_id": {
+            "title": "Generic Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generic_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_run_document"
+    },
+    {
+      "annotations": null,
+      "description": "Query generic connector records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_run_documents"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional generic records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_run_documents_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query AS2 connector records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_as2_records"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional AS2 records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_as2_records_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query EDI Custom connector records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_edicustom_records"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional EDI Custom records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_edicustom_records_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query EDIFACT connector records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_edifact_records"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional EDIFACT records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_edifact_records_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query HL7 connector records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_hl7_records"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional HL7 records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_hl7_records_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query ODETTE connector records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_odette_records"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional ODETTE records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_odette_records_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query OFTP2 connector records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_oftp2_records"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional OFTP2 records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_oftp2_records_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query RosettaNet connector records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_rosetta_records"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional RosettaNet records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_rosetta_records_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query Tradacoms connector records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_tradacoms_records"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional Tradacoms records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_tradacoms_records_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query X12 connector records.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_x12_records"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional X12 records using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_x12_records_more"
+    },
+    {
+      "annotations": null,
+      "description": "Get a URL to an atom log.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "additionalProperties": true,
+            "title": "Body",
+            "type": "object"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "get_atom_log"
+    },
+    {
+      "annotations": null,
+      "description": "Get a URL to AS2 artifacts.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "additionalProperties": true,
+            "title": "Body",
+            "type": "object"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "get_as2_artifacts"
+    },
+    {
+      "annotations": null,
+      "description": "Get a URL to a worker log.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "additionalProperties": true,
+            "title": "Body",
+            "type": "object"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "get_worker_log"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch an audit log entry.",
+      "inputSchema": {
+        "properties": {
+          "audit_id": {
+            "title": "Audit Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "audit_id"
+        ],
+        "type": "object"
+      },
+      "name": "get_audit_log"
+    },
+    {
+      "annotations": null,
+      "description": "Query audit logs.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_audit_logs"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional audit logs using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_audit_logs_more"
+    },
+    {
+      "annotations": null,
+      "description": "Query events.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "additionalProperties": true,
+            "title": "Query",
+            "type": "object"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "type": "object"
+      },
+      "name": "query_events"
+    },
+    {
+      "annotations": null,
+      "description": "Fetch additional events using a query token.",
+      "inputSchema": {
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "name": "query_events_more"
+    },
+    {
+      "annotations": null,
       "description": "Fetch schedule info.",
       "inputSchema": {
         "properties": {
