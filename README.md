@@ -19,13 +19,15 @@ dependencies before running the installation command.
 
 ## Usage
 
-Set your Boomi credentials as environment variables:
+Set your Boomi credentials using environment variables or a `.env` file:
 
 ```bash
-export BOOMI_ACCOUNT=...
-export BOOMI_USER=...
-export BOOMI_SECRET=...
+BOOMI_ACCOUNT=...
+BOOMI_USER=...
+BOOMI_SECRET=...
 ```
+
+If a `.env` file exists in the working directory the server will load it automatically.
 
 Then start the server:
 
