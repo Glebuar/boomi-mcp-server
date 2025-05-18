@@ -12,8 +12,14 @@ mcp = FastMCP(
 
 
 @mcp.tool()
+def health_check() -> bool:
+    """Simple connectivity check returning ``True`` when the server is alive."""
+    return True
+
+
+@mcp.tool()
 def create_component(xml_path: str) -> dict:
-    """Create a Boomi component from an XML file."""
+    """Create a new component in Boomi from the provided XML definition."""
     boomi = get_client()
     comp = boomi.components.create(Path(xml_path))
     return comp.model_dump()
@@ -21,86 +27,86 @@ def create_component(xml_path: str) -> dict:
 
 @mcp.tool()
 def update_component(component_id: str, xml: str) -> None:
-    """Update a component's XML."""
+    """Replace the XML configuration for an existing component."""
     get_client().components.update(component_id, xml)
 
 
 @mcp.tool()
 def delete_component(component_id: str) -> None:
-    """Delete a component by ID."""
+    """Remove a component from the account using its ID."""
     get_client().components.delete(component_id)
 
 
 @mcp.tool()
 def get_component(component_id: str) -> dict:
-    """Fetch a component by its Boomi ID."""
+    """Retrieve a component's metadata and XML by ID."""
     return get_client().components.get(component_id).model_dump()
 
 
 @mcp.tool()
 def create_package(component_id: str, package_version: str | None = None,
                     notes: str | None = None) -> dict:
-    """Create a package from a component."""
+    """Package a component for deployment, optionally setting a version."""
     return get_client().packages.create(component_id, package_version, notes)
 
 
 @mcp.tool()
 def deploy_package(environment_id: str, package_id: str) -> dict:
-    """Deploy an existing package to a target environment."""
+    """Deploy a previously created package to an environment."""
     return get_client().deployments.deploy(environment_id, package_id)
 
 
 @mcp.tool()
 def create_folder(name: str, parent_id: str | None = None) -> dict:
-    """Create a folder."""
+    """Create a new folder optionally under ``parent_id``."""
     return get_client().folders.create(name, parent_id)
 
 
 @mcp.tool()
 def get_folder(folder_id: str) -> dict:
-    """Fetch a folder by ID."""
+    """Return folder details for the given ID."""
     return get_client().folders.get(folder_id)
 
 
 @mcp.tool()
 def delete_folder(folder_id: str) -> None:
-    """Delete a folder."""
+    """Delete an existing folder by ID."""
     get_client().folders.delete(folder_id)
 
 
 @mcp.tool()
 def list_atoms() -> list:
-    """List available atoms."""
+    """List all atoms available to the account."""
     return get_client().atoms.list()
 
 
 @mcp.tool()
 def list_environments() -> list:
-    """List environments."""
+    """List all deployment environments in the connected Boomi account."""
     return get_client().environments.list()
 
 
 @mcp.tool()
 def query_runs(query: dict) -> dict:
-    """Query execution records."""
+    """Search for execution records matching the provided query."""
     return get_client().runs.list(query)
 
 
 @mcp.tool()
 def get_run_log(execution_id: str) -> str:
-    """Get a URL to the execution log."""
+    """Return a URL pointing to the log for the given execution."""
     return get_client().runs.log(execution_id)
 
 
 @mcp.tool()
 def query_runs_more(token: str) -> dict:
-    """Fetch additional execution records using a query token."""
+    """Continue a previous execution query using the pagination token."""
     return get_client().runs.list_more(token)
 
 
 @mcp.tool()
 def query_run_summary(query: dict) -> dict:
-    """Query execution summary records."""
+    """Retrieve summarized statistics for executions matching a query."""
     return get_client().runs.summary(query)
 
 

@@ -5,7 +5,7 @@ from pathlib import Path
 import os
 
 
-def test_warn_missing_env(monkeypatch):
+def test_fail_missing_env(monkeypatch):
     root = Path(__file__).resolve().parents[1]
     monkeypatch.delenv("BOOMI_ACCOUNT", raising=False)
     monkeypatch.delenv("BOOMI_USER", raising=False)
@@ -15,16 +15,11 @@ def test_warn_missing_env(monkeypatch):
     proc = subprocess.Popen(
         [sys.executable, "server.py"],
         cwd=root,
-        stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
         env=env,
     )
-    try:
-        time.sleep(0.5)
-        stderr_line = proc.stderr.readline()
-        assert "Missing Boomi credentials" in stderr_line
-    finally:
-        proc.terminate()
-        proc.wait(timeout=5)
+    stdout, stderr = proc.communicate(timeout=5)
+    assert proc.returncode != 0
+    assert "Missing Boomi credentials" in stderr
