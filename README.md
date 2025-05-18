@@ -38,3 +38,7 @@ The server exposes most methods provided by the Boomi SDK, including helpers to:
 - Trigger process executions
 
 Run `tools/list` against the server to see the full list.
+
+A discovery file is available at `.well-known/mcp.json`.
+Run `python generate_mcp_json.py` to regenerate it from the MCP registry.
+
