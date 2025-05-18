@@ -93,6 +93,246 @@ def get_run_log(execution_id: str) -> str:
 
 
 @mcp.tool()
+def query_runs_more(token: str) -> dict:
+    """Fetch additional execution records using a query token."""
+    return get_client().runs.list_more(token)
+
+
+@mcp.tool()
+def query_run_summary(query: dict) -> dict:
+    """Query execution summary records."""
+    return get_client().runs.summary(query)
+
+
+@mcp.tool()
+def query_run_summary_more(token: str) -> dict:
+    """Fetch additional summary records using a query token."""
+    return get_client().runs.summary_more(token)
+
+
+@mcp.tool()
+def query_run_connectors(query: dict) -> dict:
+    """Query execution connector records."""
+    return get_client().runs.connectors(query)
+
+
+@mcp.tool()
+def query_run_connectors_more(token: str) -> dict:
+    """Fetch additional connector records using a query token."""
+    return get_client().runs.connectors_more(token)
+
+
+@mcp.tool()
+def query_execution_count_account(query: dict) -> dict:
+    """Query execution count by account."""
+    return get_client().runs.count_account(query)
+
+
+@mcp.tool()
+def query_execution_count_account_more(token: str) -> dict:
+    """Fetch additional account counts using a query token."""
+    return get_client().runs.count_account_more(token)
+
+
+@mcp.tool()
+def query_execution_count_group(query: dict) -> dict:
+    """Query execution count by account group."""
+    return get_client().runs.count_group(query)
+
+
+@mcp.tool()
+def query_execution_count_group_more(token: str) -> dict:
+    """Fetch additional group counts using a query token."""
+    return get_client().runs.count_group_more(token)
+
+
+@mcp.tool()
+def get_run_artifacts(execution_id: str) -> str:
+    """Get a URL to execution artifacts."""
+    return get_client().runs.artifacts(execution_id)
+
+
+@mcp.tool()
+def request_execution(body: dict) -> dict:
+    """Submit an execution request."""
+    return get_client().runs.request(body)
+
+
+@mcp.tool()
+def get_run_document(generic_id: str) -> dict:
+    """Fetch a generic connector record by ID."""
+    return get_client().runs.doc(generic_id)
+
+
+@mcp.tool()
+def query_run_documents(query: dict) -> dict:
+    """Query generic connector records."""
+    return get_client().runs.docs(query)
+
+
+@mcp.tool()
+def query_run_documents_more(token: str) -> dict:
+    """Fetch additional generic records using a query token."""
+    return get_client().runs.docs_more(token)
+
+
+@mcp.tool()
+def query_as2_records(query: dict) -> dict:
+    """Query AS2 connector records."""
+    return get_client().runs.as2_records(query)
+
+
+@mcp.tool()
+def query_as2_records_more(token: str) -> dict:
+    """Fetch additional AS2 records using a query token."""
+    return get_client().runs.as2_records_more(token)
+
+
+@mcp.tool()
+def query_edicustom_records(query: dict) -> dict:
+    """Query EDI Custom connector records."""
+    return get_client().runs.edicustom_records(query)
+
+
+@mcp.tool()
+def query_edicustom_records_more(token: str) -> dict:
+    """Fetch additional EDI Custom records using a query token."""
+    return get_client().runs.edicustom_records_more(token)
+
+
+@mcp.tool()
+def query_edifact_records(query: dict) -> dict:
+    """Query EDIFACT connector records."""
+    return get_client().runs.edifact_records(query)
+
+
+@mcp.tool()
+def query_edifact_records_more(token: str) -> dict:
+    """Fetch additional EDIFACT records using a query token."""
+    return get_client().runs.edifact_records_more(token)
+
+
+@mcp.tool()
+def query_hl7_records(query: dict) -> dict:
+    """Query HL7 connector records."""
+    return get_client().runs.hl7_records(query)
+
+
+@mcp.tool()
+def query_hl7_records_more(token: str) -> dict:
+    """Fetch additional HL7 records using a query token."""
+    return get_client().runs.hl7_records_more(token)
+
+
+@mcp.tool()
+def query_odette_records(query: dict) -> dict:
+    """Query ODETTE connector records."""
+    return get_client().runs.odette_records(query)
+
+
+@mcp.tool()
+def query_odette_records_more(token: str) -> dict:
+    """Fetch additional ODETTE records using a query token."""
+    return get_client().runs.odette_records_more(token)
+
+
+@mcp.tool()
+def query_oftp2_records(query: dict) -> dict:
+    """Query OFTP2 connector records."""
+    return get_client().runs.oftp2_records(query)
+
+
+@mcp.tool()
+def query_oftp2_records_more(token: str) -> dict:
+    """Fetch additional OFTP2 records using a query token."""
+    return get_client().runs.oftp2_records_more(token)
+
+
+@mcp.tool()
+def query_rosetta_records(query: dict) -> dict:
+    """Query RosettaNet connector records."""
+    return get_client().runs.rosetta_records(query)
+
+
+@mcp.tool()
+def query_rosetta_records_more(token: str) -> dict:
+    """Fetch additional RosettaNet records using a query token."""
+    return get_client().runs.rosetta_records_more(token)
+
+
+@mcp.tool()
+def query_tradacoms_records(query: dict) -> dict:
+    """Query Tradacoms connector records."""
+    return get_client().runs.tradacoms_records(query)
+
+
+@mcp.tool()
+def query_tradacoms_records_more(token: str) -> dict:
+    """Fetch additional Tradacoms records using a query token."""
+    return get_client().runs.tradacoms_records_more(token)
+
+
+@mcp.tool()
+def query_x12_records(query: dict) -> dict:
+    """Query X12 connector records."""
+    return get_client().runs.x12_records(query)
+
+
+@mcp.tool()
+def query_x12_records_more(token: str) -> dict:
+    """Fetch additional X12 records using a query token."""
+    return get_client().runs.x12_records_more(token)
+
+
+@mcp.tool()
+def get_atom_log(body: dict) -> str:
+    """Get a URL to an atom log."""
+    return get_client().runs.atom_log(body)
+
+
+@mcp.tool()
+def get_as2_artifacts(body: dict) -> str:
+    """Get a URL to AS2 artifacts."""
+    return get_client().runs.as2_artifacts(body)
+
+
+@mcp.tool()
+def get_worker_log(body: dict) -> str:
+    """Get a URL to a worker log."""
+    return get_client().runs.worker_log(body)
+
+
+@mcp.tool()
+def get_audit_log(audit_id: str) -> dict:
+    """Fetch an audit log entry."""
+    return get_client().runs.audit(audit_id)
+
+
+@mcp.tool()
+def query_audit_logs(query: dict) -> dict:
+    """Query audit logs."""
+    return get_client().runs.audit_query(query)
+
+
+@mcp.tool()
+def query_audit_logs_more(token: str) -> dict:
+    """Fetch additional audit logs using a query token."""
+    return get_client().runs.audit_query_more(token)
+
+
+@mcp.tool()
+def query_events(query: dict) -> dict:
+    """Query events."""
+    return get_client().runs.events(query)
+
+
+@mcp.tool()
+def query_events_more(token: str) -> dict:
+    """Fetch additional events using a query token."""
+    return get_client().runs.events_more(token)
+
+
+@mcp.tool()
 def get_schedule(schedule_id: str) -> dict:
     """Fetch schedule info."""
     return get_client().schedules.get(schedule_id)
