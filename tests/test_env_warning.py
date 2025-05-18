@@ -2,6 +2,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+import os
 
 
 def test_warn_missing_env(monkeypatch):
@@ -9,6 +10,8 @@ def test_warn_missing_env(monkeypatch):
     monkeypatch.delenv("BOOMI_ACCOUNT", raising=False)
     monkeypatch.delenv("BOOMI_USER", raising=False)
     monkeypatch.delenv("BOOMI_SECRET", raising=False)
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(root)
     proc = subprocess.Popen(
         [sys.executable, "server.py"],
         cwd=root,
@@ -16,6 +19,7 @@ def test_warn_missing_env(monkeypatch):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        env=env,
     )
     try:
         time.sleep(0.5)

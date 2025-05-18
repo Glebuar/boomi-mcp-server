@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-boomi-mcp = "boomi_mcp.server:main"
+boomi-mcp = "src.server:main"
 
 [project.optional-dependencies]
 dev = [
@@ -29,5 +29,5 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["boomi_mcp*"]
+where = ["src"]
+include = ["src*"]
