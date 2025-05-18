@@ -13,7 +13,7 @@ Install the package directly from PyPI:
 pip install boomi-mcp-server
 ```
 
-The server depends on the `boomi` and `fastmcp` packages from PyPI. If your
+The server depends on the `boomi` and `uvicorn` packages from PyPI. If your
 environment lacks internet access, pre-build wheels or vendor these
 dependencies before running the installation command.
 
