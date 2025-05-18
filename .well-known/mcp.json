@@ -1,0 +1,27 @@
+{
+  "tools": [
+    {
+      "name": "create_component",
+      "description": "Create a Boomi component from an XML file.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "xml_path": { "type": "string", "description": "Path to the XML file" }
+        },
+        "required": ["xml_path"]
+      }
+    },
+    {
+      "name": "deploy_package",
+      "description": "Deploy a Boomi package to an environment.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "environment_id": { "type": "string" },
+          "package_id": { "type": "string" }
+        },
+        "required": ["environment_id", "package_id"]
+      }
+    }
+  ]
+}
