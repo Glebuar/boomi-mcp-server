@@ -6,6 +6,8 @@ import sys
 from dotenv import load_dotenv
 from fastmcp import __version__ as fastmcp_version
 from .tools import mcp
+from .custom_session import PatchedServerSession
+from mcp import server as mcp_server
 
 
 logger = logging.getLogger(__name__)
@@ -14,7 +16,9 @@ logger = logging.getLogger(__name__)
 def _check_env() -> None:
     missing = [v for v in ("BOOMI_ACCOUNT", "BOOMI_USER", "BOOMI_SECRET") if v not in os.environ]
     if missing:
-        logger.warning("Missing Boomi credentials: %s", ", ".join(missing))
+        msg = f"Missing Boomi credentials: {', '.join(missing)}"
+        logger.error(msg)
+        raise EnvironmentError(msg)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -26,6 +30,9 @@ def main(argv: list[str] | None = None) -> None:
     logging.basicConfig(level=logging.INFO, stream=sys.stderr)
     for name in ("uvicorn", "fastapi"):
         logging.getLogger(name).handlers = []
+
+    # Use patched session to gracefully handle unsupported requests
+    mcp_server.session.ServerSession = PatchedServerSession
 
     load_dotenv()
     _check_env()

@@ -1,6 +1,8 @@
 {
   "mcpServers": {
     "boomi": {
+      "displayName": "Boomi MCP Server",
+      "description": "Interact with the Boomi Platform via MCP.",
       "command": "python",
       "args": ["server.py"],
       "type": "stdio",
