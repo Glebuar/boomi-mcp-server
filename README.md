@@ -39,7 +39,6 @@ Start the server in stdio mode (for Cursor and most hosts):
 ```bash
 python server.py
 ```
-On Windows, use `pythonw` instead of `python` to avoid a console window.
 
 For development you can run an SSE HTTP server:
 
