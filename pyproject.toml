@@ -1,6 +1,6 @@
 [project]
 name = "boomi-mcp-server"
-version = "0.1.0"
+version = "0.2.0"
 description = "MCP server exposing Boomi API via FastMCP"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -15,7 +15,13 @@ dependencies = [
 ]
 
 [project.scripts]
-boomi-mcp = "server:main"
+boomi-mcp = "boomi_mcp.server:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "httpx",
+]
 
 [build-system]
 requires = ["setuptools", "wheel"]

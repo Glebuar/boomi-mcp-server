@@ -1,9 +1,10 @@
 {
   "mcpServers": {
-    "server-name": {
+    "boomi": {
       "command": "python",
-      "args": ["server.py"]
-      
+      "args": ["server.py"],
+      "type": "stdio",
+      "cwd": "${workspaceFolder}"
     }
   }
 }
