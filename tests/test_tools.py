@@ -1,5 +1,5 @@
 import asyncio
-from boomi_mcp.tools import mcp
+from src.tools import mcp
 
 
 def test_create_component_tool_registered():

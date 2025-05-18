@@ -5,7 +5,7 @@ import sys
 
 from dotenv import load_dotenv
 from fastmcp import __version__ as fastmcp_version
-from boomi_mcp.tools import mcp
+from .tools import mcp
 
 
 logger = logging.getLogger(__name__)
