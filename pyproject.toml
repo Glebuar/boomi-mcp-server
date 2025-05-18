@@ -9,6 +9,7 @@ requires-python = ">=3.10"
 
 dependencies = [
     "boomi",
+    "fastmcp",
     "uvicorn",
     "pydantic",
     "python-dotenv",
