@@ -7,10 +7,10 @@ This repository provides a simple [Model Context Protocol](https://modelcontextp
 - Python 3.10+
 - Access credentials for the Boomi API
 
-Install dependencies with `pip` or any PEP 517 build frontend:
+Install the package directly from PyPI:
 
 ```bash
-pip install -e .
+pip install boomi-mcp-server
 ```
 
 The server depends on the `boomi` and `fastmcp` packages from PyPI. If your
