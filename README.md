@@ -52,6 +52,21 @@ BOOMI_SECRET=...
 
 If a `.env` file exists in the working directory the server will load it automatically.
 
+### Using the Python client
+
+The package includes a simple client library for programmatic access. After
+installing `boomi-mcp-server` you can import and use `MCPClient`:
+
+```python
+from boomi_mcp_client import MCPClient
+
+client = MCPClient("http://localhost:8080")
+print(client.list_tools())
+result = client.call_tool("health_check")
+print(result)
+```
+
+
 ## Running with uv (Claude for Desktop)
 
 `uv` provides fast cold starts and isolates dependencies in a temporary virtual environment. MCP servers started with `uv` also comply with the latest MCP specification.
@@ -74,7 +89,7 @@ Windows:
         "--directory",
         "C:\\ABSOLUTE\\PATH\\TO\\boomi-mcp-server",
         "run",
-        "src/server.py"
+        "boomi_mcp_server/server.py"
       ]
     }
   }
@@ -93,7 +108,7 @@ macOS/Linux:
         "--directory",
         "/ABSOLUTE/PATH/TO/boomi-mcp-server",
         "run",
-        "src/server.py"
+        "boomi_mcp_server/server.py"
       ]
     }
   }
@@ -105,14 +120,33 @@ Only the `command` and `args` keys are supported when launching from Claude. If 
 Start the server in stdio mode (for Cursor and most hosts):
 
 ```bash
-uv run src/server.py
+uv run boomi_mcp_server/server.py
 ```
 
 For development you can run an SSE HTTP server:
 
 ```bash
-uv run src/server.py -- --transport sse --port 8080
+uv run boomi_mcp_server/server.py -- --transport sse --port 8080
 ```
+
+## Running via Docker
+
+The repository provides a `Dockerfile` and `docker-compose.yml` for
+containerized deployments. Build the image and start the server with
+
+```bash
+docker build -t boomi-mcp-server .
+docker run -p 8080:8080 -e BOOMI_ACCOUNT=... -e BOOMI_USER=... -e BOOMI_SECRET=... boomi-mcp-server
+```
+
+Or use Compose:
+
+```bash
+docker-compose up
+```
+
+The container listens on port `8080` by default in SSE mode and reads Boomi
+credentials from environment variables.
 
 The server exposes most methods provided by the Boomi SDK, including helpers to:
 

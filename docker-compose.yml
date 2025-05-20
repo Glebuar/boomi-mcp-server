@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  boomi-mcp-server:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - BOOMI_ACCOUNT=${BOOMI_ACCOUNT}
+      - BOOMI_USER=${BOOMI_USER}
+      - BOOMI_SECRET=${BOOMI_SECRET}

@@ -11,7 +11,7 @@ def test_fail_missing_env(monkeypatch):
     monkeypatch.delenv("BOOMI_USER", raising=False)
     monkeypatch.delenv("BOOMI_SECRET", raising=False)
     env = os.environ.copy()
-    env["PYTHONPATH"] = str(root)
+    env["PYTHONPATH"] = os.pathsep.join([str(root), str(root / "src")])
     proc = subprocess.Popen(
         [sys.executable, "server.py"],
         cwd=root,
