@@ -13,7 +13,7 @@ def test_fail_missing_env(monkeypatch):
     env = os.environ.copy()
     env["PYTHONPATH"] = os.pathsep.join([str(root), str(root / "src")])
     proc = subprocess.Popen(
-        [sys.executable, "server.py"],
+        [sys.executable, "-m", "boomi_mcp_server.server"],
         cwd=root,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

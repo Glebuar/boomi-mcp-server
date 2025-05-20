@@ -18,3 +18,20 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e .[dev]
       - run: pytest
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: pip install ruff
+      - run: ruff .
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t boomi-mcp-server .
