@@ -1,6 +1,6 @@
 [project]
 name = "boomi-mcp-server"
-version = "0.2.0"
+version = "0.3.0"
 description = "MCP server exposing Boomi API via FastMCP"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-boomi-mcp = "src.server:main"
+boomi-mcp = "boomi_mcp_server.server:main"
 
 [project.optional-dependencies]
 dev = [
@@ -30,4 +30,4 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["src*"]
+include = ["boomi_mcp_server*", "boomi_mcp_client*"]

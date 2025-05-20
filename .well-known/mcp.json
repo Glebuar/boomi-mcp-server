@@ -6,7 +6,7 @@
         "--directory",
         "${workspaceFolder}",
         "run",
-        "src/server.py"
+        "boomi_mcp_server/server.py"
       ]
     }
   }

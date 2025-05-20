@@ -1,5 +1,5 @@
 import os
-from src import auth
+from boomi_mcp_server import auth
 
 class DummyBoomi:
     def __init__(self, account, user, secret):
