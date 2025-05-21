@@ -39,6 +39,7 @@ uv venv
 source .venv/bin/activate     # or .venv\Scripts\activate on Windows
 uv lock
 ```
+Running `uv lock` is a recommended step to ensure reproducible environments by locking dependencies, but it's not strictly required for basic server operation if you prefer to use the latest compatible versions.
 
 You can also install the server directly from PyPI:
 
@@ -82,13 +83,13 @@ See [`examples/using_client.py`](examples/using_client.py) for a complete script
 demonstrating these calls.
 
 
-## Running with uv (Claude for Desktop)
+## Running with uv (Claude Desktop)
 
 `uv` provides fast cold starts and isolates dependencies in a temporary virtual environment. MCP servers started with `uv` also comply with the latest MCP specification.
 
 Claude Desktop reads its configuration from `claude_desktop_config.json`:
 `~/Library/Application Support/Claude` on macOS or `%AppData%\Claude` on Windows.
-Create or edit this file to add a server entry as shown below, then restart Claude.
+Create or edit this file to add a server entry as shown below, then restart Claude Desktop.
 
 Add a server entry in your `mcp.json` using absolute paths only. Example configurations are available under the [`examples`](examples) folder.
 
@@ -130,7 +131,7 @@ macOS/Linux:
 }
 ```
 
-Only the `command` and `args` keys are supported when launching from Claude. If `uv` is not in your `PATH`, replace it with the full path returned by `where uv` (Windows) or `which uv` (macOS/Linux). Restart Claude after updating `mcp.json`.
+Note: `${workspaceFolder}` is a placeholder that should be replaced with the absolute path to the `boomi-mcp-server` directory if your host application does not support this variable. Alternatively, you can use the example configurations from the `examples/` folder which use absolute paths. Only the `command` and `args` keys are supported when launching from Claude Desktop. If `uv` is not in your `PATH`, replace `uv` with the full path to the `uv` executable. Restart Claude Desktop after updating `mcp.json`.
 
 Start the server in stdio mode (for Cursor and most hosts):
 
@@ -175,7 +176,7 @@ Run `tools/list` against the server to see the full list.
 
 A discovery file is available at `.well-known/mcp.json`. See
 [docs/cursor_setup.md](docs/cursor_setup.md) for instructions on using it
-with Cursor.
+with Cursor/Claude Desktop.
 
 ## Running tests
 
