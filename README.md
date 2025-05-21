@@ -6,6 +6,17 @@
 
 This repository provides a simple [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server for interacting with the Boomi API. The server exposes Boomi SDK operations as MCP tools using [FastMCP](https://pypi.org/project/fastmcp/).
 
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Quick start](#quick-start)
+- [Usage](#usage)
+- [Running with uv (Claude for Desktop)](#running-with-uv-claude-for-desktop)
+- [Running via Docker](#running-via-docker)
+- [Cursor/Claude Setup](docs/cursor_setup.md)
+- [Running tests](#running-tests)
+- [Contributing](#contributing)
+
 ## Requirements
 
 - Python 3.10+
@@ -42,7 +53,8 @@ dependencies before running the installation command.
 
 ## Usage
 
-Set your Boomi credentials using environment variables or a `.env` file:
+Set your Boomi credentials using environment variables or a `.env` file
+(copy the provided `.env.example` and fill in your values):
 
 ```bash
 BOOMI_ACCOUNT=...
@@ -65,6 +77,9 @@ print(client.list_tools())
 result = client.call_tool("health_check")
 print(result)
 ```
+
+See [`examples/using_client.py`](examples/using_client.py) for a complete script
+demonstrating these calls.
 
 
 ## Running with uv (Claude for Desktop)
@@ -171,3 +186,8 @@ dependencies and run them with `pytest`:
 pip install -e .[dev]      # or `uv pip install -e .[dev]`
 pytest
 ```
+
+## Contributing
+
+Please open an issue or pull request if you encounter problems or have
+improvements. Ensure `pytest` and `ruff` pass before submitting changes.
