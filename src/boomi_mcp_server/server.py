@@ -4,7 +4,6 @@ import os
 import sys
 
 from dotenv import load_dotenv
-from fastmcp import __version__ as fastmcp_version
 from .tools import mcp
 from .custom_session import PatchedServerSession
 from mcp import server as mcp_server

@@ -1,4 +1,3 @@
-import os
 from boomi_mcp_server import auth
 
 class DummyBoomi:
