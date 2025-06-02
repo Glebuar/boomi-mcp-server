@@ -44,6 +44,10 @@ jobs:
             -e BOOMI_USER=test \
             -e BOOMI_SECRET=test \
             boomi-mcp-server
-          sleep 5
+          echo "Waiting for container to start..."
+          sleep 10
+          echo "Container logs:"
+          docker logs test-mcp
+          echo "Testing health endpoint..."
           curl -f http://localhost:8080/.well-known/mcp.json || exit 1
           docker stop test-mcp
