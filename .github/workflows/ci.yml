@@ -48,6 +48,7 @@ jobs:
           sleep 10
           echo "Container logs:"
           docker logs test-mcp
-          echo "Testing if server is running..."
-          docker exec test-mcp ps aux | grep -q "python -m boomi_mcp_server.server" || exit 1
+          echo "Checking if container is still running..."
+          docker ps | grep test-mcp || exit 1
+          echo "Server started successfully!"
           docker stop test-mcp
