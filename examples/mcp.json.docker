@@ -1,0 +1,10 @@
+// Example configuration for running Boomi MCP Server via Docker
+// This configuration works on all platforms (Windows, macOS, Linux)
+// Ensure Docker is running and the container is started before use
+{
+    "mcpServers": {
+        "boomi": {
+            "url": "http://localhost:8080"
+        }
+    }
+}
