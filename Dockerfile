@@ -25,7 +25,8 @@ RUN chown -R mcp:mcp /app
 USER mcp
 
 # Environment variables with defaults
-ENV BOOMI_ACCOUNT="" \
+ENV PYTHONPATH=/app \
+    BOOMI_ACCOUNT="" \
     BOOMI_USER="" \
     BOOMI_SECRET="" \
     MCP_SERVER_NAME="boomi-mcp-server" \
