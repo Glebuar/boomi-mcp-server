@@ -1,5 +1,6 @@
 from fastmcp import FastMCP
 from .auth import get_client
+from typing import Optional, Dict, Any, List
 
 mcp = FastMCP(
     name="Boomi MCP",
@@ -16,14 +17,14 @@ def health_check() -> bool:
     return True
 
 
+# Component Management Tools
 @mcp.tool()
 def create_component(xml_path: str) -> dict:
     """Create a new component in Boomi from the provided XML definition."""
     boomi = get_client()
     with open(xml_path, 'r') as f:
         xml_content = f.read()
-    comp = boomi.component.create_component(xml_content)
-    return comp
+    return boomi.component.create_component(xml_content)
 
 
 @mcp.tool()
@@ -33,24 +34,39 @@ def update_component(component_id: str, xml: str) -> dict:
 
 
 @mcp.tool()
-def delete_component(component_id: str) -> dict:
-    """Remove a component from the account using its ID."""
-    # Note: Boomi SDK v1.1.0 doesn't have a delete_component method
-    # Components are typically archived instead of deleted
-    raise NotImplementedError("Component deletion not available in current SDK")
-
-
-@mcp.tool()
 def get_component(component_id: str) -> dict:
     """Retrieve a component's metadata and XML by ID."""
     return get_client().component.get_component(component_id)
 
 
 @mcp.tool()
-def create_package(component_id: str, package_version: str | None = None,
-                    notes: str | None = None) -> dict:
+def query_components(query: dict) -> dict:
+    """Search for components by name, type, or folder.
+    
+    Example query:
+    {
+        "QueryFilter": {
+            "expression": {
+                "operator": "and",
+                "nestedExpression": [
+                    {
+                        "property": "name",
+                        "operator": "LIKE",
+                        "argument": ["MyProcess%"]
+                    }
+                ]
+            }
+        }
+    }
+    """
+    return get_client().component.query_component(query)
+
+
+# Package Management Tools
+@mcp.tool()
+def create_package(component_id: str, package_version: Optional[str] = None,
+                    notes: Optional[str] = None) -> dict:
     """Package a component for deployment, optionally setting a version."""
-    # Build package request object
     package_data = {"componentId": component_id}
     if package_version:
         package_data["packageVersion"] = package_version
@@ -60,17 +76,63 @@ def create_package(component_id: str, package_version: str | None = None,
 
 
 @mcp.tool()
-def deploy_package(environment_id: str, package_id: str) -> dict:
+def get_package(package_id: str) -> dict:
+    """Get details of a packaged component."""
+    return get_client().packaged_component.get_packaged_component(package_id)
+
+
+@mcp.tool()
+def query_packages(query: dict) -> dict:
+    """Query packaged components."""
+    return get_client().packaged_component.query_packaged_component(query)
+
+
+# Deployment Management Tools
+@mcp.tool()
+def deploy_package(environment_id: str, package_id: str, notes: Optional[str] = None) -> dict:
     """Deploy a previously created package to an environment."""
     deployment_data = {
         "environmentId": environment_id,
         "packagedComponentId": package_id
     }
+    if notes:
+        deployment_data["notes"] = notes
     return get_client().deployment.create_deployment(deployment_data)
 
 
 @mcp.tool()
-def create_folder(name: str, parent_id: str | None = None) -> dict:
+def get_deployment(deployment_id: str) -> dict:
+    """Check deployment status and details."""
+    return get_client().deployment.get_deployment(deployment_id)
+
+
+@mcp.tool()
+def query_deployments(query: dict) -> dict:
+    """Query deployments by environment or component.
+    
+    Example query:
+    {
+        "QueryFilter": {
+            "expression": {
+                "property": "environmentId",
+                "operator": "EQUALS",
+                "argument": ["env-id-here"]
+            }
+        }
+    }
+    """
+    return get_client().deployment.query_deployment(query)
+
+
+@mcp.tool()
+def query_deployed_packages(query: dict) -> dict:
+    """Query deployed packages in environments."""
+    return get_client().deployed_package.query_deployed_package(query)
+
+
+# Folder Management Tools
+@mcp.tool()
+def create_folder(name: str, parent_id: Optional[str] = None) -> dict:
     """Create a new folder optionally under ``parent_id``."""
     folder_data = {"name": name}
     if parent_id:
@@ -90,20 +152,23 @@ def delete_folder(folder_id: str) -> dict:
     return get_client().folder.delete_folder(folder_id)
 
 
+# Environment and Atom Management Tools
 @mcp.tool()
-def list_atoms() -> str:
-    """List all atoms available to the account."""
-    # Note: Complex query configuration required for atom listing
-    # For now, return guidance on using get_atom with specific IDs
-    return "Atom listing requires complex query configuration. Use get_atom(id) for specific atoms."
-
-
-@mcp.tool()
-def list_environments() -> str:
-    """List all deployment environments in the connected Boomi account."""
-    # Note: Complex query configuration required for environment listing
-    # For now, return guidance on using get_environment with specific IDs
-    return "Environment listing requires complex query configuration. Use get_environment(id) for specific environments."
+def query_environments(query: dict) -> dict:
+    """Query deployment environments.
+    
+    Example query:
+    {
+        "QueryFilter": {
+            "expression": {
+                "property": "name",
+                "operator": "LIKE",
+                "argument": ["%Production%"]
+            }
+        }
+    }
+    """
+    return get_client().environment.query_environment(query)
 
 
 @mcp.tool()
@@ -113,343 +178,456 @@ def get_environment(environment_id: str) -> dict:
 
 
 @mcp.tool()
+def query_atoms(query: dict) -> dict:
+    """Query atoms in the account.
+    
+    Example query:
+    {
+        "QueryFilter": {
+            "expression": {
+                "property": "status",
+                "operator": "EQUALS",
+                "argument": ["ONLINE"]
+            }
+        }
+    }
+    """
+    return get_client().atom.query_atom(query)
+
+
+@mcp.tool()
 def get_atom(atom_id: str) -> dict:
     """Get details for a specific atom by ID."""
     return get_client().atom.get_atom(atom_id)
 
 
+# Process Attachment Tools (Critical for execution)
 @mcp.tool()
-def query_runs(query: dict) -> dict:
-    """Search for execution records matching the provided query."""
+def attach_process_to_atom(process_id: str, atom_id: str) -> dict:
+    """Attach a process to an atom for execution."""
+    attachment_data = {
+        "processId": process_id,
+        "atomId": atom_id
+    }
+    return get_client().process_atom_attachment.create_process_atom_attachment(attachment_data)
+
+
+@mcp.tool()
+def detach_process_from_atom(process_id: str, atom_id: str) -> dict:
+    """Detach a process from an atom."""
+    return get_client().process_atom_attachment.delete_process_atom_attachment(process_id, atom_id)
+
+
+@mcp.tool()
+def query_process_attachments(query: dict) -> dict:
+    """Query process-atom attachments."""
+    return get_client().process_atom_attachment.query_process_atom_attachment(query)
+
+
+# Environment Attachment Tools
+@mcp.tool()
+def attach_environment_to_atom(environment_id: str, atom_id: str) -> dict:
+    """Attach an environment to an atom."""
+    attachment_data = {
+        "environmentId": environment_id,
+        "atomId": atom_id
+    }
+    return get_client().environment_atom_attachment.create_environment_atom_attachment(attachment_data)
+
+
+@mcp.tool()
+def query_environment_attachments(query: dict) -> dict:
+    """Query environment-atom attachments."""
+    return get_client().environment_atom_attachment.query_environment_atom_attachment(query)
+
+
+# Execution Tools
+@mcp.tool()
+def execute_process(process_id: str, atom_id: str, process_properties: Optional[Dict[str, Any]] = None) -> dict:
+    """Execute a process on a specific atom.
+    
+    Args:
+        process_id: The ID of the process to execute
+        atom_id: The ID of the atom to execute on
+        process_properties: Optional dict of process properties to pass
+    """
+    execution_data = {
+        "processId": process_id,
+        "atomId": atom_id
+    }
+    if process_properties:
+        execution_data["processProperties"] = {
+            "processProperty": [
+                {"@name": k, "#text": v} for k, v in process_properties.items()
+            ]
+        }
+    return get_client().execute_process.create_execute_process(execution_data)
+
+
+@mcp.tool()
+def cancel_execution(execution_id: str) -> dict:
+    """Cancel a running execution."""
+    return get_client().cancel_execution.create_cancel_execution({"executionId": execution_id})
+
+
+@mcp.tool()
+def request_execution(body: dict) -> dict:
+    """Submit an execution request with custom configuration."""
+    return get_client().execution_request.create_execution_request(body)
+
+
+# Execution Monitoring Tools
+@mcp.tool()
+def query_executions(query: dict) -> dict:
+    """Search for execution records matching the provided query.
+    
+    Example query:
+    {
+        "QueryFilter": {
+            "expression": {
+                "property": "processId",
+                "operator": "EQUALS",
+                "argument": ["process-id-here"]
+            }
+        }
+    }
+    """
     return get_client().execution_record.query_execution_record(query)
 
 
 @mcp.tool()
-def get_run_log(execution_id: str) -> dict:
+def query_executions_more(token: str) -> dict:
+    """Continue a previous execution query using the pagination token."""
+    return get_client().execution_record.query_more_execution_record(token)
+
+
+@mcp.tool()
+def get_execution_log(execution_id: str) -> dict:
     """Return a URL pointing to the log for the given execution."""
     log_request = {"executionId": execution_id}
     return get_client().process_log.create_process_log(log_request)
 
 
 @mcp.tool()
-def query_runs_more(token: str) -> dict:
-    """Continue a previous execution query using the pagination token."""
-    return get_client().execution_record.query_more_execution_record(token)
-
-
-@mcp.tool()
-def query_run_summary(query: dict) -> dict:
+def query_execution_summary(query: dict) -> dict:
     """Retrieve summarized statistics for executions matching a query."""
     return get_client().execution_summary_record.query_execution_summary_record(query)
 
 
 @mcp.tool()
-def query_run_summary_more(token: str) -> dict:
+def query_execution_summary_more(token: str) -> dict:
     """Fetch additional summary records using a query token."""
     return get_client().execution_summary_record.query_more_execution_summary_record(token)
 
 
 @mcp.tool()
-def query_run_connectors(query: dict) -> dict:
-    """Query execution connector records."""
-    return get_client().runs.connectors(query)
+def get_execution_artifacts(execution_id: str) -> dict:
+    """Get execution artifacts including request/response data."""
+    artifact_request = {"executionId": execution_id}
+    return get_client().execution_artifacts.create_execution_artifacts(artifact_request)
+
+
+# Process Properties Management
+@mcp.tool()
+def get_process_properties(process_id: str, environment_id: str) -> dict:
+    """Get process properties for a specific environment."""
+    return get_client().persisted_process_properties.get_persisted_process_properties(
+        process_id, environment_id
+    )
 
 
 @mcp.tool()
-def query_run_connectors_more(token: str) -> dict:
-    """Fetch additional connector records using a query token."""
-    return get_client().runs.connectors_more(token)
+def update_process_properties(process_id: str, environment_id: str, properties: dict) -> dict:
+    """Update process properties for a specific environment.
+    
+    Args:
+        process_id: The process ID
+        environment_id: The environment ID
+        properties: Dict of property names and values
+    """
+    property_data = {
+        "processId": process_id,
+        "environmentId": environment_id,
+        "processProperties": {
+            "processProperty": [
+                {"@name": k, "#text": v} for k, v in properties.items()
+            ]
+        }
+    }
+    return get_client().persisted_process_properties.update_persisted_process_properties(
+        process_id, environment_id, property_data
+    )
+
+
+# Connector Management Tools
+@mcp.tool()
+def get_connector(connector_id: str) -> dict:
+    """Get connector configuration details."""
+    return get_client().connector.get_connector(connector_id)
 
 
 @mcp.tool()
-def query_execution_count_account(query: dict) -> dict:
-    """Query execution count by account."""
-    return get_client().runs.count_account(query)
+def update_connector(connector_id: str, connector_xml: str) -> dict:
+    """Update connector configuration."""
+    return get_client().connector.update_connector(connector_id, connector_xml)
 
 
 @mcp.tool()
-def query_execution_count_account_more(token: str) -> dict:
-    """Fetch additional account counts using a query token."""
-    return get_client().runs.count_account_more(token)
+def query_connectors(query: dict) -> dict:
+    """Query connectors in the account."""
+    return get_client().connector.query_connector(query)
+
+
+# Document/Data Flow Tools
+@mcp.tool()
+def rerun_document(document_id: str, execution_id: str) -> dict:
+    """Rerun a failed document through a process."""
+    rerun_data = {
+        "documentId": document_id,
+        "executionId": execution_id
+    }
+    return get_client().rerun_document.create_rerun_document(rerun_data)
+
+
+# Queue Management Tools
+@mcp.tool()
+def list_queues(atom_id: str) -> dict:
+    """List message queues on an atom."""
+    queue_request = {"atomId": atom_id}
+    return get_client().list_queues.create_list_queues(queue_request)
 
 
 @mcp.tool()
-def query_execution_count_group(query: dict) -> dict:
-    """Query execution count by account group."""
-    return get_client().runs.count_group(query)
+def clear_queue(atom_id: str, queue_id: str) -> dict:
+    """Clear messages from a queue."""
+    clear_request = {
+        "atomId": atom_id,
+        "queueId": queue_id
+    }
+    return get_client().clear_queue.create_clear_queue(clear_request)
+
+
+# Listener Management Tools
+@mcp.tool()
+def get_listener_status(atom_id: str, listener_id: str) -> dict:
+    """Check listener status on an atom."""
+    return get_client().listener_status.get_listener_status(atom_id, listener_id)
 
 
 @mcp.tool()
-def query_execution_count_group_more(token: str) -> dict:
-    """Fetch additional group counts using a query token."""
-    return get_client().runs.count_group_more(token)
-
-
-@mcp.tool()
-def get_run_artifacts(execution_id: str) -> str:
-    """Get a URL to execution artifacts."""
-    return get_client().runs.artifacts(execution_id)
-
-
-@mcp.tool()
-def request_execution(body: dict) -> dict:
-    """Submit an execution request."""
-    return get_client().runs.request(body)
-
-
-@mcp.tool()
-def get_run_document(generic_id: str) -> dict:
-    """Fetch a generic connector record by ID."""
-    return get_client().runs.doc(generic_id)
-
-
-@mcp.tool()
-def query_run_documents(query: dict) -> dict:
-    """Query generic connector records."""
-    return get_client().runs.docs(query)
-
-
-@mcp.tool()
-def query_run_documents_more(token: str) -> dict:
-    """Fetch additional generic records using a query token."""
-    return get_client().runs.docs_more(token)
-
-
-@mcp.tool()
-def query_as2_records(query: dict) -> dict:
-    """Query AS2 connector records."""
-    return get_client().runs.as2_records(query)
-
-
-@mcp.tool()
-def query_as2_records_more(token: str) -> dict:
-    """Fetch additional AS2 records using a query token."""
-    return get_client().runs.as2_records_more(token)
-
-
-@mcp.tool()
-def query_edicustom_records(query: dict) -> dict:
-    """Query EDI Custom connector records."""
-    return get_client().runs.edicustom_records(query)
-
-
-@mcp.tool()
-def query_edicustom_records_more(token: str) -> dict:
-    """Fetch additional EDI Custom records using a query token."""
-    return get_client().runs.edicustom_records_more(token)
-
-
-@mcp.tool()
-def query_edifact_records(query: dict) -> dict:
-    """Query EDIFACT connector records."""
-    return get_client().runs.edifact_records(query)
-
-
-@mcp.tool()
-def query_edifact_records_more(token: str) -> dict:
-    """Fetch additional EDIFACT records using a query token."""
-    return get_client().runs.edifact_records_more(token)
-
-
-@mcp.tool()
-def query_hl7_records(query: dict) -> dict:
-    """Query HL7 connector records."""
-    return get_client().runs.hl7_records(query)
-
-
-@mcp.tool()
-def query_hl7_records_more(token: str) -> dict:
-    """Fetch additional HL7 records using a query token."""
-    return get_client().runs.hl7_records_more(token)
-
-
-@mcp.tool()
-def query_odette_records(query: dict) -> dict:
-    """Query ODETTE connector records."""
-    return get_client().runs.odette_records(query)
-
-
-@mcp.tool()
-def query_odette_records_more(token: str) -> dict:
-    """Fetch additional ODETTE records using a query token."""
-    return get_client().runs.odette_records_more(token)
-
-
-@mcp.tool()
-def query_oftp2_records(query: dict) -> dict:
-    """Query OFTP2 connector records."""
-    return get_client().runs.oftp2_records(query)
-
-
-@mcp.tool()
-def query_oftp2_records_more(token: str) -> dict:
-    """Fetch additional OFTP2 records using a query token."""
-    return get_client().runs.oftp2_records_more(token)
-
-
-@mcp.tool()
-def query_rosetta_records(query: dict) -> dict:
-    """Query RosettaNet connector records."""
-    return get_client().runs.rosetta_records(query)
-
-
-@mcp.tool()
-def query_rosetta_records_more(token: str) -> dict:
-    """Fetch additional RosettaNet records using a query token."""
-    return get_client().runs.rosetta_records_more(token)
-
-
-@mcp.tool()
-def query_tradacoms_records(query: dict) -> dict:
-    """Query Tradacoms connector records."""
-    return get_client().runs.tradacoms_records(query)
-
-
-@mcp.tool()
-def query_tradacoms_records_more(token: str) -> dict:
-    """Fetch additional Tradacoms records using a query token."""
-    return get_client().runs.tradacoms_records_more(token)
-
-
-@mcp.tool()
-def query_x12_records(query: dict) -> dict:
-    """Query X12 connector records."""
-    return get_client().runs.x12_records(query)
-
-
-@mcp.tool()
-def query_x12_records_more(token: str) -> dict:
-    """Fetch additional X12 records using a query token."""
-    return get_client().runs.x12_records_more(token)
-
-
-@mcp.tool()
-def get_atom_log(body: dict) -> str:
-    """Get a URL to an atom log."""
-    return get_client().runs.atom_log(body)
-
-
-@mcp.tool()
-def get_as2_artifacts(body: dict) -> str:
-    """Get a URL to AS2 artifacts."""
-    return get_client().runs.as2_artifacts(body)
-
-
-@mcp.tool()
-def get_worker_log(body: dict) -> str:
-    """Get a URL to a worker log."""
-    return get_client().runs.worker_log(body)
-
-
-@mcp.tool()
-def get_audit_log(audit_id: str) -> dict:
-    """Fetch an audit log entry."""
-    return get_client().runs.audit(audit_id)
-
-
-@mcp.tool()
-def query_audit_logs(query: dict) -> dict:
-    """Query audit logs."""
-    return get_client().runs.audit_query(query)
-
-
-@mcp.tool()
-def query_audit_logs_more(token: str) -> dict:
-    """Fetch additional audit logs using a query token."""
-    return get_client().runs.audit_query_more(token)
-
-
-@mcp.tool()
-def query_events(query: dict) -> dict:
-    """Query events."""
-    return get_client().runs.events(query)
-
-
-@mcp.tool()
-def query_events_more(token: str) -> dict:
-    """Fetch additional events using a query token."""
-    return get_client().runs.events_more(token)
-
-
+def change_listener_status(atom_id: str, listener_id: str, action: str) -> dict:
+    """Change listener status (START, STOP, RESTART).
+    
+    Args:
+        atom_id: The atom ID
+        listener_id: The listener ID
+        action: One of "START", "STOP", or "RESTART"
+    """
+    status_data = {
+        "atomId": atom_id,
+        "listenerId": listener_id,
+        "action": action
+    }
+    return get_client().change_listener_status.create_change_listener_status(status_data)
+
+
+# Schedule Management Tools
 @mcp.tool()
 def get_schedule(schedule_id: str) -> dict:
     """Fetch schedule info."""
-    return get_client().schedules.get(schedule_id)
+    return get_client().process_schedules.get_process_schedules(schedule_id)
 
 
 @mcp.tool()
-def update_schedule(schedule_id: str, body: dict) -> dict:
+def update_schedule(schedule_id: str, schedule_data: dict) -> dict:
     """Update a schedule."""
-    return get_client().schedules.update(schedule_id, body)
+    return get_client().process_schedules.update_process_schedules(schedule_id, schedule_data)
 
 
 @mcp.tool()
 def query_schedules(query: dict) -> dict:
     """Query schedules."""
-    return get_client().schedules.query(query)
+    return get_client().process_schedules.query_process_schedules(query)
 
 
+# Environment Extensions Tools
 @mcp.tool()
-def bulk_schedules(ids: list[str]) -> dict:
-    """Get schedules in bulk."""
-    return get_client().schedules.bulk(ids)
-
-
-@mcp.tool()
-def get_extensions(environment_id: str) -> dict:
+def get_environment_extensions(environment_id: str) -> dict:
     """Get environment extensions."""
-    return get_client().extensions.get(environment_id)
+    return get_client().environment_extensions.get_environment_extensions(environment_id)
 
 
 @mcp.tool()
-def update_extensions(environment_id: str, body: dict) -> dict:
+def update_environment_extensions(environment_id: str, extensions_data: dict) -> dict:
     """Update environment extensions."""
-    return get_client().extensions.update(environment_id, body)
+    return get_client().environment_extensions.update_environment_extensions(
+        environment_id, extensions_data
+    )
 
 
 @mcp.tool()
-def query_extensions(query: dict) -> dict:
-    """Query extensions."""
-    return get_client().extensions.query(query)
+def query_environment_extensions(query: dict) -> dict:
+    """Query environment extensions."""
+    return get_client().environment_extensions.query_environment_extensions(query)
+
+
+# Audit and Event Tools
+@mcp.tool()
+def get_audit_log(audit_id: str) -> dict:
+    """Fetch an audit log entry."""
+    return get_client().audit_log.get_audit_log(audit_id)
 
 
 @mcp.tool()
-def query_extension_field_summary(query: dict) -> dict:
-    """Query connection field extension summary."""
-    return get_client().extensions.query_conn_field_summary(query)
+def query_audit_logs(query: dict) -> dict:
+    """Query audit logs."""
+    return get_client().audit_log.query_audit_log(query)
 
 
 @mcp.tool()
-def create_runtime_release(body: dict) -> dict:
-    """Create a runtime release schedule."""
-    return get_client().runtime.create(body)
+def query_audit_logs_more(token: str) -> dict:
+    """Fetch additional audit logs using a query token."""
+    return get_client().audit_log.query_more_audit_log(token)
 
 
 @mcp.tool()
-def get_runtime_release(cid: str) -> dict:
-    """Get runtime release details."""
-    return get_client().runtime.get(cid)
+def query_events(query: dict) -> dict:
+    """Query system events."""
+    return get_client().event.query_event(query)
 
 
 @mcp.tool()
-def update_runtime_release(cid: str, body: dict) -> dict:
-    """Update runtime release."""
-    return get_client().runtime.update(cid, body)
+def query_events_more(token: str) -> dict:
+    """Fetch additional events using a query token."""
+    return get_client().event.query_more_event(token)
+
+
+# Atom Log Tools
+@mcp.tool()
+def get_atom_log(atom_id: str, log_date: str) -> dict:
+    """Get a URL to an atom log for a specific date.
+    
+    Args:
+        atom_id: The atom ID
+        log_date: Date in YYYY-MM-DD format
+    """
+    log_request = {
+        "atomId": atom_id,
+        "logDate": log_date
+    }
+    return get_client().atom_log.create_atom_log(log_request)
 
 
 @mcp.tool()
-def delete_runtime_release(cid: str) -> None:
-    """Delete runtime release."""
-    get_client().runtime.delete(cid)
+def get_worker_log(atom_id: str, container_id: str, log_date: str) -> dict:
+    """Get a URL to a worker log.
+    
+    Args:
+        atom_id: The atom ID
+        container_id: The container/worker ID
+        log_date: Date in YYYY-MM-DD format
+    """
+    log_request = {
+        "atomId": atom_id,
+        "containerId": container_id,
+        "logDate": log_date
+    }
+    return get_client().atom_worker_log.create_atom_worker_log(log_request)
+
+
+# Connector Record Query Tools
+@mcp.tool()
+def query_execution_connectors(query: dict) -> dict:
+    """Query execution connector records."""
+    return get_client().execution_connector.query_execution_connector(query)
 
 
 @mcp.tool()
-def execute_process(body: dict) -> dict:
-    """Execute a process."""
-    return get_client().execute.run(body)
+def query_execution_connectors_more(token: str) -> dict:
+    """Fetch additional connector records using a query token."""
+    return get_client().execution_connector.query_more_execution_connector(token)
 
 
 @mcp.tool()
-def cancel_execution(execution_id: str) -> None:
-    """Cancel an execution."""
-    get_client().execute.cancel(execution_id)
+def query_as2_records(query: dict) -> dict:
+    """Query AS2 connector records."""
+    return get_client().as2_mdn_record.query_as2_mdn_record(query)
+
+
+@mcp.tool()
+def query_as2_records_more(token: str) -> dict:
+    """Fetch additional AS2 records using a query token."""
+    return get_client().as2_mdn_record.query_more_as2_mdn_record(token)
+
+
+@mcp.tool()
+def get_as2_artifacts(record_id: str) -> dict:
+    """Get AS2 artifacts for a specific record."""
+    artifact_request = {"recordId": record_id}
+    return get_client().as2_mdn_artifacts.create_as2_mdn_artifacts(artifact_request)
+
+
+@mcp.tool()
+def query_edi_x12_records(query: dict) -> dict:
+    """Query X12 EDI connector records."""
+    return get_client().edi_x12_record.query_edi_x12_record(query)
+
+
+@mcp.tool()
+def query_edi_x12_records_more(token: str) -> dict:
+    """Fetch additional X12 records using a query token."""
+    return get_client().edi_x12_record.query_more_edi_x12_record(token)
+
+
+@mcp.tool()
+def query_edi_edifact_records(query: dict) -> dict:
+    """Query EDIFACT connector records."""
+    return get_client().edi_edifact_record.query_edi_edifact_record(query)
+
+
+@mcp.tool()
+def query_edi_edifact_records_more(token: str) -> dict:
+    """Fetch additional EDIFACT records using a query token."""
+    return get_client().edi_edifact_record.query_more_edi_edifact_record(token)
+
+
+@mcp.tool()
+def query_hl7_records(query: dict) -> dict:
+    """Query HL7 connector records."""
+    return get_client().hl7_record.query_hl7_record(query)
+
+
+@mcp.tool()
+def query_hl7_records_more(token: str) -> dict:
+    """Fetch additional HL7 records using a query token."""
+    return get_client().hl7_record.query_more_hl7_record(token)
+
+
+# Account Information Tool
+@mcp.tool()
+def get_account_info() -> dict:
+    """Get account information and settings."""
+    return get_client().account.get()
+
+
+# Component Metadata Tools
+@mcp.tool()
+def query_component_metadata(query: dict) -> dict:
+    """Query component metadata to understand relationships."""
+    return get_client().component_metadata.query_component_metadata(query)
+
+
+# Runtime Management Tools
+@mcp.tool()
+def create_runtime_restart(atom_id: str, force_restart: bool = False) -> dict:
+    """Request runtime restart for an atom.
+    
+    Args:
+        atom_id: The atom to restart
+        force_restart: Whether to force restart even if processes are running
+    """
+    restart_data = {
+        "atomId": atom_id,
+        "forceRestart": force_restart
+    }
+    return get_client().runtime_restart_request.create_runtime_restart_request(restart_data)
