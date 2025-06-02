@@ -48,6 +48,6 @@ jobs:
           sleep 10
           echo "Container logs:"
           docker logs test-mcp
-          echo "Testing health endpoint..."
-          curl -f http://localhost:8080/.well-known/mcp.json || exit 1
+          echo "Testing SSE endpoint..."
+          curl -f http://localhost:8080/sse || exit 1
           docker stop test-mcp
