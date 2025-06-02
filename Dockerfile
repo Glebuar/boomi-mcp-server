@@ -25,7 +25,7 @@ RUN chown -R mcp:mcp /app
 USER mcp
 
 # Environment variables with defaults
-ENV PYTHONPATH=/app \
+ENV PYTHONPATH=/app/src \
     BOOMI_ACCOUNT="" \
     BOOMI_USER="" \
     BOOMI_SECRET="" \
