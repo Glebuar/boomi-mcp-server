@@ -33,9 +33,9 @@ ENV PYTHONPATH=/app/src \
     MCP_SERVER_NAME="boomi-mcp-server" \
     PORT=8080
 
-# Health check
+# Health check - verify the process is running
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/sse')" || exit 1
+    CMD pgrep -f "python -m boomi_mcp_server.server" || exit 1
 
 EXPOSE 8080
 

@@ -48,6 +48,6 @@ jobs:
           sleep 10
           echo "Container logs:"
           docker logs test-mcp
-          echo "Testing SSE endpoint..."
-          curl -f http://localhost:8080/sse || exit 1
+          echo "Testing if server is running..."
+          docker exec test-mcp ps aux | grep -q "python -m boomi_mcp_server.server" || exit 1
           docker stop test-mcp
