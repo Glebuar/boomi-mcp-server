@@ -1,6 +1,6 @@
 from fastmcp import FastMCP
 from .auth import get_client
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 
 mcp = FastMCP(
     name="Boomi MCP",
