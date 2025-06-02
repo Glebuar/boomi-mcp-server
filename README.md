@@ -96,9 +96,9 @@ Docker is the recommended way to run the Boomi MCP Server for production use:
    docker-compose up -d
    ```
 
-3. Check server health:
+3. Check if server is running:
    ```bash
-   curl http://localhost:8080/.well-known/mcp.json
+   docker ps | grep boomi-mcp-server
    ```
 
 ### Using Docker directly
@@ -200,9 +200,8 @@ The server exposes most methods provided by the Boomi SDK, including helpers to:
 - Trigger process executions
 - Query connector configurations (AS2, EDI, HL7, OFTP2, etc.)
 
-A discovery file is available at `.well-known/mcp.json`. See
-[docs/cursor_setup.md](docs/cursor_setup.md) for instructions on using it
-with Cursor/Claude Desktop.
+See [docs/cursor_setup.md](docs/cursor_setup.md) for instructions on setting up
+the server with Cursor/Claude Desktop.
 
 ## Development
 

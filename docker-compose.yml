@@ -19,7 +19,7 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/.well-known/mcp.json')"]
+      test: ["CMD", "pgrep", "-f", "python -m boomi_mcp_server.server"]
       interval: 30s
       timeout: 3s
       retries: 3
