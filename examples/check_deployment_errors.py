@@ -12,7 +12,6 @@ This script:
 import sys
 import os
 from datetime import datetime, timedelta, timezone
-import json
 from typing import List, Dict, Any
 
 # Add the src directory to the Python path
@@ -157,7 +156,7 @@ class DeploymentErrorChecker:
                     more_results = self.client.call_tool("query_audit_logs_more", token=query_token)
                     audit_logs.extend(more_results.get("result", []))
                     query_token = more_results.get("queryToken")
-                except:
+                except Exception:
                     break
             
             return audit_logs
@@ -219,7 +218,7 @@ class DeploymentErrorChecker:
         audit_logs = self.get_deployment_audit_logs(hours_back=48)
         
         if audit_logs:
-            print(f"\n📝 DEPLOYMENT AUDIT LOGS (Last 48 hours)")
+            print("\n📝 DEPLOYMENT AUDIT LOGS (Last 48 hours)")
             print("-" * 40)
             print(f"Total audit entries: {len(audit_logs)}")
             

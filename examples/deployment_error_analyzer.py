@@ -72,7 +72,7 @@ class DeploymentErrorAnalyzer:
                     more_results = self.client.call_tool("query_deployments_more", token=query_token)
                     deployments.extend(more_results.get("result", []))
                     query_token = more_results.get("queryToken")
-                except:
+                except Exception:
                     break
             
             return deployments
@@ -131,7 +131,7 @@ class DeploymentErrorAnalyzer:
                             "sub_type": component.get("subType"),
                             "folder_id": component.get("folderId")
                         }
-                    except:
+                    except Exception:
                         pass
             except Exception as e:
                 analysis["warnings"].append(f"Could not fetch package info: {str(e)}")
@@ -144,7 +144,7 @@ class DeploymentErrorAnalyzer:
                     "name": environment.get("name"),
                     "classification": environment.get("classification")
                 }
-            except:
+            except Exception:
                 pass
         
         return analysis
@@ -178,7 +178,7 @@ class DeploymentErrorAnalyzer:
         try:
             result = self.client.call_tool("query_audit_logs", query=query)
             related_logs = result.get("result", [])
-        except:
+        except Exception:
             pass
         
         return related_logs
@@ -258,7 +258,7 @@ class DeploymentErrorAnalyzer:
         try:
             result = self.client.call_tool("query_audit_logs", query=query)
             self.results["audit_logs"] = result.get("result", [])
-        except:
+        except Exception:
             pass
     
     def save_results(self, filename: str):
@@ -275,13 +275,13 @@ class DeploymentErrorAnalyzer:
         print("=" * 80)
         
         summary = self.results["summary"]
-        print(f"\n📊 SUMMARY")
+        print("\n📊 SUMMARY")
         print(f"  Total Deployments: {summary['total_deployments']}")
         print(f"  Date Range: {summary['date_range']}")
         print(f"  Environment: {summary['environment_filter']}")
         print(f"  Error Rate: {summary['error_rate']}")
         
-        print(f"\n📈 STATUS BREAKDOWN")
+        print("\n📈 STATUS BREAKDOWN")
         for status, count in summary["status_breakdown"].items():
             print(f"  {status}: {count}")
         
