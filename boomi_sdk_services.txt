@@ -1,0 +1,281 @@
+Boomi SDK Services
+==================
+
+Total services: 114
+
+Complete Service List:
+--------------------------------------------------------------------------------
+  1. account                                            (AccountService)
+  2. account_cloud_attachment_properties                (AccountCloudAttachmentPropertiesService)
+  3. account_cloud_attachment_quota                     (AccountCloudAttachmentQuotaService)
+  4. account_group                                      (AccountGroupService)
+  5. account_group_account                              (AccountGroupAccountService)
+  6. account_group_integration_pack                     (AccountGroupIntegrationPackService)
+  7. account_group_user_role                            (AccountGroupUserRoleService)
+  8. account_provision                                  (AccountProvisionService)
+  9. account_sso_config                                 (AccountSsoConfigService)
+ 10. account_user_federation                            (AccountUserFederationService)
+ 11. account_user_role                                  (AccountUserRoleService)
+ 12. api_usage_count                                    (ApiUsageCountService)
+ 13. as2_connector_record                               (As2ConnectorRecordService)
+ 14. atom                                               (AtomService)
+ 15. atom_as2_artifacts                                 (AtomAs2ArtifactsService)
+ 16. atom_connection_field_extension_summary            (AtomConnectionFieldExtensionSummaryService)
+ 17. atom_connector_versions                            (AtomConnectorVersionsService)
+ 18. atom_counters                                      (AtomCountersService)
+ 19. atom_disk_space                                    (AtomDiskSpaceService)
+ 20. atom_log                                           (AtomLogService)
+ 21. atom_purge                                         (AtomPurgeService)
+ 22. atom_security_policies                             (AtomSecurityPoliciesService)
+ 23. atom_startup_properties                            (AtomStartupPropertiesService)
+ 24. atom_worker_log                                    (AtomWorkerLogService)
+ 25. audit_log                                          (AuditLogService)
+ 26. branch                                             (BranchService)
+ 27. cancel_execution                                   (CancelExecutionService)
+ 28. change_listener_status                             (ChangeListenerStatusService)
+ 29. clear_queue                                        (ClearQueueService)
+ 30. cloud                                              (CloudService)
+ 31. component                                          (ComponentService)
+ 32. component_atom_attachment                          (ComponentAtomAttachmentService)
+ 33. component_diff_request                             (ComponentDiffRequestService)
+ 34. component_environment_attachment                   (ComponentEnvironmentAttachmentService)
+ 35. component_metadata                                 (ComponentMetadataService)
+ 36. component_reference                                (ComponentReferenceService)
+ 37. connection_licensing_report                        (ConnectionLicensingReportService)
+ 38. connector                                          (ConnectorService)
+ 39. connector_document                                 (ConnectorDocumentService)
+ 40. custom_tracked_field                               (CustomTrackedFieldService)
+ 41. deployed_expired_certificate                       (DeployedExpiredCertificateService)
+ 42. deployed_package                                   (DeployedPackageService)
+ 43. deployment                                         (DeploymentService)
+ 44. document_count_account                             (DocumentCountAccountService)
+ 45. document_count_account_group                       (DocumentCountAccountGroupService)
+ 46. edi_custom_connector_record                        (EdiCustomConnectorRecordService)
+ 47. edifact_connector_record                           (EdifactConnectorRecordService)
+ 48. environment                                        (EnvironmentService)
+ 49. environment_atom_attachment                        (EnvironmentAtomAttachmentService)
+ 50. environment_connection_field_extension_summary     (EnvironmentConnectionFieldExtensionSummaryService)
+ 51. environment_extensions                             (EnvironmentExtensionsService)
+ 52. environment_map_extension                          (EnvironmentMapExtensionService)
+ 53. environment_map_extension_external_component       (EnvironmentMapExtensionExternalComponentService)
+ 54. environment_map_extension_user_defined_function    (EnvironmentMapExtensionUserDefinedFunctionService)
+ 55. environment_map_extension_user_defined_function_summary (EnvironmentMapExtensionUserDefinedFunctionSummaryService)
+ 56. environment_map_extensions_summary                 (EnvironmentMapExtensionsSummaryService)
+ 57. environment_role                                   (EnvironmentRoleService)
+ 58. event                                              (EventService)
+ 59. execute_process                                    (ExecuteProcessService)
+ 60. execution_artifacts                                (ExecutionArtifactsService)
+ 61. execution_connector                                (ExecutionConnectorService)
+ 62. execution_count_account                            (ExecutionCountAccountService)
+ 63. execution_count_account_group                      (ExecutionCountAccountGroupService)
+ 64. execution_record                                   (ExecutionRecordService)
+ 65. execution_request                                  (ExecutionRequestService)
+ 66. execution_summary_record                           (ExecutionSummaryRecordService)
+ 67. folder                                             (FolderService)
+ 68. generic_connector_record                           (GenericConnectorRecordService)
+ 69. get_assignable_roles                               (GetAssignableRolesService)
+ 70. hl7_connector_record                               (Hl7ConnectorRecordService)
+ 71. installer_token                                    (InstallerTokenService)
+ 72. integration_pack                                   (IntegrationPackService)
+ 73. integration_pack_atom_attachment                   (IntegrationPackAtomAttachmentService)
+ 74. integration_pack_environment_attachment            (IntegrationPackEnvironmentAttachmentService)
+ 75. integration_pack_instance                          (IntegrationPackInstanceService)
+ 76. java_rollback                                      (JavaRollbackService)
+ 77. java_upgrade                                       (JavaUpgradeService)
+ 78. list_queues                                        (ListQueuesService)
+ 79. listener_status                                    (ListenerStatusService)
+ 80. merge_request                                      (MergeRequestService)
+ 81. move_queue_request                                 (MoveQueueRequestService)
+ 82. node_offboard                                      (NodeOffboardService)
+ 83. odette_connector_record                            (OdetteConnectorRecordService)
+ 84. oftp2_connector_record                             (Oftp2ConnectorRecordService)
+ 85. organization_component                             (OrganizationComponentService)
+ 86. packaged_component                                 (PackagedComponentService)
+ 87. packaged_component_manifest                        (PackagedComponentManifestService)
+ 88. persisted_process_properties                       (PersistedProcessPropertiesService)
+ 89. process                                            (ProcessService)
+ 90. process_atom_attachment                            (ProcessAtomAttachmentService)
+ 91. process_environment_attachment                     (ProcessEnvironmentAttachmentService)
+ 92. process_log                                        (ProcessLogService)
+ 93. process_schedule_status                            (ProcessScheduleStatusService)
+ 94. process_schedules                                  (ProcessSchedulesService)
+ 95. publisher_integration_pack                         (PublisherIntegrationPackService)
+ 96. refresh_secrets_manager                            (RefreshSecretsManagerService)
+ 97. release_integration_pack                           (ReleaseIntegrationPackService)
+ 98. release_integration_pack_status                    (ReleaseIntegrationPackStatusService)
+ 99. rerun_document                                     (RerunDocumentService)
+100. role                                               (RoleService)
+101. rosetta_net_connector_record                       (RosettaNetConnectorRecordService)
+102. runtime_release_schedule                           (RuntimeReleaseScheduleService)
+103. runtime_restart_request                            (RuntimeRestartRequestService)
+104. shared_communication_channel_component             (SharedCommunicationChannelComponentService)
+105. shared_server_information                          (SharedServerInformationService)
+106. shared_web_server                                  (SharedWebServerService)
+107. shared_web_server_log                              (SharedWebServerLogService)
+108. throughput_account                                 (ThroughputAccountService)
+109. throughput_account_group                           (ThroughputAccountGroupService)
+110. tradacoms_connector_record                         (TradacomsConnectorRecordService)
+111. trading_partner_component                          (TradingPartnerComponentService)
+112. trading_partner_processing_group                   (TradingPartnerProcessingGroupService)
+113. worker                                             (WorkerService)
+114. x12_connector_record                               (X12ConnectorRecordService)
+
+
+Services by Category:
+================================================================================
+
+Account Management:
+------------------
+  - account
+  - account_cloud_attachment_properties
+  - account_cloud_attachment_quota
+  - account_group
+  - account_group_account
+  - account_group_integration_pack
+  - account_group_user_role
+  - account_provision
+  - account_sso_config
+  - account_user_federation
+  - account_user_role
+
+Atom Management:
+---------------
+  - atom
+  - atom_as2_artifacts
+  - atom_connection_field_extension_summary
+  - atom_connector_versions
+  - atom_counters
+  - atom_disk_space
+  - atom_log
+  - atom_purge
+  - atom_security_policies
+  - atom_startup_properties
+  - atom_worker_log
+
+Component Management:
+--------------------
+  - component
+  - component_atom_attachment
+  - component_diff_request
+  - component_environment_attachment
+  - component_metadata
+  - component_reference
+
+Connector Management:
+--------------------
+  - as2_connector_record
+  - connector
+  - connector_document
+  - edi_custom_connector_record
+  - edifact_connector_record
+  - generic_connector_record
+  - hl7_connector_record
+  - odette_connector_record
+  - oftp2_connector_record
+  - rosetta_net_connector_record
+  - tradacoms_connector_record
+  - x12_connector_record
+
+Deployment Management:
+---------------------
+  - deployed_expired_certificate
+  - deployed_package
+
+Environment Management:
+----------------------
+  - environment
+  - environment_atom_attachment
+  - environment_connection_field_extension_summary
+  - environment_extensions
+  - environment_map_extension
+  - environment_map_extension_external_component
+  - environment_map_extension_user_defined_function
+  - environment_map_extension_user_defined_function_summary
+  - environment_map_extensions_summary
+  - environment_role
+
+Execution Management:
+--------------------
+  - cancel_execution
+  - execute_process
+  - execution_artifacts
+  - execution_connector
+  - execution_count_account
+  - execution_count_account_group
+  - execution_record
+  - execution_request
+  - execution_summary_record
+
+Integration Pack Management:
+---------------------------
+  - integration_pack
+  - integration_pack_atom_attachment
+  - integration_pack_environment_attachment
+  - integration_pack_instance
+
+Logging and Events:
+------------------
+  - audit_log
+  - event
+
+Other Services:
+--------------
+  - api_usage_count
+  - branch
+  - change_listener_status
+  - clear_queue
+  - cloud
+  - connection_licensing_report
+  - custom_tracked_field
+  - deployment
+  - document_count_account
+  - document_count_account_group
+  - folder
+  - get_assignable_roles
+  - installer_token
+  - java_rollback
+  - java_upgrade
+  - list_queues
+  - listener_status
+  - merge_request
+  - move_queue_request
+  - node_offboard
+  - organization_component
+  - packaged_component
+  - packaged_component_manifest
+  - persisted_process_properties
+  - publisher_integration_pack
+  - refresh_secrets_manager
+  - release_integration_pack
+  - release_integration_pack_status
+  - rerun_document
+  - runtime_release_schedule
+  - runtime_restart_request
+  - throughput_account
+  - throughput_account_group
+  - worker
+
+Process Management:
+------------------
+  - process
+  - process_atom_attachment
+  - process_environment_attachment
+  - process_log
+  - process_schedule_status
+  - process_schedules
+
+Role Management:
+---------------
+  - role
+
+Shared Resources:
+----------------
+  - shared_communication_channel_component
+  - shared_server_information
+  - shared_web_server
+  - shared_web_server_log
+
+Trading Partner Management:
+--------------------------
+  - trading_partner_component
+  - trading_partner_processing_group

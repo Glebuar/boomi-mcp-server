@@ -31,7 +31,7 @@ The recommended way to run the Boomi MCP Server is using Docker:
 docker pull ghcr.io/glebuar/boomi-mcp-server:latest
 
 # Run with environment variables
-docker run -p 8080:8080 \
+docker run -d --name boomi-mcp-server -p 8080:8080 \
   -e BOOMI_ACCOUNT=your_account \
   -e BOOMI_USER=your_user \
   -e BOOMI_SECRET=your_secret \
@@ -191,14 +191,30 @@ For Claude Desktop integration, add this to your `claude_desktop_config.json`:
 
 ## Features
 
-The server exposes most methods provided by the Boomi SDK, including helpers to:
+The server exposes 85+ tools covering the complete Boomi integration lifecycle:
 
-- Manage components and packages
-- Work with folders and environments
-- Deploy packages and inspect execution runs
-- Manage schedules and extensions
-- Trigger process executions
-- Query connector configurations (AS2, EDI, HL7, OFTP2, etc.)
+### Core Workflow Support
+- **Discovery**: Query components, environments, atoms, and folders
+- **Development**: Create/update components, manage folders
+- **Packaging**: Create versioned packages for deployment
+- **Deployment**: Deploy packages, check deployment status
+- **Execution**: Run processes with parameters, manage attachments
+- **Monitoring**: Query executions, view logs, track performance
+- **Debugging**: Access detailed logs, artifacts, and error records
+- **Management**: Handle schedules, properties, extensions
+
+### Connector Support
+- AS2, EDI (X12/EDIFACT), HL7, OFTP2, RosettaNet, Tradacoms
+- Query connector records and retrieve artifacts
+- Manage connector configurations
+
+### Advanced Features
+- Process-atom attachments for execution
+- Environment-atom attachments
+- Queue management and listener control
+- Audit logs and system events
+- Document rerun capabilities
+- Runtime restart management
 
 See [docs/cursor_setup.md](docs/cursor_setup.md) for instructions on setting up
 the server with Cursor/Claude Desktop.
