@@ -1,12 +1,11 @@
 """Helper functions for Boomi SDK interactions."""
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from boomi.models.atom_query_config import AtomQueryConfig
 from boomi.models.environment_query_config import EnvironmentQueryConfig
 from boomi.models.deployment_query_config import DeploymentQueryConfig
 from boomi.models.packaged_component_query_config import PackagedComponentQueryConfig
 from boomi.models.execution_record_query_config import ExecutionRecordQueryConfig
-from boomi.models.query_filter import QueryFilter
 
 
 def create_query_config(config_class, query_dict: Dict[str, Any]):

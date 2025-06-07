@@ -4,8 +4,6 @@ from .sdk_helpers import (
     create_atom_query_config, 
     create_environment_query_config,
     create_deployment_query_config,
-    create_execution_record_query_config,
-    create_packaged_component_query_config,
     extract_response_data
 )
 from typing import Optional, Dict, Any
