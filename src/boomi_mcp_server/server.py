@@ -39,7 +39,7 @@ def main(argv: list[str] | None = None) -> None:
     if args.transport == "stdio":
         mcp.run(transport="stdio")
     else:
-        mcp.run(transport="sse", port=args.port)
+        mcp.run(transport="sse", host="0.0.0.0", port=args.port)
 
 
 if __name__ == "__main__":
