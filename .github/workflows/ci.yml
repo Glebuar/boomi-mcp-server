@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov ruff
+      - run: pytest
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: pip install ruff
+      - run: ruff check .
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t boomi-mcp-server .
+      - name: Test Docker image
+        run: |
+          docker run -d --name test-mcp -p 8080:8080 \
+            -e BOOMI_ACCOUNT=test \
+            -e BOOMI_USER=test \
+            -e BOOMI_SECRET=test \
+            boomi-mcp-server
+          echo "Waiting for container to start..."
+          sleep 10
+          echo "Container logs:"
+          docker logs test-mcp
+          echo "Checking if container is still running..."
+          docker ps | grep test-mcp || exit 1
+          echo "Server started successfully!"
+          docker stop test-mcp

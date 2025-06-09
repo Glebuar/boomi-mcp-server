@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  boomi-mcp-server:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: boomi-mcp-server:latest
+    container_name: boomi-mcp-server
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - BOOMI_ACCOUNT=${BOOMI_ACCOUNT}
+      - BOOMI_USER=${BOOMI_USER}
+      - BOOMI_SECRET=${BOOMI_SECRET}
+      - MCP_SERVER_NAME=${MCP_SERVER_NAME:-boomi-mcp-server}
+      - PORT=${PORT:-8080}
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "python -m boomi_mcp_server.server"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge

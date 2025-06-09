@@ -1,0 +1,43 @@
+{
+  "name": "boomi-mcp-server",
+  "description": "MCP server for Boomi API operations",
+  "version": "0.4.0",
+  "mcp_version": "1.0",
+  "vendor": "glebuar",
+  "homepage": "https://github.com/glebuar/boomi-mcp-server",
+  "license": "MIT",
+  "runtime": "python",
+  "docker": {
+    "image": "ghcr.io/glebuar/boomi-mcp-server:latest",
+    "port": 8080,
+    "environment": {
+      "BOOMI_ACCOUNT": "required",
+      "BOOMI_USER": "required", 
+      "BOOMI_SECRET": "required"
+    }
+  },
+  "source": {
+    "command": "python",
+    "args": [
+      "-m",
+      "boomi_mcp_server.server"
+    ],
+    "cwd": "${workspaceFolder}",
+    "env": {
+      "PYTHONPATH": "src"
+    }
+  },
+  "tools": {
+    "count": 100,
+    "categories": [
+      "components",
+      "packages",
+      "deployments",
+      "environments",
+      "atoms",
+      "executions",
+      "schedules",
+      "connectors"
+    ]
+  }
+}
