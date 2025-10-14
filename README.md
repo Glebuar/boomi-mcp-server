@@ -10,6 +10,7 @@ A production-ready Model Context Protocol (MCP) server that enables Claude Code 
 
 ## Features
 
+- ⚡ **Auto-Configuration** - Automatically loads credentials from `.env` on startup - no manual setup required!
 - 🔐 **JWT Authentication** - Industry-standard authentication (HS256 for development, RS256+JWKS for production)
 - 🔒 **Secure Credential Storage** - Per-user encrypted credential management (SQLite for dev, cloud secret managers for production)
 - 🎯 **Scope-based Authorization** - Fine-grained access control using OAuth 2.0 scopes
@@ -106,9 +107,21 @@ claude mcp list
 
 ### Test the Integration
 
-In Claude Code, type `/mcp` to see available tools:
+The server automatically loads credentials from `.env` on startup. You can immediately start using it!
 
-1. **Store credentials:**
+**Simple usage** - just ask in natural language:
+```
+Show me my Boomi account information
+```
+
+**Available MCP tools** (type `/mcp` in Claude Code to see them):
+
+1. **Get account information** (uses .env credentials automatically):
+   ```
+   Run boomi_account_info
+   ```
+
+2. **Store additional credentials** (optional):
    ```
    Run set_boomi_credentials with profile='sandbox',
    username='BOOMI_TOKEN.your@email.com',
@@ -116,14 +129,9 @@ In Claude Code, type `/mcp` to see available tools:
    account_id='your-account-id'
    ```
 
-2. **List profiles:**
+3. **List stored profiles:**
    ```
    Run list_boomi_profiles
-   ```
-
-3. **Get account information:**
-   ```
-   Run boomi_account_info with profile='sandbox'
    ```
 
 ## Architecture

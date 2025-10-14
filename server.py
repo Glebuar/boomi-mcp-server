@@ -157,7 +157,11 @@ def require(scope: str, scopes: list[str]):
 # --- Schemas ---
 class Profile(BaseModel):
     """Profile identifier."""
-    profile: str = Field(..., pattern=r"^[a-zA-Z0-9_-]{1,32}$", description="Profile name")
+    profile: str = Field(
+        default="default",
+        pattern=r"^[a-zA-Z0-9_-]{1,32}$",
+        description="Profile name (defaults to 'default' if not specified)"
+    )
 
 
 class SetCreds(Profile):
@@ -228,24 +232,50 @@ def delete_boomi_profile(p: Profile):
 
 
 @mcp.tool()
-def boomi_account_info(p: Profile):
+def boomi_account_info(p: Profile = Profile()):
     """
     Get Boomi account information (requires 'boomi:read' scope).
 
-    Retrieves account details from Boomi API using stored credentials.
+    Retrieves account details from Boomi API. If no credentials are stored for the
+    specified profile, automatically uses credentials from .env configuration.
+
     This implements the core logic from boomi-python/examples/12_utilities/sample.py:
-    1. Initialize Boomi SDK with stored credentials
+    1. Initialize Boomi SDK with credentials
     2. Call account.get_account() to retrieve account information
     3. Return structured account data
+
+    Args:
+        p: Profile configuration (optional, defaults to 'default')
+
+    Returns:
+        Account information including name, status, licensing details
     """
     subject, scopes = get_user_info()
     require("boomi:read", scopes)
 
-    # Get stored credentials
+    # Try to get stored credentials, fall back to .env if not found
     try:
         creds = get_secret(subject, p.profile)
-    except ValueError as e:
-        return {"error": str(e), "success": False}
+        print(f"[INFO] Using stored credentials for {subject}:{p.profile}")
+    except ValueError:
+        # Fall back to .env credentials
+        boomi_account = os.getenv("BOOMI_ACCOUNT")
+        boomi_user = os.getenv("BOOMI_USER")
+        boomi_secret = os.getenv("BOOMI_SECRET")
+
+        if not (boomi_account and boomi_user and boomi_secret):
+            return {
+                "error": f"Profile '{p.profile}' not found and no .env credentials available. Use set_boomi_credentials first.",
+                "success": False
+            }
+
+        creds = {
+            "username": boomi_user,
+            "password": boomi_secret,
+            "account_id": boomi_account,
+            "base_url": None,
+        }
+        print(f"[INFO] Using .env credentials (no stored profile '{p.profile}' found)")
 
     print(f"[INFO] Calling Boomi API for {subject}:{p.profile} (account: {creds['account_id']})")
 
@@ -303,6 +333,19 @@ if __name__ == "__main__":
     print(f"JWT Issuer:    {JWT_ISSUER}")
     print(f"JWT Audience:  {JWT_AUDIENCE}")
     print(f"Secrets DB:    {DB_PATH}")
+    print("=" * 60)
+
+    # Check if .env credentials are available for auto-configuration
+    boomi_account = os.getenv("BOOMI_ACCOUNT")
+    boomi_user = os.getenv("BOOMI_USER")
+    boomi_secret = os.getenv("BOOMI_SECRET")
+
+    if boomi_account and boomi_user and boomi_secret:
+        print(f"✓ Boomi credentials loaded from .env (account: {boomi_account})")
+        print(f"  Users can call boomi_account_info without storing credentials first")
+    else:
+        print(f"⚠ No Boomi credentials in .env - users must call set_boomi_credentials first")
+
     print("=" * 60)
     print("\nTools available:")
     print("  • set_boomi_credentials  - Store Boomi credentials")

@@ -48,6 +48,7 @@ logs/
 
 # MCP
 mcp-server.log
+.mcp.json
 
 # Secrets
 secrets/
