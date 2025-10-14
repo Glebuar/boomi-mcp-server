@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+credentials.db
+
+# Logs
+*.log
+logs/
+
+# MCP
+mcp-server.log
+
+# Secrets
+secrets/
+*.key
+*.pem
+*.crt
+
+# Internal Documentation (not for public repo)
+QUICKSTART.md
+PRODUCTION.md
+IMPLEMENTATION_SUMMARY.md
+TEST_TRANSCRIPT.md
+OPS_GUIDE.md
+START_HERE.txt
+claude.md
+claude.md:Zone.Identifier
+PUBLIC_RELEASE_CHECKLIST.md
+
+# Test Files (internal use only)
+END_TO_END_TEST.md
+TEST_COMMANDS.md
+TEST_RESULTS.md
+FINAL_TEST_REPORT.md
+run_tests.py
+test_mcp_client.py
+
+# Cloned Repositories (examples/references)
+fastmcp/
+mcp-streamable-http/
+boomi-python/
+
+# Server Runtime
+server.pid
+setup_claude_code.sh
