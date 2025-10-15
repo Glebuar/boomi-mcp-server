@@ -68,4 +68,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 EXPOSE 8000
 
 # Run the MCP server directly (simpler and more reliable)
+# Updated: 2025-10-15 - using server.py with native HTTP transport
 CMD ["python", "server.py"]
