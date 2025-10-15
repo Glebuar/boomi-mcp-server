@@ -81,12 +81,15 @@ The server will start on `http://127.0.0.1:8000/mcp`
 ### Generate JWT Token
 
 ```bash
-# Generate a development token (valid for 30 minutes)
+# Generate a development token (valid for 8 hours by default)
 python3 generate_token.py
 
-# Custom token with 2-hour expiry
-python3 generate_token.py your-email@example.com 120
+# Custom token with different expiry (in minutes)
+python3 generate_token.py your-email@example.com 120  # 2 hours
+python3 generate_token.py your-email@example.com 1440  # 24 hours
 ```
+
+**Note:** The default token expiration is 8 hours for development convenience. For production, use shorter-lived tokens (1 hour) with a refresh token mechanism.
 
 ### Connect Claude Code
 

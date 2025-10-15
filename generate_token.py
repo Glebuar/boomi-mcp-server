@@ -22,14 +22,23 @@ AUDIENCE = os.getenv("MCP_JWT_AUDIENCE", "boomi-mcp")
 # Token claims
 SUBJECT = os.getenv("JWT_SUBJECT", "dev-user@example.com")
 SCOPES = os.getenv("JWT_SCOPES", "secrets:read secrets:write boomi:read")
-EXPIRES_IN_MINUTES = int(os.getenv("JWT_EXPIRES_IN_MINUTES", "30"))
+EXPIRES_IN_MINUTES = int(os.getenv("JWT_EXPIRES_IN_MINUTES", "480"))  # 8 hours for development
 
 def generate_token(
     subject: str = SUBJECT,
     scopes: str = SCOPES,
     expires_in_minutes: int = EXPIRES_IN_MINUTES
 ) -> str:
-    """Generate a JWT token for development."""
+    """Generate a JWT token for development.
+
+    Args:
+        subject: User identifier (email)
+        scopes: Space-separated list of OAuth scopes
+        expires_in_minutes: Token expiration time (default: 480 minutes / 8 hours for dev)
+
+    Returns:
+        JWT token string
+    """
     now = datetime.utcnow()
     exp = now + timedelta(minutes=expires_in_minutes)
 
