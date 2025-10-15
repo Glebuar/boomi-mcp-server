@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Boomi MCP Cloud Server
+  boomi-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: boomi-mcp-server
+    ports:
+      - "8000:8000"
+    environment:
+      # Server Configuration
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8000
+      - MCP_PATH=/mcp
+      - LOG_LEVEL=info
+
+      # JWT Authentication (Development - HS256)
+      - MCP_JWT_ALG=HS256
+      - MCP_JWT_SECRET=${MCP_JWT_SECRET:-change-this-dev-secret}
+      - MCP_JWT_ISSUER=https://local-issuer
+      - MCP_JWT_AUDIENCE=boomi-mcp
+
+      # Secrets Storage (SQLite for local testing)
+      - SECRETS_BACKEND=sqlite
+      - SECRETS_DB=/app/data/secrets.sqlite
+
+      # CORS Configuration
+      - CORS_ORIGINS=*
+
+      # Boomi Credentials (optional - for auto-configuration)
+      - BOOMI_ACCOUNT=${BOOMI_ACCOUNT:-}
+      - BOOMI_USER=${BOOMI_USER:-}
+      - BOOMI_SECRET=${BOOMI_SECRET:-}
+
+    volumes:
+      # Persist database
+      - boomi-mcp-data:/app/data
+      # Mount source code for development (optional)
+      # - ./src:/app/src
+      # - ./server.py:/app/server.py
+      # - ./cloud_server.py:/app/cloud_server.py
+
+    networks:
+      - boomi-mcp-network
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Optional: NGINX reverse proxy for production-like setup
+  nginx:
+    image: nginx:alpine
+    container_name: boomi-mcp-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # Add SSL certificates for HTTPS
+      # - ./certs:/etc/nginx/certs:ro
+    networks:
+      - boomi-mcp-network
+    depends_on:
+      - boomi-mcp
+    restart: unless-stopped
+    profiles:
+      - with-proxy
+
+volumes:
+  boomi-mcp-data:
+    driver: local
+
+networks:
+  boomi-mcp-network:
+    driver: bridge

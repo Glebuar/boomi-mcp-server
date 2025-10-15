@@ -17,6 +17,16 @@ A production-ready Model Context Protocol (MCP) server that enables Claude Code 
 - 🌐 **Streamable HTTP Transport** - Claude Code compatible remote MCP server
 - 📦 **4 Ready-to-Use Tools** - Complete credential lifecycle management and Boomi API integration
 - 🚀 **Production Ready** - Clear upgrade paths for enterprise deployment
+- ☁️ **Cloud Deployment** - Docker, Kubernetes, GCP Cloud Run, AWS ECS, Azure Container Apps support
+
+## Deployment Options
+
+This server supports both local development and cloud production deployments:
+
+- **Local Development**: `server.py` - Quick start for testing and development
+- **Cloud Production**: `cloud_server.py` - FastAPI wrapper with health checks, metrics, and cloud integration
+
+📘 **For cloud deployment, see [Cloud Deployment Guide](README-CLOUD.md)**
 
 ## Quick Start
 
@@ -330,6 +340,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Resources
 
+- **Cloud Deployment Guide:** [README-CLOUD.md](README-CLOUD.md)
 - **FastMCP Documentation:** https://gofastmcp.com
 - **Boomi Python SDK:** https://github.com/Glebuar/boomi-python
 - **MCP Specification:** https://modelcontextprotocol.io
