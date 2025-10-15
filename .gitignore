@@ -67,6 +67,8 @@ claude.md
 claude.md:Zone.Identifier
 PUBLIC_RELEASE_CHECKLIST.md
 README-CLOUD.md
+CLOUD_DEPLOYMENT_TEST_PLAN.md
+QUICK_START_CLOUD.md
 
 # Test Files (internal use only)
 END_TO_END_TEST.md
