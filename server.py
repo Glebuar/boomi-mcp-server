@@ -21,7 +21,6 @@ from pathlib import Path
 from fastmcp import FastMCP
 from fastmcp.server.auth import JWTVerifier, AccessToken
 from fastmcp.server.dependencies import get_access_token
-from pydantic import BaseModel, Field
 
 # --- Add boomi-python to path ---
 boomi_python_path = Path(__file__).parent.parent / "boomi-python"
@@ -154,47 +153,39 @@ def require(scope: str, scopes: list[str]):
         raise PermissionError(f"Missing required scope: {scope}")
 
 
-# --- Schemas ---
-class Profile(BaseModel):
-    """Profile identifier."""
-    profile: str = Field(
-        default="default",
-        pattern=r"^[a-zA-Z0-9_-]{1,32}$",
-        description="Profile name (defaults to 'default' if not specified)"
-    )
-
-
-class SetCreds(Profile):
-    """Credentials for Boomi API."""
-    username: str = Field(..., description="Boomi username (e.g., BOOMI_TOKEN.user@example.com)")
-    password: str = Field(..., description="Boomi password or API token")
-    account_id: str = Field(..., description="Boomi account ID")
-    base_url: Optional[str] = Field(
-        default=None,
-        description="Boomi API base URL (optional - SDK will use default if not provided)"
-    )
-
-
 # --- Tools ---
 @mcp.tool()
-def set_boomi_credentials(p: SetCreds) -> str:
+def set_boomi_credentials(
+    username: str,
+    password: str,
+    account_id: str,
+    profile: str = "default",
+    base_url: Optional[str] = None
+) -> str:
     """
     Store Boomi credentials for a profile (requires 'secrets:write' scope).
 
     Credentials are stored securely per user and never logged or displayed.
     Use different profiles for different environments (e.g., 'sandbox', 'prod').
+
+    Args:
+        username: Boomi username (e.g., BOOMI_TOKEN.user@example.com)
+        password: Boomi password or API token
+        account_id: Boomi account ID
+        profile: Profile name (defaults to 'default')
+        base_url: Boomi API base URL (optional - SDK will use default if not provided)
     """
     subject, scopes = get_user_info()
     require("secrets:write", scopes)
 
-    put_secret(subject, p.profile, {
-        "username": p.username,
-        "password": p.password,
-        "account_id": p.account_id,
-        "base_url": p.base_url,
+    put_secret(subject, profile, {
+        "username": username,
+        "password": password,
+        "account_id": account_id,
+        "base_url": base_url,
     })
 
-    return f"✓ Stored credentials for profile '{p.profile}'"
+    return f"✓ Stored credentials for profile '{profile}'"
 
 
 @mcp.tool()
@@ -215,24 +206,27 @@ def list_boomi_profiles():
 
 
 @mcp.tool()
-def delete_boomi_profile(p: Profile):
+def delete_boomi_profile(profile: str):
     """
     Delete a Boomi profile (requires 'secrets:write' scope).
 
     This permanently removes stored credentials for the profile.
+
+    Args:
+        profile: Profile name to delete
     """
     subject, scopes = get_user_info()
     require("secrets:write", scopes)
 
     try:
-        delete_profile(subject, p.profile)
-        return f"✓ Deleted profile '{p.profile}'"
+        delete_profile(subject, profile)
+        return f"✓ Deleted profile '{profile}'"
     except ValueError as e:
         return f"✗ {str(e)}"
 
 
 @mcp.tool()
-def boomi_account_info(p: Profile = Profile()):
+def boomi_account_info(profile: str = "default"):
     """
     Get Boomi account information (requires 'boomi:read' scope).
 
@@ -245,7 +239,7 @@ def boomi_account_info(p: Profile = Profile()):
     3. Return structured account data
 
     Args:
-        p: Profile configuration (optional, defaults to 'default')
+        profile: Profile name (optional, defaults to 'default')
 
     Returns:
         Account information including name, status, licensing details
@@ -255,8 +249,8 @@ def boomi_account_info(p: Profile = Profile()):
 
     # Try to get stored credentials, fall back to .env if not found
     try:
-        creds = get_secret(subject, p.profile)
-        print(f"[INFO] Using stored credentials for {subject}:{p.profile}")
+        creds = get_secret(subject, profile)
+        print(f"[INFO] Using stored credentials for {subject}:{profile}")
     except ValueError:
         # Fall back to .env credentials
         boomi_account = os.getenv("BOOMI_ACCOUNT")
@@ -265,7 +259,7 @@ def boomi_account_info(p: Profile = Profile()):
 
         if not (boomi_account and boomi_user and boomi_secret):
             return {
-                "error": f"Profile '{p.profile}' not found and no .env credentials available. Use set_boomi_credentials first.",
+                "error": f"Profile '{profile}' not found and no .env credentials available. Use set_boomi_credentials first.",
                 "success": False
             }
 
@@ -275,9 +269,9 @@ def boomi_account_info(p: Profile = Profile()):
             "account_id": boomi_account,
             "base_url": None,
         }
-        print(f"[INFO] Using .env credentials (no stored profile '{p.profile}' found)")
+        print(f"[INFO] Using .env credentials (no stored profile '{profile}' found)")
 
-    print(f"[INFO] Calling Boomi API for {subject}:{p.profile} (account: {creds['account_id']})")
+    print(f"[INFO] Calling Boomi API for {subject}:{profile} (account: {creds['account_id']})")
 
     # Initialize Boomi SDK (matches sample.py - no base_url unless explicitly provided)
     try:
