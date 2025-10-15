@@ -67,5 +67,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE 8000
 
-# Run the cloud server
-CMD ["python", "cloud_server.py"]
+# Run the MCP server directly (simpler and more reliable)
+CMD ["python", "server.py"]
