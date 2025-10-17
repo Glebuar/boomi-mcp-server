@@ -19,7 +19,6 @@ from typing import Optional, Dict
 from pathlib import Path
 
 from fastmcp import FastMCP
-from fastmcp.server.auth import JWTVerifier, AccessToken
 from fastmcp.server.dependencies import get_access_token
 
 # --- Add boomi-python to path ---
@@ -94,38 +93,62 @@ def delete_profile(sub: str, profile: str):
             raise ValueError(f"Profile '{profile}' not found.")
 
 
-# --- Auth: JWT (HS256) for dev; use JWKS/RS256 in prod ---
-JWT_ALG = os.getenv("MCP_JWT_ALG", "HS256")
-JWT_ISSUER = os.getenv("MCP_JWT_ISSUER", "https://local-issuer")
-JWT_AUDIENCE = os.getenv("MCP_JWT_AUDIENCE", "boomi-mcp")
-JWT_HS_SECRET = os.getenv("MCP_JWT_SECRET", "change-this-dev-secret")  # dev only
-JWT_JWKS_URI = os.getenv("MCP_JWT_JWKS_URI")  # RS256 production
+# --- Auth: OAuth 2.0 / OIDC ---
+# Check if OAuth is enabled
+OAUTH_ENABLED = os.getenv("OAUTH_ENABLED", "true").lower() in ("true", "1", "yes")
 
-# Configure JWT verifier based on algorithm
-if JWT_ALG.startswith("HS"):
-    # Symmetric algorithm (HS256/384/512) - use shared secret as public_key
-    if JWT_HS_SECRET == "change-this-dev-secret":
-        print("[WARN] Using default JWT secret! Generate one with:")
-        print("       python3 -c 'import secrets; print(secrets.token_urlsafe(32))'")
-    auth = JWTVerifier(
-        public_key=JWT_HS_SECRET,  # For HS* algorithms, public_key is the shared secret
-        algorithm=JWT_ALG,
-        issuer=JWT_ISSUER,
-        audience=JWT_AUDIENCE,
-    )
-else:
-    # Asymmetric algorithm (RS256/384/512, ES256, etc.) - use JWKS
-    if not JWT_JWKS_URI:
-        print(f"[ERROR] MCP_JWT_JWKS_URI must be set for {JWT_ALG}")
-        sys.exit(1)
-    auth = JWTVerifier(
-        jwks_uri=JWT_JWKS_URI,
-        algorithm=JWT_ALG,
-        issuer=JWT_ISSUER,
-        audience=JWT_AUDIENCE,
-    )
+if OAUTH_ENABLED:
+    try:
+        from src.boomi_mcp.oauth_provider import BoomiOAuthProvider
 
-print(f"[INFO] JWT auth configured: {JWT_ALG} (issuer: {JWT_ISSUER}, audience: {JWT_AUDIENCE})")
+        # Create OAuth provider from environment
+        auth = BoomiOAuthProvider.from_env()
+
+        provider_type = os.getenv("OIDC_PROVIDER", "unknown")
+        print(f"[INFO] OAuth 2.0 auth configured with provider: {provider_type}")
+        print(f"[INFO] Base URL: {os.getenv('OIDC_BASE_URL', 'http://localhost:8000')}")
+        print(f"[INFO] OAuth endpoints:")
+        print(f"       - Authorization: Navigate to /auth/login in browser")
+        print(f"       - Callback: /auth/callback")
+        print(f"       - Token: /token")
+        print(f"[INFO] Required scopes: secrets:read, secrets:write, boomi:read")
+    except Exception as e:
+        print(f"[ERROR] Failed to configure OAuth: {e}")
+        print("[INFO] Falling back to JWT authentication...")
+        OAUTH_ENABLED = False
+
+if not OAUTH_ENABLED:
+    # Fallback to JWT for development/testing
+    from fastmcp.server.auth import JWTVerifier
+
+    JWT_ALG = os.getenv("MCP_JWT_ALG", "HS256")
+    JWT_ISSUER = os.getenv("MCP_JWT_ISSUER", "https://local-issuer")
+    JWT_AUDIENCE = os.getenv("MCP_JWT_AUDIENCE", "boomi-mcp")
+    JWT_HS_SECRET = os.getenv("MCP_JWT_SECRET", "change-this-dev-secret")
+    JWT_JWKS_URI = os.getenv("MCP_JWT_JWKS_URI")
+
+    if JWT_ALG.startswith("HS"):
+        if JWT_HS_SECRET == "change-this-dev-secret":
+            print("[WARN] Using default JWT secret! Generate one with:")
+            print("       python3 -c 'import secrets; print(secrets.token_urlsafe(32))'")
+        auth = JWTVerifier(
+            public_key=JWT_HS_SECRET,
+            algorithm=JWT_ALG,
+            issuer=JWT_ISSUER,
+            audience=JWT_AUDIENCE,
+        )
+    else:
+        if not JWT_JWKS_URI:
+            print(f"[ERROR] MCP_JWT_JWKS_URI must be set for {JWT_ALG}")
+            sys.exit(1)
+        auth = JWTVerifier(
+            jwks_uri=JWT_JWKS_URI,
+            algorithm=JWT_ALG,
+            issuer=JWT_ISSUER,
+            audience=JWT_AUDIENCE,
+        )
+
+    print(f"[INFO] JWT auth configured (fallback): {JWT_ALG} (issuer: {JWT_ISSUER})")
 
 # Create FastMCP server with auth
 mcp = FastMCP(name="boomi-mcp", auth=auth)
@@ -323,9 +346,18 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("🚀 Boomi MCP Server")
     print("=" * 60)
-    print(f"JWT Algorithm: {JWT_ALG}")
-    print(f"JWT Issuer:    {JWT_ISSUER}")
-    print(f"JWT Audience:  {JWT_AUDIENCE}")
+
+    if OAUTH_ENABLED:
+        provider_type = os.getenv("OIDC_PROVIDER", "unknown")
+        base_url = os.getenv("OIDC_BASE_URL", "http://localhost:8000")
+        print(f"Auth Mode:     OAuth 2.0 ({provider_type})")
+        print(f"Base URL:      {base_url}")
+        print(f"Login URL:     {base_url}/auth/login")
+    else:
+        print(f"Auth Mode:     JWT ({JWT_ALG})")
+        print(f"JWT Issuer:    {JWT_ISSUER}")
+        print(f"JWT Audience:  {JWT_AUDIENCE}")
+
     print(f"Secrets DB:    {DB_PATH}")
     print("=" * 60)
 

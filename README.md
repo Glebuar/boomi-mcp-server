@@ -11,12 +11,13 @@ A production-ready Model Context Protocol (MCP) server that enables Claude Code 
 ## Features
 
 - ⚡ **Auto-Configuration** - Automatically loads credentials from `.env` on startup - no manual setup required!
-- 🔐 **JWT Authentication** - Industry-standard authentication (HS256 for development, RS256+JWKS for production)
+- 🔐 **OAuth 2.0 Authentication** - Industry-standard OAuth flow with Google, Auth0, Azure AD, AWS Cognito, Okta, GitHub
+- 🔄 **Automatic Token Refresh** - Seamless session extension without re-authentication
 - 🔒 **Secure Credential Storage** - Per-user encrypted credential management (SQLite for dev, cloud secret managers for production)
-- 🎯 **Scope-based Authorization** - Fine-grained access control using OAuth 2.0 scopes
+- 🎯 **Scope-based Authorization** - Fine-grained access control (secrets:read, secrets:write, boomi:read)
 - 🌐 **Streamable HTTP Transport** - Claude Code compatible remote MCP server
 - 📦 **4 Ready-to-Use Tools** - Complete credential lifecycle management and Boomi API integration
-- 🚀 **Production Ready** - Clear upgrade paths for enterprise deployment
+- 🚀 **Production Ready** - Enterprise-grade security and deployment patterns
 - ☁️ **Cloud Deployment** - Docker, Kubernetes, GCP Cloud Run, AWS ECS, Azure Container Apps support
 
 ## Deployment Options
@@ -35,7 +36,8 @@ This server supports both local development and cloud production deployments:
 - Python 3.11 or higher
 - Claude Code CLI
 - Boomi account with API access
-- Basic understanding of JWT tokens
+- OAuth 2.0 application registered with an Identity Provider (Google, Auth0, etc.)
+  - OR: Use JWT mode for local development/testing (not recommended for production)
 
 ### Installation
 
@@ -61,10 +63,34 @@ cp .env.example .env
 
 ### Configuration
 
-Create a `.env` file with your settings:
+Create a `.env` file with your settings. See `.env.example` for all options.
+
+**Option 1: OAuth 2.0 (Recommended)**
 
 ```bash
-# JWT Configuration (Development - HS256)
+# Enable OAuth
+OAUTH_ENABLED=true
+OIDC_PROVIDER=google  # or auth0, azure, cognito, okta, github, generic
+OIDC_CLIENT_ID=your-client-id-here
+OIDC_CLIENT_SECRET=your-client-secret-here
+OIDC_BASE_URL=http://localhost:8000
+
+# Server Configuration
+MCP_HOST=127.0.0.1
+MCP_PORT=8000
+MCP_PATH=/mcp
+
+# Storage Configuration
+SECRETS_DB=secrets.sqlite
+```
+
+**Option 2: JWT (Development/Testing Only)**
+
+```bash
+# Disable OAuth (fallback to JWT)
+OAUTH_ENABLED=false
+
+# JWT Configuration
 MCP_JWT_ALG=HS256
 MCP_JWT_SECRET=your-secret-key-here
 MCP_JWT_ISSUER=https://local-issuer
@@ -150,17 +176,34 @@ Show me my Boomi account information
 ## Architecture
 
 ```
-┌──────────────┐  JWT Auth  ┌──────────────┐  Encrypted  ┌──────────┐
-│  Claude Code │ ─────────> │  MCP Server  │ ──────────> │  SQLite  │
-│              │   Bearer    │   (FastMCP)  │   Storage   │ secrets  │
-└──────────────┘             └──────────────┘             └──────────┘
-                                    │
-                                    │ API Calls
-                                    ▼
-                             ┌──────────────┐
-                             │  Boomi API   │
-                             └──────────────┘
+                           OAuth 2.0 Flow
+┌──────────────┐                                   ┌──────────────┐
+│              │  1. Navigate to /auth/login       │   Identity   │
+│    User      │ ─────────────────────────────────>│   Provider   │
+│  (Browser)   │                                   │ (Google,etc) │
+│              │<─────────────────────────────────│              │
+└──────────────┘  2. Authenticate & Consent        └──────────────┘
+       │
+       │ 3. OAuth Token (with refresh)
+       ▼
+┌──────────────┐  Bearer Token  ┌──────────────┐  Encrypted  ┌──────────┐
+│  Claude Code │ ──────────────>│  MCP Server  │ ──────────> │  SQLite  │
+│              │   (Auto-refresh)│   (FastMCP)  │   Storage   │ secrets  │
+└──────────────┘                 └──────────────┘             └──────────┘
+                                        │
+                                        │ API Calls
+                                        ▼
+                                 ┌──────────────┐
+                                 │  Boomi API   │
+                                 └──────────────┘
 ```
+
+**Key Components:**
+
+1. **OAuth Provider** - Handles authentication flow, token validation, and automatic refresh
+2. **MCP Server** - FastMCP-based server with tools for Boomi API integration
+3. **Credential Store** - Secure per-user credential storage (SQLite local, cloud secret managers for production)
+4. **Boomi SDK** - Python SDK for interacting with Boomi Platform APIs
 
 ## Available Tools
 
@@ -173,28 +216,111 @@ Show me my Boomi account information
 
 ## Security
 
-### Development Environment
+### Authentication Methods
 
-The default configuration uses:
-- HS256 JWT with shared secret
-- SQLite credential storage
-- HTTP localhost-only access
-- 30-minute token expiry
+The Boomi MCP Server supports two authentication methods:
 
-**⚠️ Not suitable for production use!**
+1. **OAuth 2.0 / OIDC (Recommended)** - Standard OAuth 2.0 flow with support for major Identity Providers
+2. **JWT Tokens (Fallback)** - Development/testing only, not recommended for production
 
-### Production Deployment
+### OAuth 2.0 Authentication (Production)
 
-For production environments, upgrade to:
+**OAuth 2.0 is the recommended authentication method** for production deployments. It provides:
 
-1. **RS256 JWT with JWKS:**
+- ✅ Industry-standard authentication
+- ✅ Automatic token refresh for long-lived sessions
+- ✅ Support for MFA and enterprise policies
+- ✅ Secure consent flow prevents confused deputy attacks
+- ✅ No manual token generation needed
+
+**Supported Identity Providers:**
+- Google OAuth
+- Auth0
+- Azure AD (Microsoft Entra ID)
+- AWS Cognito
+- Okta
+- GitHub
+- Generic OAuth 2.0 / OIDC providers
+
+**Setup Steps:**
+
+1. **Register OAuth Application** with your Identity Provider:
+
+   For Google (example):
+   - Go to https://console.cloud.google.com/apis/credentials
+   - Create OAuth 2.0 Client ID (Web application)
+   - Add authorized redirect URI: `http://localhost:8000/auth/callback` (local) or `https://your-domain.com/auth/callback` (production)
+   - Copy Client ID and Secret
+
+2. **Configure Environment:**
    ```bash
-   export MCP_JWT_ALG=RS256
-   export MCP_JWT_JWKS_URI=https://your-idp.com/.well-known/jwks.json
-   export MCP_JWT_ISSUER=https://your-idp.com/
+   # Enable OAuth
+   OAUTH_ENABLED=true
+   OIDC_PROVIDER=google
+   OIDC_CLIENT_ID=your-client-id-here
+   OIDC_CLIENT_SECRET=your-client-secret-here
+   OIDC_BASE_URL=http://localhost:8000  # or your production URL
    ```
 
-2. **Cloud Secret Manager:**
+3. **Start Server and Login:**
+   ```bash
+   python3 server.py
+   ```
+
+   The server will display OAuth endpoints. Open in browser:
+   ```
+   http://localhost:8000/auth/login
+   ```
+
+   You'll be redirected to your Identity Provider to authenticate. After successful login, you'll be redirected back to the server.
+
+4. **Connect Claude Code:**
+
+   The OAuth token will be provided after login. Use it to connect Claude Code:
+   ```bash
+   export MCP_OAUTH_TOKEN='<token-from-browser>'
+
+   claude mcp add-json boomi '{
+     "type": "http",
+     "url": "http://localhost:8000/mcp",
+     "headers": { "Authorization": "Bearer ${MCP_OAUTH_TOKEN}" }
+   }'
+   ```
+
+**Token Refresh:**
+
+OAuth tokens are automatically refreshed by the server when they expire. You don't need to manually refresh or re-authenticate unless:
+- The server restarts (in-memory token store)
+- The refresh token expires (typically 90 days or more)
+- You revoke access in your Identity Provider
+
+### JWT Authentication (Development/Testing Only)
+
+For local development and testing, you can use JWT authentication:
+
+```bash
+# Disable OAuth (fallback to JWT)
+OAUTH_ENABLED=false
+
+# Configure JWT
+MCP_JWT_ALG=HS256
+MCP_JWT_SECRET=your-secret-key-here
+MCP_JWT_ISSUER=https://local-issuer
+MCP_JWT_AUDIENCE=boomi-mcp
+```
+
+Generate a token:
+```bash
+python3 generate_token.py your-email@example.com 480  # 8 hours
+```
+
+**⚠️ JWT mode is NOT suitable for production use!** Use OAuth 2.0 for production deployments.
+
+### Cloud Deployment Security
+
+For production environments, also configure:
+
+1. **Cloud Secret Manager:**
    - AWS Secrets Manager
    - GCP Secret Manager
    - Azure Key Vault
