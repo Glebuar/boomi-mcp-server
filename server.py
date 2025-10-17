@@ -93,62 +93,29 @@ def delete_profile(sub: str, profile: str):
             raise ValueError(f"Profile '{profile}' not found.")
 
 
-# --- Auth: OAuth 2.0 / OIDC ---
-# Check if OAuth is enabled
-OAUTH_ENABLED = os.getenv("OAUTH_ENABLED", "true").lower() in ("true", "1", "yes")
+# --- Auth: OAuth 2.0 / OIDC (Required) ---
+from src.boomi_mcp.oauth_provider import BoomiOAuthProvider
 
-if OAUTH_ENABLED:
-    try:
-        from src.boomi_mcp.oauth_provider import BoomiOAuthProvider
+# Create OAuth provider from environment
+try:
+    auth = BoomiOAuthProvider.from_env()
 
-        # Create OAuth provider from environment
-        auth = BoomiOAuthProvider.from_env()
-
-        provider_type = os.getenv("OIDC_PROVIDER", "unknown")
-        print(f"[INFO] OAuth 2.0 auth configured with provider: {provider_type}")
-        print(f"[INFO] Base URL: {os.getenv('OIDC_BASE_URL', 'http://localhost:8000')}")
-        print(f"[INFO] OAuth endpoints:")
-        print(f"       - Authorization: Navigate to /auth/login in browser")
-        print(f"       - Callback: /auth/callback")
-        print(f"       - Token: /token")
-        print(f"[INFO] Required scopes: secrets:read, secrets:write, boomi:read")
-    except Exception as e:
-        print(f"[ERROR] Failed to configure OAuth: {e}")
-        print("[INFO] Falling back to JWT authentication...")
-        OAUTH_ENABLED = False
-
-if not OAUTH_ENABLED:
-    # Fallback to JWT for development/testing
-    from fastmcp.server.auth import JWTVerifier
-
-    JWT_ALG = os.getenv("MCP_JWT_ALG", "HS256")
-    JWT_ISSUER = os.getenv("MCP_JWT_ISSUER", "https://local-issuer")
-    JWT_AUDIENCE = os.getenv("MCP_JWT_AUDIENCE", "boomi-mcp")
-    JWT_HS_SECRET = os.getenv("MCP_JWT_SECRET", "change-this-dev-secret")
-    JWT_JWKS_URI = os.getenv("MCP_JWT_JWKS_URI")
-
-    if JWT_ALG.startswith("HS"):
-        if JWT_HS_SECRET == "change-this-dev-secret":
-            print("[WARN] Using default JWT secret! Generate one with:")
-            print("       python3 -c 'import secrets; print(secrets.token_urlsafe(32))'")
-        auth = JWTVerifier(
-            public_key=JWT_HS_SECRET,
-            algorithm=JWT_ALG,
-            issuer=JWT_ISSUER,
-            audience=JWT_AUDIENCE,
-        )
-    else:
-        if not JWT_JWKS_URI:
-            print(f"[ERROR] MCP_JWT_JWKS_URI must be set for {JWT_ALG}")
-            sys.exit(1)
-        auth = JWTVerifier(
-            jwks_uri=JWT_JWKS_URI,
-            algorithm=JWT_ALG,
-            issuer=JWT_ISSUER,
-            audience=JWT_AUDIENCE,
-        )
-
-    print(f"[INFO] JWT auth configured (fallback): {JWT_ALG} (issuer: {JWT_ISSUER})")
+    provider_type = os.getenv("OIDC_PROVIDER", "unknown")
+    print(f"[INFO] OAuth 2.0 auth configured with provider: {provider_type}")
+    print(f"[INFO] Base URL: {os.getenv('OIDC_BASE_URL', 'http://localhost:8000')}")
+    print(f"[INFO] OAuth endpoints:")
+    print(f"       - Authorization: Navigate to /auth/login in browser")
+    print(f"       - Callback: /auth/callback")
+    print(f"       - Token: /token")
+    print(f"[INFO] Required scopes: secrets:read, secrets:write, boomi:read")
+except Exception as e:
+    print(f"[ERROR] Failed to configure OAuth: {e}")
+    print(f"[ERROR] Please ensure these environment variables are set:")
+    print(f"       - OIDC_PROVIDER (google, auth0, azure, cognito, okta, github, generic)")
+    print(f"       - OIDC_CLIENT_ID")
+    print(f"       - OIDC_CLIENT_SECRET")
+    print(f"       - OIDC_BASE_URL")
+    sys.exit(1)
 
 # Create FastMCP server with auth
 mcp = FastMCP(name="boomi-mcp", auth=auth)
@@ -347,17 +314,11 @@ if __name__ == "__main__":
     print("🚀 Boomi MCP Server")
     print("=" * 60)
 
-    if OAUTH_ENABLED:
-        provider_type = os.getenv("OIDC_PROVIDER", "unknown")
-        base_url = os.getenv("OIDC_BASE_URL", "http://localhost:8000")
-        print(f"Auth Mode:     OAuth 2.0 ({provider_type})")
-        print(f"Base URL:      {base_url}")
-        print(f"Login URL:     {base_url}/auth/login")
-    else:
-        print(f"Auth Mode:     JWT ({JWT_ALG})")
-        print(f"JWT Issuer:    {JWT_ISSUER}")
-        print(f"JWT Audience:  {JWT_AUDIENCE}")
-
+    provider_type = os.getenv("OIDC_PROVIDER", "unknown")
+    base_url = os.getenv("OIDC_BASE_URL", "http://localhost:8000")
+    print(f"Auth Mode:     OAuth 2.0 ({provider_type})")
+    print(f"Base URL:      {base_url}")
+    print(f"Login URL:     {base_url}/auth/login")
     print(f"Secrets DB:    {DB_PATH}")
     print("=" * 60)
 
