@@ -316,8 +316,8 @@ async def web_ui(request: Request):
     # Get authenticated user
     subject = get_authenticated_user(request)
     if not subject:
-        # Redirect to OAuth login
-        return RedirectResponse(url="/auth/login", status_code=302)
+        # Redirect to OAuth authorization
+        return RedirectResponse(url="/authorize", status_code=302)
 
     # Read and render template
     template_path = Path(__file__).parent / "templates" / "credentials.html"
