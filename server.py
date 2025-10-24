@@ -295,7 +295,7 @@ from starlette.requests import Request
 
 def get_authenticated_user(request: Request) -> Optional[str]:
     """Extract authenticated user from request (works with OAuth middleware)."""
-    # Try request.state (FastMCP/Starlette pattern)
+    # Try request.state (FastMCP/Starlette OAuth pattern)
     if hasattr(request.state, "user"):
         user = request.state.user
         if isinstance(user, dict):
@@ -306,11 +306,7 @@ def get_authenticated_user(request: Request) -> Optional[str]:
             return user.email
         return str(user)
 
-    # Try session-based auth
-    session = request.session if hasattr(request, "session") else {}
-    if session.get("user_id"):
-        return session.get("user_id")
-
+    # No authenticated user found
     return None
 
 
