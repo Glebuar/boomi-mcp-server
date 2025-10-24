@@ -316,8 +316,19 @@ async def web_ui(request: Request):
     # Get authenticated user
     subject = get_authenticated_user(request)
     if not subject:
-        # Redirect to OAuth authorization
-        return RedirectResponse(url="/authorize", status_code=302)
+        # Show login page
+        template_path = Path(__file__).parent / "templates" / "login.html"
+        html = template_path.read_text()
+
+        # Get OAuth configuration
+        client_id = os.getenv("OIDC_CLIENT_ID", "")
+        base_url = os.getenv("OIDC_BASE_URL", request.url.scheme + "://" + request.url.netloc)
+        redirect_uri = f"{base_url}/auth/callback"
+
+        html = html.replace("{{ client_id }}", client_id)
+        html = html.replace("{{ redirect_uri }}", redirect_uri)
+
+        return HTMLResponse(html)
 
     # Read and render template
     template_path = Path(__file__).parent / "templates" / "credentials.html"
