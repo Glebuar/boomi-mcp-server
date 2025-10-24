@@ -277,8 +277,9 @@ def generate_pkce_pair():
 def get_authenticated_user(request: Request) -> Optional[str]:
     """Extract authenticated user from request (works with OAuth middleware and sessions)."""
     # Try session first (web portal authentication)
-    if hasattr(request, "session") and request.session.get("user_email"):
-        return request.session.get("user_email")
+    # Use 'sub' (Google user ID) for consistency with MCP OAuth
+    if hasattr(request, "session") and request.session.get("user_sub"):
+        return request.session.get("user_sub")
 
     # Try request.state (FastMCP/Starlette OAuth pattern for MCP clients)
     if hasattr(request.state, "user"):
