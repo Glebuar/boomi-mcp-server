@@ -288,6 +288,106 @@ def boomi_account_info(profile: str = "default"):
         }
 
 
+# --- Web UI Routes ---
+from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
+from starlette.requests import Request
+
+
+def get_authenticated_user(request: Request) -> Optional[str]:
+    """Extract authenticated user from request (works with OAuth middleware)."""
+    # Try request.state (FastMCP/Starlette pattern)
+    if hasattr(request.state, "user"):
+        user = request.state.user
+        if isinstance(user, dict):
+            return user.get("sub") or user.get("email")
+        if hasattr(user, "sub"):
+            return user.sub
+        if hasattr(user, "email"):
+            return user.email
+        return str(user)
+
+    # Try session-based auth
+    session = request.session if hasattr(request, "session") else {}
+    if session.get("user_id"):
+        return session.get("user_id")
+
+    return None
+
+
+@mcp.custom_route("/", methods=["GET"])
+async def web_ui(request: Request):
+    """Serve the credential management web UI (requires authentication)."""
+    # Get authenticated user
+    subject = get_authenticated_user(request)
+    if not subject:
+        # Redirect to OAuth login
+        return RedirectResponse(url="/auth/login", status_code=302)
+
+    # Read and render template
+    template_path = Path(__file__).parent / "templates" / "credentials.html"
+    html = template_path.read_text()
+    html = html.replace("{{ user_email }}", subject)
+
+    return HTMLResponse(html)
+
+
+@mcp.custom_route("/api/credentials", methods=["POST"])
+async def api_set_credentials(request: Request):
+    """API endpoint to save credentials."""
+    subject = get_authenticated_user(request)
+    if not subject:
+        return JSONResponse({"error": "Authentication required"}, status_code=401)
+
+    try:
+        data = await request.json()
+
+        put_secret(subject, data["profile"], {
+            "username": data["username"],
+            "password": data["password"],
+            "account_id": data["account_id"],
+            "base_url": data.get("base_url"),
+        })
+
+        return JSONResponse({
+            "success": True,
+            "message": f"Credentials saved for profile '{data['profile']}'"
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+@mcp.custom_route("/api/profiles", methods=["GET"])
+async def api_list_profiles(request: Request):
+    """API endpoint to list profiles."""
+    subject = get_authenticated_user(request)
+    if not subject:
+        return JSONResponse({"error": "Authentication required"}, status_code=401)
+
+    profiles_data = list_profiles(subject)
+    profile_names = [p["profile"] for p in profiles_data]
+
+    return JSONResponse({"profiles": profile_names})
+
+
+@mcp.custom_route("/api/profiles/{profile}", methods=["DELETE"])
+async def api_delete_profile(request: Request):
+    """API endpoint to delete a profile."""
+    subject = get_authenticated_user(request)
+    if not subject:
+        return JSONResponse({"error": "Authentication required"}, status_code=401)
+
+    profile = request.path_params["profile"]
+
+    try:
+        delete_profile(subject, profile)
+        return JSONResponse({
+            "success": True,
+            "message": f"Profile '{profile}' deleted"
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
 if __name__ == "__main__":
     # Print startup info
     print("\n" + "=" * 60)
@@ -317,12 +417,14 @@ if __name__ == "__main__":
         print(f"⚠ No Boomi credentials in .env - users must call set_boomi_credentials first")
 
     print("=" * 60)
-    print("\nTools available:")
+    print("\n🌐 Web Interface:")
+    print(f"  Credential Management: {base_url}/")
+    print("\n🔧 MCP Tools available:")
     print("  • set_boomi_credentials  - Store Boomi credentials")
     print("  • list_boomi_profiles    - List your profiles")
     print("  • delete_boomi_profile   - Delete a profile")
     print("  • boomi_account_info     - Get account information from Boomi API")
-    print("\nRequired scopes:")
+    print("\n🔑 Required scopes:")
     print("  • secrets:read   - List profiles")
     print("  • secrets:write  - Store/delete credentials")
     print("  • boomi:read     - Call Boomi API")
@@ -337,6 +439,10 @@ if __name__ == "__main__":
     print(f"Starting server on http://{host}:{port}")
     print(f"MCP endpoint: /mcp")
     print(f"OAuth endpoints: /authorize, /auth/callback, /token")
-    print("Press Ctrl+C to stop\n")
+    print(f"\n💡 To set up credentials:")
+    print(f"   1. Open {base_url}/ in your browser")
+    print(f"   2. Login with Google")
+    print(f"   3. Enter your Boomi credentials in the web form")
+    print("\nPress Ctrl+C to stop\n")
 
     mcp.run(transport="http", host=host, port=port)
