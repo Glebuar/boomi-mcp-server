@@ -11,6 +11,9 @@ Based on claude.md reference with security enhancements:
 
 import os
 import sys
+import secrets
+import hashlib
+import base64
 from typing import Optional, Dict
 from pathlib import Path
 
@@ -291,11 +294,27 @@ def boomi_account_info(profile: str = "default"):
 # --- Web UI Routes ---
 from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.requests import Request
+from starlette.middleware.sessions import SessionMiddleware
+import urllib.parse
+import httpx
+
+
+def generate_pkce_pair():
+    """Generate PKCE code_verifier and code_challenge."""
+    code_verifier = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode('utf-8').rstrip('=')
+    code_challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(code_verifier.encode('utf-8')).digest()
+    ).decode('utf-8').rstrip('=')
+    return code_verifier, code_challenge
 
 
 def get_authenticated_user(request: Request) -> Optional[str]:
-    """Extract authenticated user from request (works with OAuth middleware)."""
-    # Try request.state (FastMCP/Starlette OAuth pattern)
+    """Extract authenticated user from request (works with OAuth middleware and sessions)."""
+    # Try session first (web portal authentication)
+    if hasattr(request, "session") and request.session.get("user_email"):
+        return request.session.get("user_email")
+
+    # Try request.state (FastMCP/Starlette OAuth pattern for MCP clients)
     if hasattr(request.state, "user"):
         user = request.state.user
         if isinstance(user, dict):
@@ -310,24 +329,122 @@ def get_authenticated_user(request: Request) -> Optional[str]:
     return None
 
 
+@mcp.custom_route("/web/login", methods=["GET"])
+async def web_login(request: Request):
+    """Initiate OAuth login with PKCE for web portal."""
+    # Get Google OAuth configuration
+    client_id = os.getenv("OIDC_CLIENT_ID")
+    base_url = os.getenv("OIDC_BASE_URL", str(request.base_url).rstrip('/'))
+
+    if not client_id:
+        return JSONResponse({"error": "OAuth not configured"}, status_code=500)
+
+    # Generate PKCE parameters
+    code_verifier, code_challenge = generate_pkce_pair()
+    state = secrets.token_urlsafe(32)
+
+    # Store code_verifier and state in session
+    request.session["oauth_state"] = state
+    request.session["code_verifier"] = code_verifier
+
+    # Build Google OAuth authorization URL with PKCE
+    redirect_uri = f"{base_url}/web/callback"
+    auth_params = {
+        "client_id": client_id,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "redirect_uri": redirect_uri,
+        "state": state,
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256",
+    }
+
+    auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(auth_params)
+
+    print(f"[INFO] Initiating OAuth login for web portal")
+    print(f"[INFO] Redirect URI: {redirect_uri}")
+
+    return RedirectResponse(auth_url)
+
+
+@mcp.custom_route("/web/callback", methods=["GET"])
+async def web_callback(request: Request):
+    """Handle OAuth callback for web portal."""
+    # Get parameters from callback
+    code = request.query_params.get("code")
+    state = request.query_params.get("state")
+    error = request.query_params.get("error")
+
+    if error:
+        return HTMLResponse(f"<html><body><h1>OAuth Error</h1><p>{error}</p></body></html>", status_code=400)
+
+    if not code or not state:
+        return HTMLResponse("<html><body><h1>OAuth Error</h1><p>Missing code or state</p></body></html>", status_code=400)
+
+    # Verify state
+    stored_state = request.session.get("oauth_state")
+    if not stored_state or state != stored_state:
+        return HTMLResponse("<html><body><h1>OAuth Error</h1><p>Invalid state</p></body></html>", status_code=400)
+
+    # Get stored code_verifier
+    code_verifier = request.session.get("code_verifier")
+    if not code_verifier:
+        return HTMLResponse("<html><body><h1>OAuth Error</h1><p>Missing code_verifier</p></body></html>", status_code=400)
+
+    # Exchange code for tokens
+    client_id = os.getenv("OIDC_CLIENT_ID")
+    client_secret = os.getenv("OIDC_CLIENT_SECRET")
+    base_url = os.getenv("OIDC_BASE_URL", str(request.base_url).rstrip('/'))
+    redirect_uri = f"{base_url}/web/callback"
+
+    token_url = "https://oauth2.googleapis.com/token"
+    token_data = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "code": code,
+        "code_verifier": code_verifier,
+        "grant_type": "authorization_code",
+        "redirect_uri": redirect_uri,
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(token_url, data=token_data)
+            response.raise_for_status()
+            tokens = response.json()
+
+        # Decode ID token to get user info (we don't verify signature here since we got it directly from Google)
+        import jwt
+        id_token = tokens.get("id_token")
+        user_info = jwt.decode(id_token, options={"verify_signature": False})
+
+        # Store user info in session
+        request.session["user_email"] = user_info.get("email")
+        request.session["user_sub"] = user_info.get("sub")
+
+        # Clear OAuth state
+        request.session.pop("oauth_state", None)
+        request.session.pop("code_verifier", None)
+
+        print(f"[INFO] Web portal login successful for {user_info.get('email')}")
+
+        # Redirect to main page
+        return RedirectResponse("/")
+
+    except Exception as e:
+        print(f"[ERROR] OAuth token exchange failed: {e}")
+        return HTMLResponse(f"<html><body><h1>OAuth Error</h1><p>Token exchange failed: {str(e)}</p></body></html>", status_code=500)
+
+
 @mcp.custom_route("/", methods=["GET"])
 async def web_ui(request: Request):
     """Serve the credential management web UI (requires authentication)."""
     # Get authenticated user
     subject = get_authenticated_user(request)
     if not subject:
-        # Show login page
+        # Show login page (no template variables needed - uses /web/login endpoint)
         template_path = Path(__file__).parent / "templates" / "login.html"
         html = template_path.read_text()
-
-        # Get OAuth configuration
-        client_id = os.getenv("OIDC_CLIENT_ID", "")
-        base_url = os.getenv("OIDC_BASE_URL", request.url.scheme + "://" + request.url.netloc)
-        redirect_uri = f"{base_url}/auth/callback"
-
-        html = html.replace("{{ client_id }}", client_id)
-        html = html.replace("{{ redirect_uri }}", redirect_uri)
-
         return HTMLResponse(html)
 
     # Read and render template
