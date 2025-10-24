@@ -5,3 +5,4 @@ cryptography>=41.0.0
 httpx>=0.25.0
 python-dotenv>=1.0.0
 requests>=2.31.0
+itsdangerous>=2.1.0
