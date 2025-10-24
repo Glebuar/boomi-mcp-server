@@ -131,118 +131,84 @@ def get_user_subject() -> str:
 
 
 # --- Tools ---
-@mcp.tool()
-def set_boomi_credentials(
-    username: str,
-    password: str,
-    account_id: str,
-    profile: str = "default",
-    base_url: Optional[str] = None
-) -> str:
-    """
-    Store Boomi credentials for a profile (requires 'secrets:write' scope).
+# Note: Credential management is done via web UI at /
+# The following tools are commented out to avoid confusion
 
-    Credentials are stored securely per user and never logged or displayed.
-    Use different profiles for different environments (e.g., 'sandbox', 'prod').
+# @mcp.tool()
+# def set_boomi_credentials(...):
+#     """Use the web UI to manage credentials"""
+#     pass
 
-    Args:
-        username: Boomi username (e.g., BOOMI_TOKEN.user@example.com)
-        password: Boomi password or API token
-        account_id: Boomi account ID
-        profile: Profile name (defaults to 'default')
-        base_url: Boomi API base URL (optional - SDK will use default if not provided)
-    """
-    subject = get_user_subject()
+# @mcp.tool()
+# def list_boomi_profiles(...):
+#     """Use the web UI to view profiles"""
+#     pass
 
-    put_secret(subject, profile, {
-        "username": username,
-        "password": password,
-        "account_id": account_id,
-        "base_url": base_url,
-    })
-
-    return f"✓ Stored credentials for profile '{profile}'"
-
-
-@mcp.tool()
-def list_boomi_profiles():
-    """
-    List all Boomi profiles for the authenticated user (requires 'secrets:read' scope).
-
-    Returns profile names and last update timestamps.
-    """
-    subject = get_user_subject()
-    profiles = list_profiles(subject)
-
-    if not profiles:
-        return {"message": "No profiles found. Use set_boomi_credentials to create one.", "profiles": []}
-
-    return {"profiles": profiles, "count": len(profiles)}
-
-
-@mcp.tool()
-def delete_boomi_profile(profile: str):
-    """
-    Delete a Boomi profile (requires 'secrets:write' scope).
-
-    This permanently removes stored credentials for the profile.
-
-    Args:
-        profile: Profile name to delete
-    """
-    subject = get_user_subject()
-
-    try:
-        delete_profile(subject, profile)
-        return f"✓ Deleted profile '{profile}'"
-    except ValueError as e:
-        return f"✗ {str(e)}"
+# @mcp.tool()
+# def delete_boomi_profile(...):
+#     """Use the web UI to delete profiles"""
+#     pass
 
 
 @mcp.tool()
 def boomi_account_info(profile: str = "default"):
     """
-    Get Boomi account information (requires 'boomi:read' scope).
+    Get Boomi account information.
 
-    Retrieves account details from Boomi API. If no credentials are stored for the
-    specified profile, automatically uses credentials from .env configuration.
+    Retrieves account details from Boomi API using credentials stored via the web UI.
 
-    This implements the core logic from boomi-python/examples/12_utilities/sample.py:
-    1. Initialize Boomi SDK with credentials
-    2. Call account.get_account() to retrieve account information
-    3. Return structured account data
+    IMPORTANT: You must first store your credentials at the web portal:
+    https://boomi-mcp-server-126964451821.us-central1.run.app/
+
+    This tool implements the core logic from boomi-python/examples/12_utilities/sample.py:
+    1. Retrieve your stored credentials
+    2. Initialize Boomi SDK with credentials
+    3. Call account.get_account() to retrieve account information
+    4. Return structured account data
 
     Args:
-        profile: Profile name (optional, defaults to 'default')
+        profile: Profile name (defaults to 'default')
 
     Returns:
-        Account information including name, status, licensing details
+        Account information including name, status, licensing details, or error details
     """
-    subject = get_user_subject()
+    try:
+        subject = get_user_subject()
+        print(f"[INFO] boomi_account_info called by user: {subject}, profile: {profile}")
+    except Exception as e:
+        print(f"[ERROR] Failed to get user subject: {e}")
+        return {
+            "_success": False,
+            "error": f"Authentication failed: {str(e)}",
+            "_note": "Make sure you're authenticated with OAuth"
+        }
 
-    # Try to get stored credentials, fall back to .env if not found
+    # Try to get stored credentials
     try:
         creds = get_secret(subject, profile)
-        print(f"[INFO] Using stored credentials for {subject}:{profile}")
-    except ValueError:
-        # Fall back to .env credentials
-        boomi_account = os.getenv("BOOMI_ACCOUNT")
-        boomi_user = os.getenv("BOOMI_USER")
-        boomi_secret = os.getenv("BOOMI_SECRET")
+        print(f"[INFO] Successfully retrieved stored credentials for {subject}:{profile}")
+        print(f"[INFO] Account ID: {creds.get('account_id')}, Username: {creds.get('username', '')[:20]}...")
+    except ValueError as e:
+        print(f"[ERROR] Profile '{profile}' not found for user {subject}: {e}")
 
-        if not (boomi_account and boomi_user and boomi_secret):
-            return {
-                "error": f"Profile '{profile}' not found and no .env credentials available. Use set_boomi_credentials first.",
-                "success": False
-            }
+        # List available profiles
+        available_profiles = list_profiles(subject)
+        print(f"[INFO] Available profiles for {subject}: {[p['profile'] for p in available_profiles]}")
 
-        creds = {
-            "username": boomi_user,
-            "password": boomi_secret,
-            "account_id": boomi_account,
-            "base_url": None,
+        return {
+            "_success": False,
+            "error": f"Profile '{profile}' not found. Please store credentials at the web portal first.",
+            "available_profiles": [p["profile"] for p in available_profiles],
+            "web_portal": "https://boomi-mcp-server-126964451821.us-central1.run.app/",
+            "_note": "Use the web UI to create a profile with your Boomi credentials"
         }
-        print(f"[INFO] Using .env credentials (no stored profile '{profile}' found)")
+    except Exception as e:
+        print(f"[ERROR] Unexpected error retrieving credentials: {e}")
+        return {
+            "_success": False,
+            "error": f"Failed to retrieve credentials: {str(e)}",
+            "_note": "Check server logs for details"
+        }
 
     print(f"[INFO] Calling Boomi API for {subject}:{profile} (account: {creds['account_id']})")
 
@@ -529,29 +495,16 @@ if __name__ == "__main__":
         print(f"GCP Project:   {os.getenv('GCP_PROJECT_ID', 'not set')}")
     print("=" * 60)
 
-    # Check if .env credentials are available for auto-configuration
-    boomi_account = os.getenv("BOOMI_ACCOUNT")
-    boomi_user = os.getenv("BOOMI_USER")
-    boomi_secret = os.getenv("BOOMI_SECRET")
-
-    if boomi_account and boomi_user and boomi_secret:
-        print(f"✓ Boomi credentials loaded from .env (account: {boomi_account})")
-        print(f"  Users can call boomi_account_info without storing credentials first")
-    else:
-        print(f"⚠ No Boomi credentials in .env - users must call set_boomi_credentials first")
-
     print("=" * 60)
     print("\n🌐 Web Interface:")
     print(f"  Credential Management: {base_url}/")
+    print("  (Login with Google to store your Boomi credentials)")
     print("\n🔧 MCP Tools available:")
-    print("  • set_boomi_credentials  - Store Boomi credentials")
-    print("  • list_boomi_profiles    - List your profiles")
-    print("  • delete_boomi_profile   - Delete a profile")
-    print("  • boomi_account_info     - Get account information from Boomi API")
-    print("\n🔑 Required scopes:")
-    print("  • secrets:read   - List profiles")
-    print("  • secrets:write  - Store/delete credentials")
-    print("  • boomi:read     - Call Boomi API")
+    print("  • boomi_account_info - Get account information from Boomi API")
+    print("\n📝 Note:")
+    print("  Credentials are managed via the web UI (not MCP tools)")
+    print("  After storing credentials in the web portal, they're automatically")
+    print("  available to the boomi_account_info tool when you authenticate via MCP")
     print("=" * 60 + "\n")
 
     # Streamable HTTP transport
