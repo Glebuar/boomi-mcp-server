@@ -158,10 +158,45 @@ def get_user_subject() -> str:
 #     """Use the web UI to manage credentials"""
 #     pass
 
-# @mcp.tool()
-# def list_boomi_profiles(...):
-#     """Use the web UI to view profiles"""
-#     pass
+@mcp.tool()
+def list_boomi_profiles():
+    """
+    List all saved Boomi credential profiles for the authenticated user.
+
+    Returns a list of profile names that can be used with boomi_account_info().
+    Use this tool first to see which profiles are available before requesting account info.
+
+    Returns:
+        List of profile objects with 'profile' name and metadata
+    """
+    try:
+        subject = get_user_subject()
+        print(f"[INFO] list_boomi_profiles called by user: {subject}")
+
+        profiles = list_profiles(subject)
+        print(f"[INFO] Found {len(profiles)} profiles for {subject}")
+
+        if not profiles:
+            return {
+                "_success": True,
+                "profiles": [],
+                "message": "No profiles found. Add credentials at https://boomi.renera.ai/",
+                "web_portal": "https://boomi.renera.ai/"
+            }
+
+        return {
+            "_success": True,
+            "profiles": [p["profile"] for p in profiles],
+            "count": len(profiles),
+            "web_portal": "https://boomi.renera.ai/"
+        }
+    except Exception as e:
+        print(f"[ERROR] Failed to list profiles: {e}")
+        return {
+            "_success": False,
+            "error": f"Failed to list profiles: {str(e)}",
+            "_note": "Make sure you're authenticated with OAuth"
+        }
 
 # @mcp.tool()
 # def delete_boomi_profile(...):
