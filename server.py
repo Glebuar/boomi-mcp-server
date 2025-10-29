@@ -35,7 +35,7 @@ try:
 except ImportError as e:
     print(f"ERROR: Failed to import Boomi SDK: {e}")
     print(f"       Boomi-python path: {boomi_python_path}")
-    print(f"       Run: uv pip install git+https://github.com/Glebuar/boomi-python.git")
+    print(f"       Run: pip install git+https://github.com/RenEra-ai/boomi-python.git")
     sys.exit(1)
 
 # --- Cloud Secrets Manager (GCP/AWS/Azure) ---

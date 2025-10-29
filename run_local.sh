@@ -16,5 +16,12 @@ echo ""
 echo "=========================================="
 echo ""
 
-# Run the local server
-python3 server_local.py
+# Check if virtual environment exists
+if [ ! -d ".venv" ]; then
+    echo "ERROR: Virtual environment not found"
+    echo "Please run: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"
+    exit 1
+fi
+
+# Use virtual environment's Python
+.venv/bin/python server_local.py
