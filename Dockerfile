@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements-cloud.txt
 
 # Install Boomi Python SDK
-RUN pip install --no-cache-dir git+https://github.com/Glebuar/boomi-python.git
+RUN pip install --no-cache-dir git+https://github.com/RenEra-ai/boomi-python.git
 
 # Stage 2: Runtime
 FROM python:3.11-slim
