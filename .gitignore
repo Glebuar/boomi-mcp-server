@@ -58,6 +58,8 @@ secrets/
 *.key
 *.pem
 *.crt
+*_local_secrets.json
+.boomi_mcp_local_secrets.json
 
 # Temp files
 *.Zone.Identifier
