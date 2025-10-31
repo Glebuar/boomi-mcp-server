@@ -54,6 +54,14 @@ except ImportError as e:
     print(f"       Make sure src/boomi_mcp/cloud_secrets.py exists")
     sys.exit(1)
 
+# --- Trading Partner Tools ---
+try:
+    from boomi_mcp import trading_partner_tools
+    print(f"[INFO] Trading partner tools loaded successfully")
+except ImportError as e:
+    print(f"[WARNING] Failed to import trading_partner_tools: {e}")
+    trading_partner_tools = None
+
 
 def put_secret(sub: str, profile: str, payload: Dict[str, str]):
     """Store credentials for a user profile."""
@@ -373,6 +381,307 @@ def boomi_account_info(profile: str):
             "account_id": creds["account_id"],
             "_note": "Check credentials and API access permissions"
         }
+
+
+# --- Trading Partner MCP Tools ---
+if trading_partner_tools:
+    @mcp.tool()
+    def list_trading_partners(profile: str, standard: str = None, classification: str = None, folder_name: str = None):
+        """
+        List all trading partners with optional filtering.
+
+        Args:
+            profile: Boomi profile name (required)
+            standard: Filter by standard (x12, edifact, hl7, custom, rosettanet, tradacoms, odette)
+            classification: Filter by classification (tradingpartner, mycompany)
+            folder_name: Filter by folder name
+
+        Returns:
+            List of trading partners grouped by standard with summary statistics
+        """
+        try:
+            subject = get_user_subject()
+            print(f"[INFO] list_trading_partners called by user: {subject}, profile: {profile}")
+
+            # Get credentials
+            creds = get_secret(subject, profile)
+
+            # Initialize Boomi SDK
+            sdk = Boomi(
+                account_id=creds["account_id"],
+                username=creds["username"],
+                password=creds["password"]
+            )
+
+            # Build filters
+            filters = {}
+            if standard:
+                filters["standard"] = standard
+            if classification:
+                filters["classification"] = classification
+            if folder_name:
+                filters["folder_name"] = folder_name
+
+            return trading_partner_tools.list_trading_partners(sdk, profile, filters)
+
+        except Exception as e:
+            print(f"[ERROR] Failed to list trading partners: {e}")
+            return {"_success": False, "error": str(e)}
+
+    @mcp.tool()
+    def get_trading_partner(profile: str, component_id: str):
+        """
+        Get details of a specific trading partner by ID.
+
+        Args:
+            profile: Boomi profile name (required)
+            component_id: Trading partner component ID
+
+        Returns:
+            Trading partner details including contact info and partner identifiers
+        """
+        try:
+            subject = get_user_subject()
+            print(f"[INFO] get_trading_partner called by user: {subject}, profile: {profile}, id: {component_id}")
+
+            # Get credentials
+            creds = get_secret(subject, profile)
+
+            # Initialize Boomi SDK
+            sdk = Boomi(
+                account_id=creds["account_id"],
+                username=creds["username"],
+                password=creds["password"]
+            )
+
+            return trading_partner_tools.get_trading_partner(sdk, profile, component_id)
+
+        except Exception as e:
+            print(f"[ERROR] Failed to get trading partner: {e}")
+            return {"_success": False, "error": str(e)}
+
+    @mcp.tool()
+    def create_trading_partner(
+        profile: str,
+        component_name: str,
+        standard: str = "x12",
+        classification: str = "tradingpartner",
+        folder_name: str = None,
+        isa_id: str = None,
+        isa_qualifier: str = None,
+        gs_id: str = None,
+        contact_name: str = None,
+        contact_email: str = None,
+        contact_phone: str = None
+    ):
+        """
+        Create a new trading partner in Boomi.
+
+        Args:
+            profile: Boomi profile name (required)
+            component_name: Name of the trading partner (required)
+            standard: Trading standard (x12, edifact, hl7, custom, rosettanet, tradacoms, odette)
+            classification: Classification (tradingpartner, mycompany)
+            folder_name: Optional folder to place the partner in
+            isa_id: ISA ID for X12 partners
+            isa_qualifier: ISA Qualifier for X12 partners
+            gs_id: GS ID for X12 partners
+            contact_name: Contact person name
+            contact_email: Contact email address
+            contact_phone: Contact phone number
+
+        Returns:
+            Created trading partner details with component ID
+        """
+        try:
+            subject = get_user_subject()
+            print(f"[INFO] create_trading_partner called by user: {subject}, profile: {profile}, name: {component_name}")
+
+            # Get credentials
+            creds = get_secret(subject, profile)
+
+            # Initialize Boomi SDK
+            sdk = Boomi(
+                account_id=creds["account_id"],
+                username=creds["username"],
+                password=creds["password"]
+            )
+
+            # Build request data
+            request_data = {
+                "component_name": component_name,
+                "standard": standard,
+                "classification": classification
+            }
+
+            if folder_name:
+                request_data["folder_name"] = folder_name
+
+            # Add partner info for X12
+            if standard.lower() == "x12" and (isa_id or isa_qualifier or gs_id):
+                request_data["partner_info"] = {}
+                if isa_id:
+                    request_data["partner_info"]["isa_id"] = isa_id
+                if isa_qualifier:
+                    request_data["partner_info"]["isa_qualifier"] = isa_qualifier
+                if gs_id:
+                    request_data["partner_info"]["gs_id"] = gs_id
+
+            # Add contact info
+            if contact_name or contact_email or contact_phone:
+                request_data["contact_info"] = {}
+                if contact_name:
+                    request_data["contact_info"]["name"] = contact_name
+                if contact_email:
+                    request_data["contact_info"]["email"] = contact_email
+                if contact_phone:
+                    request_data["contact_info"]["phone"] = contact_phone
+
+            return trading_partner_tools.create_trading_partner(sdk, profile, request_data)
+
+        except Exception as e:
+            print(f"[ERROR] Failed to create trading partner: {e}")
+            return {"_success": False, "error": str(e)}
+
+    @mcp.tool()
+    def update_trading_partner(
+        profile: str,
+        component_id: str,
+        component_name: str = None,
+        contact_name: str = None,
+        contact_email: str = None,
+        contact_phone: str = None,
+        isa_id: str = None,
+        isa_qualifier: str = None,
+        gs_id: str = None
+    ):
+        """
+        Update an existing trading partner.
+
+        Args:
+            profile: Boomi profile name (required)
+            component_id: Trading partner component ID (required)
+            component_name: New name for the partner
+            contact_name: Updated contact name
+            contact_email: Updated contact email
+            contact_phone: Updated contact phone
+            isa_id: Updated ISA ID (X12)
+            isa_qualifier: Updated ISA Qualifier (X12)
+            gs_id: Updated GS ID (X12)
+
+        Returns:
+            Updated trading partner details
+        """
+        try:
+            subject = get_user_subject()
+            print(f"[INFO] update_trading_partner called by user: {subject}, profile: {profile}, id: {component_id}")
+
+            # Get credentials
+            creds = get_secret(subject, profile)
+
+            # Initialize Boomi SDK
+            sdk = Boomi(
+                account_id=creds["account_id"],
+                username=creds["username"],
+                password=creds["password"]
+            )
+
+            # Build updates
+            updates = {}
+            if component_name:
+                updates["component_name"] = component_name
+
+            # Contact info updates
+            if contact_name or contact_email or contact_phone:
+                updates["contact_info"] = {}
+                if contact_name:
+                    updates["contact_info"]["name"] = contact_name
+                if contact_email:
+                    updates["contact_info"]["email"] = contact_email
+                if contact_phone:
+                    updates["contact_info"]["phone"] = contact_phone
+
+            # Partner info updates
+            if isa_id or isa_qualifier or gs_id:
+                updates["partner_info"] = {}
+                if isa_id:
+                    updates["partner_info"]["isa_id"] = isa_id
+                if isa_qualifier:
+                    updates["partner_info"]["isa_qualifier"] = isa_qualifier
+                if gs_id:
+                    updates["partner_info"]["gs_id"] = gs_id
+
+            return trading_partner_tools.update_trading_partner(sdk, profile, component_id, updates)
+
+        except Exception as e:
+            print(f"[ERROR] Failed to update trading partner: {e}")
+            return {"_success": False, "error": str(e)}
+
+    @mcp.tool()
+    def delete_trading_partner(profile: str, component_id: str):
+        """
+        Delete a trading partner component.
+
+        Args:
+            profile: Boomi profile name (required)
+            component_id: Trading partner component ID to delete
+
+        Returns:
+            Deletion confirmation
+        """
+        try:
+            subject = get_user_subject()
+            print(f"[INFO] delete_trading_partner called by user: {subject}, profile: {profile}, id: {component_id}")
+
+            # Get credentials
+            creds = get_secret(subject, profile)
+
+            # Initialize Boomi SDK
+            sdk = Boomi(
+                account_id=creds["account_id"],
+                username=creds["username"],
+                password=creds["password"]
+            )
+
+            return trading_partner_tools.delete_trading_partner(sdk, profile, component_id)
+
+        except Exception as e:
+            print(f"[ERROR] Failed to delete trading partner: {e}")
+            return {"_success": False, "error": str(e)}
+
+    @mcp.tool()
+    def analyze_trading_partner_usage(profile: str, component_id: str):
+        """
+        Analyze where a trading partner is used in processes and configurations.
+
+        Args:
+            profile: Boomi profile name (required)
+            component_id: Trading partner component ID to analyze
+
+        Returns:
+            Usage analysis including processes, connections, and dependencies
+        """
+        try:
+            subject = get_user_subject()
+            print(f"[INFO] analyze_trading_partner_usage called by user: {subject}, profile: {profile}, id: {component_id}")
+
+            # Get credentials
+            creds = get_secret(subject, profile)
+
+            # Initialize Boomi SDK
+            sdk = Boomi(
+                account_id=creds["account_id"],
+                username=creds["username"],
+                password=creds["password"]
+            )
+
+            return trading_partner_tools.analyze_trading_partner_usage(sdk, profile, component_id)
+
+        except Exception as e:
+            print(f"[ERROR] Failed to analyze trading partner usage: {e}")
+            return {"_success": False, "error": str(e)}
+
+    print("[INFO] Trading partner tools registered successfully")
 
 
 # --- Web UI Routes ---
@@ -713,6 +1022,14 @@ if __name__ == "__main__":
     print("  (Login with Google to store your Boomi credentials)")
     print("\n🔧 MCP Tools available:")
     print("  • boomi_account_info - Get account information from Boomi API")
+    if trading_partner_tools:
+        print("\n  🤝 Trading Partner Management:")
+        print("  • list_trading_partners - List all trading partners with filtering")
+        print("  • get_trading_partner - Get specific trading partner details")
+        print("  • create_trading_partner - Create new trading partners (X12, EDIFACT, HL7, etc.)")
+        print("  • update_trading_partner - Update trading partner information")
+        print("  • delete_trading_partner - Delete a trading partner")
+        print("  • analyze_trading_partner_usage - Analyze partner usage in processes")
     print("\n📝 Note:")
     print("  Credentials are managed via the web UI (not MCP tools)")
     print("  After storing credentials in the web portal, they're automatically")
