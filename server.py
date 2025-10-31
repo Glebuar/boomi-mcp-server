@@ -14,6 +14,7 @@ import sys
 import secrets
 import hashlib
 import base64
+import time
 from typing import Optional, Dict
 from pathlib import Path
 
@@ -75,6 +76,82 @@ def delete_profile(sub: str, profile: str):
     secrets_backend.delete_profile(sub, profile)
 
 
+# --- OAuth Token Management ---
+# Store refresh tokens as a special profile to enable persistent sessions
+OAUTH_TOKEN_PROFILE = "_oauth_tokens"  # Use underscore to mark as system profile
+oauth_token_cache = {}  # In-memory cache for performance
+
+
+def store_oauth_tokens(sub: str, tokens: Dict[str, any]):
+    """Store OAuth tokens including refresh token."""
+    # Add expiration timestamp
+    if "expires_at" not in tokens and "expires_in" in tokens:
+        tokens["expires_at"] = int(time.time()) + tokens["expires_in"]
+
+    tokens["updated_at"] = int(time.time())
+
+    # Store in cache
+    oauth_token_cache[sub] = tokens
+
+    # Store in Secret Manager for persistence
+    try:
+        put_secret(sub, OAUTH_TOKEN_PROFILE, tokens)
+        print(f"[INFO] Stored OAuth tokens for {sub} (including refresh token)")
+    except Exception as e:
+        print(f"[WARNING] Failed to store OAuth tokens: {e}")
+
+
+def get_oauth_tokens(sub: str) -> Optional[Dict[str, any]]:
+    """Retrieve OAuth tokens from cache or storage."""
+    # Check cache first
+    if sub in oauth_token_cache:
+        return oauth_token_cache[sub]
+
+    # Try loading from storage
+    try:
+        tokens = get_secret(sub, OAUTH_TOKEN_PROFILE)
+        oauth_token_cache[sub] = tokens  # Cache for next time
+        print(f"[INFO] Loaded OAuth tokens from storage for {sub}")
+        return tokens
+    except:
+        return None
+
+
+def is_token_expired(tokens: Dict[str, any], buffer_seconds: int = 300) -> bool:
+    """Check if access token is expired or will expire soon."""
+    expires_at = tokens.get("expires_at")
+    if not expires_at:
+        return True
+    return expires_at < (int(time.time()) + buffer_seconds)
+
+
+async def refresh_access_token(refresh_token: str) -> Optional[Dict[str, any]]:
+    """Use refresh token to get new access token from Google."""
+    import httpx
+
+    client_id = os.getenv("OIDC_CLIENT_ID")
+    client_secret = os.getenv("OIDC_CLIENT_SECRET")
+
+    token_url = "https://oauth2.googleapis.com/token"
+    token_data = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token",
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(token_url, data=token_data)
+            response.raise_for_status()
+            new_tokens = response.json()
+            print(f"[INFO] Successfully refreshed access token")
+            return new_tokens
+    except Exception as e:
+        print(f"[ERROR] Failed to refresh token: {e}")
+        return None
+
+
 # --- Auth: OAuth 2.0 with Google (Required) ---
 from fastmcp.server.auth.providers.google import GoogleTokenVerifier
 from fastmcp.server.auth.oauth_proxy import OAuthProxy
@@ -130,6 +207,7 @@ try:
     print(f"       - Authorize: {base_url}/authorize")
     print(f"       - Callback: {base_url}/auth/callback")
     print(f"       - Token: {base_url}/token")
+    print(f"       - Refresh: {base_url}/token/refresh (for persistent sessions)")
 except Exception as e:
     print(f"[ERROR] Failed to configure OAuth: {e}")
     print(f"[ERROR] Please ensure these environment variables are set:")
@@ -204,6 +282,8 @@ def list_boomi_profiles():
         print(f"[INFO] list_boomi_profiles called by user: {subject}")
 
         profiles = list_profiles(subject)
+        # Filter out system profiles (OAuth tokens)
+        profiles = [p for p in profiles if p["profile"] != OAUTH_TOKEN_PROFILE]
         print(f"[INFO] Found {len(profiles)} profiles for {subject}")
 
         if not profiles:
@@ -266,6 +346,14 @@ def boomi_account_info(profile: str):
     Returns:
         Account information including name, status, licensing details, or error details
     """
+    # Prevent using system profile
+    if profile == OAUTH_TOKEN_PROFILE:
+        return {
+            "_success": False,
+            "error": f"Profile '{OAUTH_TOKEN_PROFILE}' is a system profile and cannot be used",
+            "_note": "Please specify a valid Boomi profile name"
+        }
+
     try:
         subject = get_user_subject()
         print(f"[INFO] boomi_account_info called by user: {subject}, profile: {profile}")
@@ -411,7 +499,7 @@ async def web_login(request: Request):
     print(f"[DEBUG] Stored in session: oauth_state={state[:20]}..., code_verifier={code_verifier[:20]}...")
     print(f"[DEBUG] Session after store: {dict(request.session)}")
 
-    # Build Google OAuth authorization URL with PKCE
+    # Build Google OAuth authorization URL with PKCE and refresh token request
     redirect_uri = f"{base_url}/web/callback"
     auth_params = {
         "client_id": client_id,
@@ -421,6 +509,8 @@ async def web_login(request: Request):
         "state": state,
         "code_challenge": code_challenge,
         "code_challenge_method": "S256",
+        "access_type": "offline",  # Request refresh token for long-lived sessions
+        "prompt": "consent",       # Force consent to ensure refresh token is provided
     }
 
     auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(auth_params)
@@ -500,6 +590,20 @@ async def web_callback(request: Request):
         # Store user info in session
         request.session["user_email"] = user_info.get("email")
         request.session["user_sub"] = user_info.get("sub")
+
+        # Store OAuth tokens including refresh token for persistent sessions
+        user_sub = user_info.get("sub")
+        if user_sub and tokens.get("refresh_token"):
+            oauth_data = {
+                "access_token": tokens.get("access_token"),
+                "refresh_token": tokens.get("refresh_token"),
+                "token_type": tokens.get("token_type", "Bearer"),
+                "expires_in": tokens.get("expires_in", 3600),
+                "scope": tokens.get("scope", "openid email profile"),
+                "id_token": tokens.get("id_token"),
+            }
+            store_oauth_tokens(user_sub, oauth_data)
+            print(f"[INFO] Stored refresh token for persistent sessions")
 
         # Clear OAuth state
         request.session.pop("oauth_state", None)
@@ -612,6 +716,12 @@ async def api_set_credentials(request: Request):
         existing_profiles = list_profiles(subject)
         profile_name = data["profile"]
 
+        # Prevent using reserved system profile name
+        if profile_name == OAUTH_TOKEN_PROFILE:
+            return JSONResponse({
+                "error": f"Profile name '{OAUTH_TOKEN_PROFILE}' is reserved for system use"
+            }, status_code=400)
+
         # Allow updating existing profile, but limit new profiles to 10
         is_new_profile = profile_name not in [p["profile"] for p in existing_profiles]
         if is_new_profile and len(existing_profiles) >= 10:
@@ -642,7 +752,8 @@ async def api_list_profiles(request: Request):
         return JSONResponse({"error": "Authentication required"}, status_code=401)
 
     profiles_data = list_profiles(subject)
-    profile_names = [p["profile"] for p in profiles_data]
+    # Filter out system profiles
+    profile_names = [p["profile"] for p in profiles_data if p["profile"] != OAUTH_TOKEN_PROFILE]
 
     return JSONResponse({"profiles": profile_names})
 
@@ -656,6 +767,10 @@ async def api_delete_profile(request: Request):
 
     profile = request.path_params["profile"]
 
+    # Prevent deleting system profiles
+    if profile == OAUTH_TOKEN_PROFILE:
+        return JSONResponse({"error": "Cannot delete system profile"}, status_code=400)
+
     try:
         delete_profile(subject, profile)
         return JSONResponse({
@@ -664,6 +779,67 @@ async def api_delete_profile(request: Request):
         })
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=400)
+
+
+@mcp.custom_route("/token/refresh", methods=["POST"])
+async def handle_token_refresh(request: Request):
+    """
+    Handle OAuth token refresh requests from clients like ChatGPT.
+
+    This endpoint accepts refresh tokens and returns new access tokens,
+    enabling persistent sessions without re-authentication.
+    """
+    try:
+        # Parse request (ChatGPT sends form-encoded data)
+        content_type = request.headers.get("content-type", "")
+
+        if "application/json" in content_type:
+            data = await request.json()
+        elif "application/x-www-form-urlencoded" in content_type:
+            form_data = await request.form()
+            data = dict(form_data)
+        else:
+            return JSONResponse({"error": "Unsupported content type"}, status_code=400)
+
+        # Get refresh token from request
+        refresh_token = data.get("refresh_token")
+        if not refresh_token:
+            return JSONResponse({"error": "refresh_token required"}, status_code=400)
+
+        # Find which user this refresh token belongs to
+        # (In production, you'd want a more efficient lookup)
+        user_sub = None
+        for sub, tokens in oauth_token_cache.items():
+            if tokens.get("refresh_token") == refresh_token:
+                user_sub = sub
+                break
+
+        if not user_sub:
+            print("[WARNING] Refresh token not found in cache")
+            return JSONResponse({"error": "Invalid refresh token"}, status_code=401)
+
+        # Refresh the token with Google
+        new_tokens = await refresh_access_token(refresh_token)
+        if not new_tokens:
+            return JSONResponse({"error": "Failed to refresh token"}, status_code=401)
+
+        # Update stored tokens (keep refresh token if not rotated)
+        if "refresh_token" not in new_tokens:
+            new_tokens["refresh_token"] = refresh_token
+
+        store_oauth_tokens(user_sub, new_tokens)
+
+        # Return new tokens to client
+        return JSONResponse({
+            "access_token": new_tokens.get("access_token"),
+            "token_type": new_tokens.get("token_type", "Bearer"),
+            "expires_in": new_tokens.get("expires_in", 3600),
+            "refresh_token": new_tokens.get("refresh_token", refresh_token),
+        })
+
+    except Exception as e:
+        print(f"[ERROR] Token refresh failed: {e}")
+        return JSONResponse({"error": "Token refresh failed"}, status_code=500)
 
 
 if __name__ == "__main__":
