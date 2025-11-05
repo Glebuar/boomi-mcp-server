@@ -371,15 +371,10 @@ def create_consent_html(
     parsed_redirect = urlparse(redirect_uri)
     redirect_scheme = parsed_redirect.scheme.lower()
 
-    # Build form-action directive with 'self' for same-origin submissions plus schemes
-    # 'self' is required for Electron apps (Claude Desktop) to submit forms to same origin
-    form_action_schemes = ["'self'", "https:", "http:"]
-    if redirect_scheme and redirect_scheme not in ("http", "https"):
-        # Custom protocol scheme (e.g., cursor:, vscode:, etc.)
-        form_action_schemes.append(f"{redirect_scheme}:")
-
-    form_action_directive = " ".join(form_action_schemes)
-    csp_policy = f"default-src 'none'; style-src 'unsafe-inline'; img-src https:; base-uri 'none'; form-action {form_action_directive}"
+    # Build form-action directive that allows forms and their redirects
+    # Need to allow both the form submission target (self) and redirect target (claude.ai, etc.)
+    # Use wildcard * to avoid CSP errors in Electron that can confuse users
+    csp_policy = "default-src 'none'; style-src 'unsafe-inline'; img-src https:; base-uri 'none'"
 
     return create_page(
         content=content,
