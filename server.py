@@ -76,36 +76,7 @@ def delete_profile(sub: str, profile: str):
 
 
 # --- Auth: OAuth 2.0 with Google (Required) ---
-from fastmcp.server.auth.providers.google import GoogleTokenVerifier
-from fastmcp.server.auth.oauth_proxy import OAuthProxy
-
-# Custom GoogleProvider with refresh token support
-class GoogleProviderWithRefresh(OAuthProxy):
-    """Google OAuth provider with refresh token support for long-lived sessions."""
-
-    def __init__(self, client_id: str, client_secret: str, base_url: str):
-        # Create Google token verifier
-        token_verifier = GoogleTokenVerifier(
-            required_scopes=["openid"],
-            timeout_seconds=10,
-        )
-
-        # Initialize OAuth proxy with Google endpoints and refresh token support
-        super().__init__(
-            upstream_authorization_endpoint="https://accounts.google.com/o/oauth2/v2/auth",
-            upstream_token_endpoint="https://oauth2.googleapis.com/token",
-            upstream_client_id=client_id,
-            upstream_client_secret=client_secret,
-            token_verifier=token_verifier,
-            base_url=base_url,
-            redirect_path="/auth/callback",
-            issuer_url=base_url,
-            allowed_client_redirect_uris=None,  # Allow all redirect URIs
-            extra_authorize_params={
-                "access_type": "offline",  # Request refresh token
-                "prompt": "consent",  # Force consent to ensure refresh token
-            },
-        )
+from fastmcp.server.auth.providers.google import GoogleProvider
 
 # Create Google OAuth provider
 try:
@@ -116,16 +87,15 @@ try:
     if not client_id or not client_secret:
         raise ValueError("OIDC_CLIENT_ID and OIDC_CLIENT_SECRET must be set")
 
-    auth = GoogleProviderWithRefresh(
+    auth = GoogleProvider(
         client_id=client_id,
         client_secret=client_secret,
         base_url=base_url,
     )
 
-    print(f"[INFO] Google OAuth 2.0 configured with refresh token support")
+    print(f"[INFO] Google OAuth 2.0 configured")
     print(f"[INFO] Base URL: {base_url}")
     print(f"[INFO] All authenticated Google users have full access to all tools")
-    print(f"[INFO] Sessions will be maintained automatically via refresh tokens")
     print(f"[INFO] OAuth endpoints:")
     print(f"       - Authorize: {base_url}/authorize")
     print(f"       - Callback: {base_url}/auth/callback")
