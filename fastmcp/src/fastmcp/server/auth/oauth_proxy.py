@@ -371,8 +371,9 @@ def create_consent_html(
     parsed_redirect = urlparse(redirect_uri)
     redirect_scheme = parsed_redirect.scheme.lower()
 
-    # Build form-action directive with standard schemes plus custom protocol if present
-    form_action_schemes = ["https:", "http:"]
+    # Build form-action directive with 'self' for same-origin submissions plus schemes
+    # 'self' is required for Electron apps (Claude Desktop) to submit forms to same origin
+    form_action_schemes = ["'self'", "https:", "http:"]
     if redirect_scheme and redirect_scheme not in ("http", "https"):
         # Custom protocol scheme (e.g., cursor:, vscode:, etc.)
         form_action_schemes.append(f"{redirect_scheme}:")
