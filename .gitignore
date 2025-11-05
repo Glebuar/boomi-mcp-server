@@ -63,7 +63,6 @@ secrets/
 *.Zone.Identifier
 
 # Cloned Repositories (examples/references)
-fastmcp/
 mcp-streamable-http/
 boomi-python/
 

@@ -36,9 +36,6 @@ secrets.sqlite
 .env.local
 *.log
 
-# FastMCP examples (we don't need these in the container)
-fastmcp/
-
 # Documentation
 README.md
 README-CLOUD.md
