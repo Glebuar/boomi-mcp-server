@@ -377,8 +377,9 @@ def create_consent_html(
         # No form-action directive for Electron (too strict with wildcards)
         csp_policy = "default-src 'none'; style-src 'unsafe-inline'; img-src https:; base-uri 'none'"
     else:
-        # ChatGPT and other clients: use wildcard schemes for form-action
-        form_action_schemes = ["https:", "http:"]
+        # ChatGPT and other clients: use 'self' + wildcard schemes for form-action
+        # 'self' allows form submission to boomi.renera.ai, wildcards allow redirects
+        form_action_schemes = ["'self'", "https:", "http:"]
 
         # Add custom protocol schemes (e.g., cursor:, vscode:) if needed
         if redirect_scheme and redirect_scheme not in ("http", "https"):
