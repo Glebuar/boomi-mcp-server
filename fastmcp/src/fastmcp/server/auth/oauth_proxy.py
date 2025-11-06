@@ -372,9 +372,16 @@ def create_consent_html(
     redirect_scheme = parsed_redirect.scheme.lower()
 
     # Build form-action directive that allows forms and their redirects
-    # Need to allow both the form submission target (self) and redirect target (claude.ai, etc.)
-    # Use wildcard * to avoid CSP errors in Electron that can confuse users
-    csp_policy = "default-src 'none'; style-src 'unsafe-inline'; img-src https:; base-uri 'none'"
+    # Need to allow both the form submission target (self) and redirect target (claude.ai, chatgpt.com, etc.)
+    # Explicitly list known MCP client domains to satisfy both Electron CSP checks and ChatGPT security validation
+    form_action_schemes = ["'self'", "https://claude.ai", "https://chatgpt.com"]
+
+    # Add custom protocol schemes (e.g., cursor:, vscode:) if redirect uses non-http(s) protocol
+    if redirect_scheme and redirect_scheme not in ("http", "https"):
+        form_action_schemes.append(f"{redirect_scheme}:")
+
+    form_action_directive = " ".join(form_action_schemes)
+    csp_policy = f"default-src 'none'; style-src 'unsafe-inline'; img-src https:; base-uri 'none'; form-action {form_action_directive}"
 
     return create_page(
         content=content,
