@@ -91,6 +91,10 @@ try:
         client_id=client_id,
         client_secret=client_secret,
         base_url=base_url,
+        extra_authorize_params={
+            "access_type": "offline",  # Request refresh tokens from Google
+            "prompt": "consent",       # Force consent to ensure refresh token is issued
+        },
     )
 
     print(f"[INFO] Google OAuth 2.0 configured")

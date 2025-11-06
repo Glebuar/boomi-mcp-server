@@ -57,6 +57,7 @@ class GoogleProviderSettings(BaseSettings):
     timeout_seconds: int | None = None
     allowed_client_redirect_uris: list[str] | None = None
     jwt_signing_key: str | None = None
+    extra_authorize_params: dict[str, str] | None = None
 
     @field_validator("required_scopes", mode="before")
     @classmethod
@@ -225,6 +226,7 @@ class GoogleProvider(OAuthProxy):
         client_storage: AsyncKeyValue | None = None,
         jwt_signing_key: str | bytes | NotSetT = NotSet,
         require_authorization_consent: bool = True,
+        extra_authorize_params: dict[str, str] | NotSetT = NotSet,
     ):
         """Initialize Google OAuth provider.
 
@@ -252,6 +254,11 @@ class GoogleProvider(OAuthProxy):
                 When True, users see a consent screen before being redirected to Google.
                 When False, authorization proceeds directly without user confirmation.
                 SECURITY WARNING: Only disable for local development or testing environments.
+            extra_authorize_params: Additional parameters to include in the Google OAuth authorization request.
+                Common parameters include:
+                - "access_type": "offline" to request refresh tokens for long-lived sessions
+                - "prompt": "consent" to force consent screen and ensure refresh token is issued
+                Example: {"access_type": "offline", "prompt": "consent"}
         """
 
         settings = GoogleProviderSettings.model_validate(
@@ -267,6 +274,7 @@ class GoogleProvider(OAuthProxy):
                     "timeout_seconds": timeout_seconds,
                     "allowed_client_redirect_uris": allowed_client_redirect_uris,
                     "jwt_signing_key": jwt_signing_key,
+                    "extra_authorize_params": extra_authorize_params,
                 }.items()
                 if v is not NotSet
             }
@@ -314,6 +322,7 @@ class GoogleProvider(OAuthProxy):
             client_storage=client_storage,
             jwt_signing_key=settings.jwt_signing_key,
             require_authorization_consent=require_authorization_consent,
+            extra_authorize_params=settings.extra_authorize_params,
         )
 
         logger.debug(
