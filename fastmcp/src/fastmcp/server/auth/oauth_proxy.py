@@ -365,23 +365,27 @@ def create_consent_html(
         + TOOLTIP_STYLES
     )
 
-    # Need to allow form-action for form submission
-    # Chrome requires explicit scheme declarations in CSP form-action when redirect chains
-    # end in custom protocol schemes (e.g., cursor://). Parse redirect_uri to include its scheme.
+    # Dynamic CSP based on client to handle different security requirements
+    # Claude Desktop (Electron): Cannot handle wildcard schemes in form-action, needs no directive
+    # ChatGPT: Requires form-action directive for security validation
     parsed_redirect = urlparse(redirect_uri)
     redirect_scheme = parsed_redirect.scheme.lower()
+    redirect_netloc = parsed_redirect.netloc.lower()
 
-    # Build form-action directive that allows forms and their redirects
-    # Use wildcard schemes (https:, http:) to cover both form submission and redirect targets
-    # No 'self' needed since https: covers https://boomi.renera.ai
-    form_action_schemes = ["https:", "http:"]
+    # Claude Desktop/Code use claude.ai domain - Electron can't handle wildcard form-action
+    if "claude.ai" in redirect_netloc:
+        # No form-action directive for Electron (too strict with wildcards)
+        csp_policy = "default-src 'none'; style-src 'unsafe-inline'; img-src https:; base-uri 'none'"
+    else:
+        # ChatGPT and other clients: use wildcard schemes for form-action
+        form_action_schemes = ["https:", "http:"]
 
-    # Add custom protocol schemes (e.g., cursor:, vscode:) if redirect uses non-http(s) protocol
-    if redirect_scheme and redirect_scheme not in ("http", "https"):
-        form_action_schemes.append(f"{redirect_scheme}:")
+        # Add custom protocol schemes (e.g., cursor:, vscode:) if needed
+        if redirect_scheme and redirect_scheme not in ("http", "https"):
+            form_action_schemes.append(f"{redirect_scheme}:")
 
-    form_action_directive = " ".join(form_action_schemes)
-    csp_policy = f"default-src 'none'; style-src 'unsafe-inline'; img-src https:; base-uri 'none'; form-action {form_action_directive}"
+        form_action_directive = " ".join(form_action_schemes)
+        csp_policy = f"default-src 'none'; style-src 'unsafe-inline'; img-src https:; base-uri 'none'; form-action {form_action_directive}"
 
     return create_page(
         content=content,
