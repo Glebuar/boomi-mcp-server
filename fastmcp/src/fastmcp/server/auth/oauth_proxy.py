@@ -372,9 +372,9 @@ def create_consent_html(
     redirect_scheme = parsed_redirect.scheme.lower()
 
     # Build form-action directive that allows forms and their redirects
-    # Need to allow both the form submission target (self) and redirect target (claude.ai, chatgpt.com, etc.)
-    # Explicitly list known MCP client domains to satisfy both Electron CSP checks and ChatGPT security validation
-    form_action_schemes = ["'self'", "https://claude.ai", "https://chatgpt.com"]
+    # Use wildcard schemes (https:, http:) to cover both form submission and redirect targets
+    # No 'self' needed since https: covers https://boomi.renera.ai
+    form_action_schemes = ["https:", "http:"]
 
     # Add custom protocol schemes (e.g., cursor:, vscode:) if redirect uses non-http(s) protocol
     if redirect_scheme and redirect_scheme not in ("http", "https"):
