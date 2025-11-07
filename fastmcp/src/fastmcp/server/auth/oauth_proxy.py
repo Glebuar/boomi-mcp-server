@@ -1210,6 +1210,10 @@ class OAuthProxy(OAuthProvider):
             )
 
         # Store JTI mappings
+        # Use refresh token TTL for access JTI to survive server restarts
+        # Access token may expire in 1 hour, but JTI mapping should persist
+        # to allow token refresh after restart
+        access_jti_ttl = refresh_expires_in or (60 * 60 * 24 * 30)  # 30 days fallback
         await self._jti_mapping_store.put(
             key=access_jti,
             value=JTIMapping(
@@ -1217,7 +1221,7 @@ class OAuthProxy(OAuthProvider):
                 upstream_token_id=upstream_token_id,
                 created_at=time.time(),
             ),
-            ttl=expires_in,  # Auto-expire with access token
+            ttl=access_jti_ttl,  # Use refresh token expiry, not access token expiry
         )
         if refresh_jti:
             await self._jti_mapping_store.put(
@@ -1398,6 +1402,8 @@ class OAuthProxy(OAuthProvider):
         )
 
         # Store new access token JTI mapping
+        # Use refresh token TTL to survive server restarts
+        new_access_jti_ttl = new_refresh_expires_in or (60 * 60 * 24 * 30)  # 30 days fallback
         await self._jti_mapping_store.put(
             key=new_access_jti,
             value=JTIMapping(
@@ -1405,7 +1411,7 @@ class OAuthProxy(OAuthProvider):
                 upstream_token_id=upstream_token_set.upstream_token_id,
                 created_at=time.time(),
             ),
-            ttl=new_expires_in,  # Auto-expire with refreshed access token
+            ttl=new_access_jti_ttl,  # Use refresh token expiry, not access token expiry
         )
 
         # Issue NEW minimal FastMCP refresh token (rotation for security)
