@@ -77,6 +77,7 @@ def delete_profile(sub: str, profile: str):
 
 # --- Auth: OAuth 2.0 with Google (Required) ---
 from fastmcp.server.auth.providers.google import GoogleProvider
+from boomi_mcp.gcp_kv_storage import GCPSecretManagerKeyValue
 
 # Create Google OAuth provider
 try:
@@ -87,10 +88,18 @@ try:
     if not client_id or not client_secret:
         raise ValueError("OIDC_CLIENT_ID and OIDC_CLIENT_SECRET must be set")
 
+    # Create GCP-backed storage for OAuth tokens (persistent across server restarts)
+    oauth_storage = GCPSecretManagerKeyValue(
+        project_id=os.getenv("GCP_PROJECT_ID", "boomimcp"),
+        prefix="fastmcp-oauth-"
+    )
+    print(f"[INFO] OAuth tokens will be stored in GCP Secret Manager")
+
     auth = GoogleProvider(
         client_id=client_id,
         client_secret=client_secret,
         base_url=base_url,
+        client_storage=oauth_storage,  # Use GCP Secret Manager for persistent token storage
         extra_authorize_params={
             "access_type": "offline",  # Request refresh tokens from Google
             "prompt": "consent",       # Force consent to ensure refresh token is issued
