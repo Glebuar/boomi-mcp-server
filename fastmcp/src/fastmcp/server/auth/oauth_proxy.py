@@ -1279,8 +1279,54 @@ class OAuthProxy(OAuthProvider):
         client: OAuthClientInformationFull,
         refresh_token: str,
     ) -> RefreshToken | None:
-        """Load refresh token from local storage."""
-        return self._refresh_tokens.get(refresh_token)
+        """Load refresh token by verifying JWT and checking persistent storage.
+
+        This allows tokens to survive server restarts by:
+        1. Verifying the JWT cryptographically (stateless)
+        2. Checking JTI mapping exists in persistent storage (GCP Secret Manager)
+        3. Reconstructing RefreshToken from JWT claims
+        """
+        # First check in-memory cache for performance
+        cached_token = self._refresh_tokens.get(refresh_token)
+        if cached_token:
+            return cached_token
+
+        # Token not in memory - verify JWT and check persistent storage
+        try:
+            # Verify JWT cryptographically (no database lookup needed)
+            payload = self._jwt_issuer.verify_token(refresh_token)
+            jti = payload.get("jti")
+            client_id = payload.get("client_id")
+            scopes_str = payload.get("scope", "")
+            scopes = scopes_str.split() if scopes_str else []
+
+            if not jti:
+                logger.debug("Refresh token missing JTI claim")
+                return None
+
+            # Verify JTI mapping exists in persistent storage
+            jti_mapping = await self._jti_mapping_store.get(key=jti)
+            if not jti_mapping:
+                logger.debug("JTI mapping not found for refresh token: %s", jti[:8])
+                return None
+
+            # Reconstruct RefreshToken object from JWT claims
+            refresh_token_obj = RefreshToken(
+                token=refresh_token,
+                client_id=client_id or client.client_id,
+                scopes=scopes,
+                expires_at=None,  # Refresh tokens don't expire (validated by JWT exp claim)
+            )
+
+            # Cache for future requests
+            self._refresh_tokens[refresh_token] = refresh_token_obj
+            logger.debug("Reconstructed refresh token from persistent storage (jti=%s)", jti[:8])
+
+            return refresh_token_obj
+
+        except Exception as e:
+            logger.debug("Failed to load refresh token: %s", e)
+            return None
 
     async def exchange_refresh_token(
         self,
