@@ -1438,6 +1438,37 @@ class OAuthProxy(OAuthProvider):
             ttl=storage_ttl,  # Use refresh token expiry, not access token expiry
         )
 
+        # Verify that the upstream token set was actually updated in storage
+        # This ensures subsequent load_access_token() calls will see the refreshed token
+        logger.debug(
+            "Verifying upstream token set was updated (upstream_token_id=%s)",
+            upstream_token_set.upstream_token_id[:8],
+        )
+        verified_token_set = await self._upstream_token_store.get(
+            key=upstream_token_set.upstream_token_id
+        )
+        if not verified_token_set:
+            logger.error(
+                "Failed to verify upstream token set after refresh - storage may have issues"
+            )
+            raise TokenError(
+                "server_error",
+                "Failed to persist refreshed tokens"
+            )
+        if verified_token_set.access_token != token_response["access_token"]:
+            logger.error(
+                "Upstream token mismatch after refresh - expected %s but got %s",
+                token_response["access_token"][:20],
+                verified_token_set.access_token[:20] if verified_token_set.access_token else None,
+            )
+            raise TokenError(
+                "server_error",
+                "Token storage verification failed"
+            )
+        logger.debug(
+            "Successfully verified upstream token set was updated with refreshed token"
+        )
+
         # Issue new minimal FastMCP access token (just a reference via JTI)
         new_access_jti = secrets.token_urlsafe(32)
         new_fastmcp_access = self._jwt_issuer.issue_access_token(
@@ -1513,20 +1544,6 @@ class OAuthProxy(OAuthProvider):
         if old_access:
             self._access_tokens.pop(old_access, None)
             self._access_to_refresh.pop(old_access, None)
-
-        # Update auth context with new access token (Fix for issue #1863)
-        # This ensures get_access_token() returns the refreshed token info
-        try:
-            new_access_token_obj = AccessToken(
-                token=new_fastmcp_access,
-                client_id=client.client_id,
-                scopes=scopes,
-                expires_at=int(time.time() + new_expires_in),
-            )
-            auth_context_var.set(new_access_token_obj)
-            logger.debug("Updated auth context with refreshed access token")
-        except Exception as e:
-            logger.warning("Failed to update auth context after refresh: %s", e)
 
         logger.info(
             "Issued new FastMCP tokens (rotated refresh) for client=%s (access_jti=%s, refresh_jti=%s)",
