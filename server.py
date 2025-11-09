@@ -171,7 +171,12 @@ def get_user_subject() -> str:
 #     """Use the web UI to manage credentials"""
 #     pass
 
-@mcp.tool()
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,   # Tool only reads data, does not modify environment
+        "openWorldHint": True   # Tool accesses external Boomi API
+    }
+)
 def list_boomi_profiles():
     """
     List all saved Boomi credential profiles for the authenticated user.
@@ -217,7 +222,12 @@ def list_boomi_profiles():
 #     pass
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,   # Tool only reads data, does not modify environment
+        "openWorldHint": True   # Tool accesses external Boomi API
+    }
+)
 def boomi_account_info(profile: str):
     """
     Get Boomi account information from a specific profile.
