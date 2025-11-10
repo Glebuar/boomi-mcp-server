@@ -1210,10 +1210,10 @@ class OAuthProxy(OAuthProvider):
             )
 
         # Store JTI mappings
-        # Use refresh token TTL for access JTI to survive server restarts
-        # Access token may expire in 1 hour, but JTI mapping should persist
-        # to allow token refresh after restart
-        access_jti_ttl = refresh_expires_in or (60 * 60 * 24 * 30)  # 30 days fallback
+        # Access JTI mapping should expire with access token (1 hour)
+        # Token refresh uses refresh JTI (not access JTI), so old access JTIs
+        # can be safely cleaned up after access token expires to prevent bloat
+        access_jti_ttl = expires_in  # Match access token expiry (1 hour)
         await self._jti_mapping_store.put(
             key=access_jti,
             value=JTIMapping(
@@ -1221,7 +1221,7 @@ class OAuthProxy(OAuthProvider):
                 upstream_token_id=upstream_token_id,
                 created_at=time.time(),
             ),
-            ttl=access_jti_ttl,  # Use refresh token expiry, not access token expiry
+            ttl=access_jti_ttl,  # Use access token expiry for automatic cleanup
         )
         if refresh_jti:
             await self._jti_mapping_store.put(
@@ -1479,8 +1479,9 @@ class OAuthProxy(OAuthProvider):
         )
 
         # Store new access token JTI mapping
-        # Use refresh token TTL to survive server restarts
-        new_access_jti_ttl = new_refresh_expires_in or (60 * 60 * 24 * 30)  # 30 days fallback
+        # Match access token expiry (1 hour) for automatic cleanup of old mappings
+        # Token refresh uses refresh JTI, so old access JTIs are dead weight after expiry
+        new_access_jti_ttl = new_expires_in  # Match access token expiry (1 hour)
         await self._jti_mapping_store.put(
             key=new_access_jti,
             value=JTIMapping(
@@ -1488,7 +1489,7 @@ class OAuthProxy(OAuthProvider):
                 upstream_token_id=upstream_token_set.upstream_token_id,
                 created_at=time.time(),
             ),
-            ttl=new_access_jti_ttl,  # Use refresh token expiry, not access token expiry
+            ttl=new_access_jti_ttl,  # Use access token expiry for automatic cleanup
         )
 
         # Issue NEW minimal FastMCP refresh token (rotation for security)
