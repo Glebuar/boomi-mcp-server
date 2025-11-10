@@ -106,10 +106,10 @@ try:
         raise ValueError("STORAGE_ENCRYPTION_KEY must be set for production deployment")
 
     # Create Redis storage with Fernet encryption (production-ready)
+    # Note: Cloud Memorystore transit encryption is transparent - no SSL config needed
     redis_storage = RedisStore(
         host=redis_host,
-        port=redis_port,
-        ssl=True  # Cloud Memorystore with transit encryption
+        port=redis_port
     )
 
     encrypted_storage = FernetEncryptionWrapper(
