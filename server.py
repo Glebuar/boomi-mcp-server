@@ -3,8 +3,10 @@
 Boomi MCP Server - FastMCP server with OAuth for Boomi API integration.
 
 Security features:
-- OAuth 2.0 authentication (Google)
-- Per-user credential storage (GCP Secret Manager)
+- OAuth 2.0 authentication (Google) with refresh token support
+- Per-user Boomi credential storage (GCP Secret Manager)
+- OAuth token storage (Redis with Fernet encryption)
+- Explicit JWT signing keys (production-ready)
 - Scope-based authorization
 - Secure logging (no password leaks)
 """
@@ -77,7 +79,9 @@ def delete_profile(sub: str, profile: str):
 
 # --- Auth: OAuth 2.0 with Google (Required) ---
 from fastmcp.server.auth.providers.google import GoogleProvider
-from boomi_mcp.gcp_kv_storage import GCPSecretManagerKeyValue
+from key_value.aio.stores.redis import RedisStore
+from key_value.aio.wrappers.encryption import FernetEncryptionWrapper
+from cryptography.fernet import Fernet
 
 # Create Google OAuth provider
 try:
@@ -88,18 +92,40 @@ try:
     if not client_id or not client_secret:
         raise ValueError("OIDC_CLIENT_ID and OIDC_CLIENT_SECRET must be set")
 
-    # Create GCP-backed storage for OAuth tokens (persistent across server restarts)
-    oauth_storage = GCPSecretManagerKeyValue(
-        project_id=os.getenv("GCP_PROJECT_ID", "boomimcp"),
-        prefix="fastmcp-oauth-"
+    # Get Redis connection details and encryption key
+    redis_host = os.getenv("REDIS_HOST")
+    redis_port = int(os.getenv("REDIS_PORT", "6379"))
+    jwt_signing_key = os.getenv("JWT_SIGNING_KEY")
+    storage_encryption_key = os.getenv("STORAGE_ENCRYPTION_KEY")
+
+    if not redis_host:
+        raise ValueError("REDIS_HOST must be set for production deployment")
+    if not jwt_signing_key:
+        raise ValueError("JWT_SIGNING_KEY must be set for production deployment")
+    if not storage_encryption_key:
+        raise ValueError("STORAGE_ENCRYPTION_KEY must be set for production deployment")
+
+    # Create Redis storage with Fernet encryption (production-ready)
+    redis_storage = RedisStore(
+        host=redis_host,
+        port=redis_port,
+        ssl=True  # Cloud Memorystore with transit encryption
     )
-    print(f"[INFO] OAuth tokens will be stored in GCP Secret Manager")
+
+    encrypted_storage = FernetEncryptionWrapper(
+        key_value=redis_storage,
+        fernet=Fernet(storage_encryption_key.encode())
+    )
+
+    print(f"[INFO] OAuth tokens will be stored in Redis at {redis_host}:{redis_port}")
+    print(f"[INFO] Token storage encrypted with Fernet (double encryption)")
 
     auth = GoogleProvider(
         client_id=client_id,
         client_secret=client_secret,
         base_url=base_url,
-        client_storage=oauth_storage,  # Use GCP Secret Manager for persistent token storage
+        jwt_signing_key=jwt_signing_key,  # Explicit JWT signing key (production requirement)
+        client_storage=encrypted_storage,  # Encrypted Redis storage (production requirement)
         extra_authorize_params={
             "access_type": "offline",  # Request refresh tokens from Google
             "prompt": "consent",       # Force consent to ensure refresh token is issued
