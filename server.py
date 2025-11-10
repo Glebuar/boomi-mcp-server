@@ -95,21 +95,25 @@ try:
     # Get Redis connection details and encryption key
     redis_host = os.getenv("REDIS_HOST")
     redis_port = int(os.getenv("REDIS_PORT", "6379"))
+    redis_password = os.getenv("REDIS_PASSWORD")
     jwt_signing_key = os.getenv("JWT_SIGNING_KEY")
     storage_encryption_key = os.getenv("STORAGE_ENCRYPTION_KEY")
 
     if not redis_host:
         raise ValueError("REDIS_HOST must be set for production deployment")
+    if not redis_password:
+        raise ValueError("REDIS_PASSWORD must be set for production deployment")
     if not jwt_signing_key:
         raise ValueError("JWT_SIGNING_KEY must be set for production deployment")
     if not storage_encryption_key:
         raise ValueError("STORAGE_ENCRYPTION_KEY must be set for production deployment")
 
     # Create Redis storage with Fernet encryption (production-ready)
-    # Note: Cloud Memorystore transit encryption is transparent - no SSL config needed
+    # Note: Redis AUTH enabled for defense-in-depth security
     redis_storage = RedisStore(
         host=redis_host,
-        port=redis_port
+        port=redis_port,
+        password=redis_password
     )
 
     encrypted_storage = FernetEncryptionWrapper(
@@ -118,7 +122,8 @@ try:
     )
 
     print(f"[INFO] OAuth tokens will be stored in Redis at {redis_host}:{redis_port}")
-    print(f"[INFO] Token storage encrypted with Fernet (double encryption)")
+    print(f"[INFO] Redis AUTH enabled for defense-in-depth security")
+    print(f"[INFO] Token storage encrypted with Fernet (triple layer: AUTH + Fernet + GCP)")
 
     auth = GoogleProvider(
         client_id=client_id,
