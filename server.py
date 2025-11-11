@@ -385,7 +385,12 @@ def boomi_account_info(profile: str):
 
 # --- Trading Partner MCP Tools ---
 if trading_partner_tools:
-    @mcp.tool()
+    @mcp.tool(
+        annotations={
+            "readOnlyHint": True,   # Tool only reads data, does not modify environment
+            "openWorldHint": True   # Tool accesses external Boomi API
+        }
+    )
     def list_trading_partners(profile: str, standard: str = None, classification: str = None, folder_name: str = None):
         """
         List all trading partners with optional filtering.
@@ -428,7 +433,12 @@ if trading_partner_tools:
             print(f"[ERROR] Failed to list trading partners: {e}")
             return {"_success": False, "error": str(e)}
 
-    @mcp.tool()
+    @mcp.tool(
+        annotations={
+            "readOnlyHint": True,   # Tool only reads data, does not modify environment
+            "openWorldHint": True   # Tool accesses external Boomi API
+        }
+    )
     def get_trading_partner(profile: str, component_id: str):
         """
         Get details of a specific trading partner by ID.
@@ -664,7 +674,12 @@ if trading_partner_tools:
             print(f"[ERROR] Failed to delete trading partner: {e}")
             return {"_success": False, "error": str(e)}
 
-    @mcp.tool()
+    @mcp.tool(
+        annotations={
+            "readOnlyHint": True,   # Tool only reads data, does not modify environment
+            "openWorldHint": True   # Tool accesses external Boomi API
+        }
+    )
     def analyze_trading_partner_usage(profile: str, component_id: str):
         """
         Analyze where a trading partner is used in processes and configurations.
