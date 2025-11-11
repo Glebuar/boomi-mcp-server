@@ -453,18 +453,33 @@ if trading_partner_tools:
         """
         Create a new trading partner in Boomi.
 
+        IMPORTANT: Before calling this tool, ask the user to choose:
+
+        1. TRADING STANDARD - Which EDI/B2B standard to use:
+           • x12 - North American EDI standard
+           • edifact - International EDI standard
+           • hl7 - Healthcare messaging standard
+           • rosettanet - Supply chain messaging
+           • custom - Flexible custom format
+           • tradacoms - UK retail EDI standard
+           • odette - Automotive industry standard
+
+        2. CLASSIFICATION - What type of partner:
+           • "tradingpartner" = "This is a partner that I trade with"
+           • "mytradingpartner" = "This is my company"
+
         Args:
             profile: Boomi profile name (required)
             component_name: Name of the trading partner (required)
-            standard: Trading standard (x12, edifact, hl7, custom, rosettanet, tradacoms, odette)
-            classification: Classification (tradingpartner, mycompany)
+            standard: Trading standard - must be one of: x12, edifact, hl7, rosettanet, custom, tradacoms, odette
+            classification: Classification type - use "tradingpartner" for external partners or "mytradingpartner" for your company
             folder_name: Optional folder to place the partner in
-            isa_id: ISA ID for X12 partners
-            isa_qualifier: ISA Qualifier for X12 partners
-            gs_id: GS ID for X12 partners
-            contact_name: Contact person name
-            contact_email: Contact email address
-            contact_phone: Contact phone number
+            isa_id: ISA ID for X12 partners (X12 only)
+            isa_qualifier: ISA Qualifier for X12 partners (X12 only)
+            gs_id: GS ID for X12 partners (X12 only)
+            contact_name: Contact person name (optional)
+            contact_email: Contact email address (optional)
+            contact_phone: Contact phone number (optional)
 
         Returns:
             Created trading partner details with component ID
