@@ -112,9 +112,29 @@ def build_trading_partner_xml_x12(
     Returns:
         XML string for creating the trading partner component
     """
-    # ContactInfo must be empty per Boomi API schema (matching SDK example)
-    # Contact information is managed separately in Boomi
-    contact_info_xml = "<ContactInfo />"
+    # Build ContactInfo XML with provided attributes
+    contact_attrs = []
+    if contact_name:
+        contact_attrs.append(f'name="{contact_name}"')
+    if contact_email:
+        contact_attrs.append(f'email="{contact_email}"')
+    if contact_phone:
+        contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_address:
+        contact_attrs.append(f'address1="{contact_address}"')
+    if contact_city:
+        contact_attrs.append(f'city="{contact_city}"')
+    if contact_state:
+        contact_attrs.append(f'state="{contact_state}"')
+    if contact_country:
+        contact_attrs.append(f'country="{contact_country}"')
+    if contact_postalcode:
+        contact_attrs.append(f'postalcode="{contact_postalcode}"')
+
+    if contact_attrs:
+        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
+    else:
+        contact_info_xml = "<ContactInfo />"
 
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
@@ -201,9 +221,29 @@ def build_trading_partner_xml_edifact(
     Returns:
         XML string for creating EDIFACT trading partner
     """
-    # ContactInfo must be empty per Boomi API schema (matching SDK example)
-    # Contact information is managed separately in Boomi
-    contact_info_xml = "<ContactInfo />"
+    # Build ContactInfo XML with provided attributes
+    contact_attrs = []
+    if contact_name:
+        contact_attrs.append(f'name="{contact_name}"')
+    if contact_email:
+        contact_attrs.append(f'email="{contact_email}"')
+    if contact_phone:
+        contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_address:
+        contact_attrs.append(f'address1="{contact_address}"')
+    if contact_city:
+        contact_attrs.append(f'city="{contact_city}"')
+    if contact_state:
+        contact_attrs.append(f'state="{contact_state}"')
+    if contact_country:
+        contact_attrs.append(f'country="{contact_country}"')
+    if contact_postalcode:
+        contact_attrs.append(f'postalcode="{contact_postalcode}"')
+
+    if contact_attrs:
+        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
+    else:
+        contact_info_xml = "<ContactInfo />"
 
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
@@ -296,9 +336,29 @@ def build_trading_partner_xml_hl7(
     Returns:
         XML string for creating HL7 trading partner
     """
-    # ContactInfo must be empty per Boomi API schema (matching SDK example)
-    # Contact information is managed separately in Boomi
-    contact_info_xml = "<ContactInfo />"
+    # Build ContactInfo XML with provided attributes
+    contact_attrs = []
+    if contact_name:
+        contact_attrs.append(f'name="{contact_name}"')
+    if contact_email:
+        contact_attrs.append(f'email="{contact_email}"')
+    if contact_phone:
+        contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_address:
+        contact_attrs.append(f'address1="{contact_address}"')
+    if contact_city:
+        contact_attrs.append(f'city="{contact_city}"')
+    if contact_state:
+        contact_attrs.append(f'state="{contact_state}"')
+    if contact_country:
+        contact_attrs.append(f'country="{contact_country}"')
+    if contact_postalcode:
+        contact_attrs.append(f'postalcode="{contact_postalcode}"')
+
+    if contact_attrs:
+        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
+    else:
+        contact_info_xml = "<ContactInfo />"
 
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
@@ -391,9 +451,29 @@ def build_trading_partner_xml_rosettanet(
     Returns:
         XML string for creating RosettaNet trading partner
     """
-    # ContactInfo must be empty per Boomi API schema (matching SDK example)
-    # Contact information is managed separately in Boomi
-    contact_info_xml = "<ContactInfo />"
+    # Build ContactInfo XML with provided attributes
+    contact_attrs = []
+    if contact_name:
+        contact_attrs.append(f'name="{contact_name}"')
+    if contact_email:
+        contact_attrs.append(f'email="{contact_email}"')
+    if contact_phone:
+        contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_address:
+        contact_attrs.append(f'address1="{contact_address}"')
+    if contact_city:
+        contact_attrs.append(f'city="{contact_city}"')
+    if contact_state:
+        contact_attrs.append(f'state="{contact_state}"')
+    if contact_country:
+        contact_attrs.append(f'country="{contact_country}"')
+    if contact_postalcode:
+        contact_attrs.append(f'postalcode="{contact_postalcode}"')
+
+    if contact_attrs:
+        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
+    else:
+        contact_info_xml = "<ContactInfo />"
 
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
@@ -465,9 +545,29 @@ def build_trading_partner_xml_custom(
     Returns:
         XML string for creating custom trading partner
     """
-    # ContactInfo must be empty per Boomi API schema (matching SDK example)
-    # Contact information is managed separately in Boomi
-    contact_info_xml = "<ContactInfo />"
+    # Build ContactInfo XML with provided attributes
+    contact_attrs = []
+    if contact_name:
+        contact_attrs.append(f'name="{contact_name}"')
+    if contact_email:
+        contact_attrs.append(f'email="{contact_email}"')
+    if contact_phone:
+        contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_address:
+        contact_attrs.append(f'address1="{contact_address}"')
+    if contact_city:
+        contact_attrs.append(f'city="{contact_city}"')
+    if contact_state:
+        contact_attrs.append(f'state="{contact_state}"')
+    if contact_country:
+        contact_attrs.append(f'country="{contact_country}"')
+    if contact_postalcode:
+        contact_attrs.append(f'postalcode="{contact_postalcode}"')
+
+    if contact_attrs:
+        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
+    else:
+        contact_info_xml = "<ContactInfo />"
 
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
@@ -528,9 +628,29 @@ def build_trading_partner_xml_tradacoms(
     Returns:
         XML string for creating TRADACOMS trading partner
     """
-    # ContactInfo must be empty per Boomi API schema (matching SDK example)
-    # Contact information is managed separately in Boomi
-    contact_info_xml = "<ContactInfo />"
+    # Build ContactInfo XML with provided attributes
+    contact_attrs = []
+    if contact_name:
+        contact_attrs.append(f'name="{contact_name}"')
+    if contact_email:
+        contact_attrs.append(f'email="{contact_email}"')
+    if contact_phone:
+        contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_address:
+        contact_attrs.append(f'address1="{contact_address}"')
+    if contact_city:
+        contact_attrs.append(f'city="{contact_city}"')
+    if contact_state:
+        contact_attrs.append(f'state="{contact_state}"')
+    if contact_country:
+        contact_attrs.append(f'country="{contact_country}"')
+    if contact_postalcode:
+        contact_attrs.append(f'postalcode="{contact_postalcode}"')
+
+    if contact_attrs:
+        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
+    else:
+        contact_info_xml = "<ContactInfo />"
 
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
@@ -599,9 +719,29 @@ def build_trading_partner_xml_odette(
     Returns:
         XML string for creating ODETTE trading partner
     """
-    # ContactInfo must be empty per Boomi API schema (matching SDK example)
-    # Contact information is managed separately in Boomi
-    contact_info_xml = "<ContactInfo />"
+    # Build ContactInfo XML with provided attributes
+    contact_attrs = []
+    if contact_name:
+        contact_attrs.append(f'name="{contact_name}"')
+    if contact_email:
+        contact_attrs.append(f'email="{contact_email}"')
+    if contact_phone:
+        contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_address:
+        contact_attrs.append(f'address1="{contact_address}"')
+    if contact_city:
+        contact_attrs.append(f'city="{contact_city}"')
+    if contact_state:
+        contact_attrs.append(f'state="{contact_state}"')
+    if contact_country:
+        contact_attrs.append(f'country="{contact_country}"')
+    if contact_postalcode:
+        contact_attrs.append(f'postalcode="{contact_postalcode}"')
+
+    if contact_attrs:
+        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
+    else:
+        contact_info_xml = "<ContactInfo />"
 
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
