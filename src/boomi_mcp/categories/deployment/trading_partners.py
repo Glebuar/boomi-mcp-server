@@ -1119,7 +1119,13 @@ def list_trading_partners(boomi_client, profile: str, filters: Optional[Dict[str
 
 def update_trading_partner(boomi_client, profile: str, component_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Update an existing trading partner component.
+    Update an existing trading partner component using XML-based Component API.
+
+    This implementation follows the boomi-python SDK example pattern:
+    1. Get component XML using component.get_component()
+    2. Get XML string using component.to_xml()
+    3. Parse and modify XML using ElementTree
+    4. Update using component.update_component() with modified XML
 
     Args:
         boomi_client: Authenticated Boomi SDK client
@@ -1131,62 +1137,122 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
         Updated trading partner details or error
     """
     try:
-        # First get the existing partner
-        existing = boomi_client.trading_partner_component.get_trading_partner_component(component_id)
+        import xml.etree.ElementTree as ET
 
-        # Build update data by merging existing with updates
-        update_data = {
-            "componentId": component_id,
-            "componentName": updates.get("component_name", getattr(existing, 'component_name', None)),
-            "standard": updates.get("standard", getattr(existing, 'standard', None)),
-            "classification": updates.get("classification", getattr(existing, 'classification', None))
-        }
+        # Step 1: Get the existing component using Component API (not trading_partner_component)
+        component = boomi_client.component.get_component(component_id=component_id)
 
-        # Update contact info if provided
-        if "contact_info" in updates:
-            contact = updates["contact_info"]
-            update_data["ContactInfo"] = {
-                "name": contact.get("name"),
-                "email": contact.get("email"),
-                "phone": contact.get("phone"),
-                "address": contact.get("address"),
-                "city": contact.get("city"),
-                "state": contact.get("state"),
-                "country": contact.get("country"),
-                "postalCode": contact.get("postal_code")
+        if not component:
+            return {
+                "_success": False,
+                "error": "Component not found",
+                "message": f"Trading partner {component_id} not found"
             }
-        elif hasattr(existing, 'ContactInfo'):
-            # Keep existing contact info
-            update_data["ContactInfo"] = existing.ContactInfo
 
-        # Update partner info if provided
-        if "partner_info" in updates:
-            info = updates["partner_info"]
-            update_data["PartnerInfo"] = {}
+        # Step 2: Get full XML structure using to_xml() method
+        try:
+            full_xml = component.to_xml()
+        except Exception as e:
+            return {
+                "_success": False,
+                "error": f"Failed to get component XML: {str(e)}",
+                "message": "Could not retrieve component XML structure"
+            }
 
-            if updates.get("standard", getattr(existing, 'standard', 'x12')) == "x12":
-                update_data["PartnerInfo"]["ISAId"] = info.get("isa_id", "")
-                update_data["PartnerInfo"]["ISAQualifier"] = info.get("isa_qualifier", "")
-                update_data["PartnerInfo"]["GSId"] = info.get("gs_id", "")
-            elif updates.get("standard") == "edifact":
-                update_data["PartnerInfo"]["UNBId"] = info.get("unb_id", "")
-                update_data["PartnerInfo"]["UNBQualifier"] = info.get("unb_qualifier", "")
-        elif hasattr(existing, 'PartnerInfo'):
-            # Keep existing partner info
-            update_data["PartnerInfo"] = existing.PartnerInfo
+        # Step 3: Parse and modify the XML
+        try:
+            root = ET.fromstring(full_xml)
 
-        # Update trading partner
-        result = boomi_client.trading_partner_component.update_trading_partner_component(
-            component_id, update_data
+            # Update component name if provided
+            if "component_name" in updates:
+                root.set('name', updates["component_name"])
+
+            # Update description if provided
+            if "description" in updates:
+                root.set('description', updates["description"])
+
+            # For contact info and partner info, we need to navigate to the TradingPartner element
+            # Find the TradingPartner element in the object section
+            ns = {'bns': 'http://api.platform.boomi.com/'}
+            trading_partner = root.find('.//TradingPartner')
+
+            if trading_partner is None:
+                return {
+                    "_success": False,
+                    "error": "Not a trading partner component",
+                    "message": "Component XML does not contain TradingPartner element"
+                }
+
+            # Update contact info if provided
+            if "contact_info" in updates:
+                contact_info = trading_partner.find('ContactInfo')
+                if contact_info is None:
+                    contact_info = ET.SubElement(trading_partner, 'ContactInfo')
+
+                # Clear existing contact info
+                contact_info.clear()
+
+                # Add updated contact fields
+                contact = updates["contact_info"]
+                if contact.get("name"):
+                    contact_info.set('name', contact["name"])
+                if contact.get("email"):
+                    contact_info.set('email', contact["email"])
+                if contact.get("phone"):
+                    contact_info.set('phone', contact["phone"])
+
+            # Update partner-specific info (X12, EDIFACT, etc.) if provided
+            if "partner_info" in updates:
+                partner_info_elem = trading_partner.find('PartnerInfo')
+                if partner_info_elem is not None:
+                    info = updates["partner_info"]
+
+                    # Update X12 fields
+                    x12_elem = partner_info_elem.find('.//X12ControlInfo')
+                    if x12_elem is not None:
+                        isa_elem = x12_elem.find('ISAControlInfo')
+                        if isa_elem is not None:
+                            if "isa_id" in info:
+                                isa_elem.set('isaid', info["isa_id"])
+                            if "isa_qualifier" in info:
+                                isa_elem.set('isaqualifier', info["isa_qualifier"])
+
+                        gs_elem = x12_elem.find('GSControlInfo')
+                        if gs_elem is not None and "gs_id" in info:
+                            gs_elem.set('gsid', info["gs_id"])
+
+                    # Update EDIFACT fields
+                    edifact_elem = partner_info_elem.find('.//EDIFACTControlInfo')
+                    if edifact_elem is not None:
+                        unb_elem = edifact_elem.find('UNBControlInfo')
+                        if unb_elem is not None:
+                            if "unb_id" in info:
+                                unb_elem.set('unbid', info["unb_id"])
+                            if "unb_qualifier" in info:
+                                unb_elem.set('unbqualifier', info["unb_qualifier"])
+
+            # Convert back to XML string
+            modified_xml = ET.tostring(root, encoding='unicode')
+
+        except ET.ParseError as e:
+            return {
+                "_success": False,
+                "error": f"XML parse error: {str(e)}",
+                "message": "Failed to parse component XML"
+            }
+
+        # Step 4: Update the component with modified XML
+        result = boomi_client.component.update_component(
+            component_id=component_id,
+            request_body=modified_xml
         )
 
         return {
             "_success": True,
             "trading_partner": {
                 "component_id": component_id,
-                "name": updates.get("component_name", getattr(result, 'component_name', None)),
-                "standard": updates.get("standard", getattr(result, 'standard', None)),
-                "classification": updates.get("classification", getattr(result, 'classification', None))
+                "name": updates.get("component_name", getattr(component, 'name', None)),
+                "updated_fields": list(updates.keys())
             },
             "message": f"Successfully updated trading partner: {component_id}"
         }
