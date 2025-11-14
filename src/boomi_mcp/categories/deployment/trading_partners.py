@@ -1057,9 +1057,17 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
     """
     try:
         # Use id_ parameter as shown in SDK example
-        result = boomi_client.trading_partner_component.get_trading_partner_component(
-            id_=component_id
-        )
+        # If ContactInfo parsing fails, fall back to Component API
+        try:
+            result = boomi_client.trading_partner_component.get_trading_partner_component(
+                id_=component_id
+            )
+        except Exception as sdk_error:
+            # If SDK ContactInfo parsing fails, use Component API instead
+            if "ContactInfo" in str(sdk_error):
+                result = boomi_client.component.get_component(component_id=component_id)
+            else:
+                raise
 
         # Extract component ID using SDK pattern (id_ attribute)
         retrieved_id = None
@@ -1089,14 +1097,18 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
         if hasattr(result, 'ContactInfo') or hasattr(result, 'contact_info'):
             contact = getattr(result, 'ContactInfo', None) or getattr(result, 'contact_info', None)
             if contact:
+                # Use safe attribute access with defaults for all fields
                 contact_info = {
                     "name": getattr(contact, 'contact_name', getattr(contact, 'name', None)),
                     "email": getattr(contact, 'email', None),
                     "phone": getattr(contact, 'phone', None),
-                    "address": getattr(contact, 'address', None),
+                    "address1": getattr(contact, 'address1', None),
+                    "address2": getattr(contact, 'address2', None),
                     "city": getattr(contact, 'city', None),
                     "state": getattr(contact, 'state', None),
-                    "country": getattr(contact, 'country', None)
+                    "country": getattr(contact, 'country', None),
+                    "postalcode": getattr(contact, 'postalcode', None),
+                    "fax": getattr(contact, 'fax', None)
                 }
 
         return {
