@@ -18,6 +18,7 @@ Supported Standards:
 from typing import Dict, Any, List, Optional
 import json
 from datetime import datetime
+import xml.etree.ElementTree as ET
 
 # Import typed models for query operations
 from boomi.models import (
