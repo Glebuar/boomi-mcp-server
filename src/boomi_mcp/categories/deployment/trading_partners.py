@@ -1645,11 +1645,8 @@ def analyze_trading_partner_usage(boomi_client, profile: str, component_id: str)
         # Execute query
         query_result = boomi_client.component_reference.query_component_reference(request_body=query_config)
 
-        # Parse references by type
-        processes = []
-        connections = []
-        maps = []
-        other_components = []
+        # Collect all referenced components
+        referenced_by = []
 
         # Extract references from query results
         if hasattr(query_result, 'result') and query_result.result:
@@ -1662,44 +1659,29 @@ def analyze_trading_partner_usage(boomi_client, profile: str, component_id: str)
                 for ref in refs:
                     parent_id = getattr(ref, 'parent_component_id', None)
                     parent_version = getattr(ref, 'parent_version', None)
-                    ref_type = getattr(ref, 'type', 'UNKNOWN')
 
                     if parent_id:
-                        # Try to get component metadata to determine type
+                        # Try to get component metadata
                         try:
                             parent_comp = boomi_client.component.get_component(component_id=parent_id)
-                            comp_type = getattr(parent_comp, 'type', 'unknown').lower()
+                            comp_type = getattr(parent_comp, 'type', 'unknown')
                             comp_name = getattr(parent_comp, 'name', 'Unknown')
 
-                            ref_info = {
+                            referenced_by.append({
                                 "component_id": parent_id,
                                 "name": comp_name,
-                                "version": parent_version,
                                 "type": comp_type,
-                                "reference_type": ref_type
-                            }
-
-                            # Categorize by component type
-                            if comp_type == 'process':
-                                processes.append(ref_info)
-                            elif comp_type == 'connection':
-                                connections.append(ref_info)
-                            elif comp_type == 'map':
-                                maps.append(ref_info)
-                            else:
-                                other_components.append(ref_info)
+                                "version": str(parent_version)
+                            })
                         except Exception as e:
                             # If we can't get parent component details, still include the reference
-                            other_components.append({
+                            referenced_by.append({
                                 "component_id": parent_id,
                                 "name": "Unknown",
-                                "version": parent_version,
                                 "type": "unknown",
-                                "reference_type": ref_type,
+                                "version": str(parent_version),
                                 "error": str(e)
                             })
-
-        total_refs = len(processes) + len(connections) + len(maps) + len(other_components)
 
         analysis = {
             "_success": True,
@@ -1708,16 +1690,9 @@ def analyze_trading_partner_usage(boomi_client, profile: str, component_id: str)
                 "name": partner_name,
                 "standard": getattr(partner, 'standard', None)
             },
-            "usage": {
-                "processes": processes,
-                "connections": connections,
-                "maps": maps,
-                "other_components": other_components
-            },
-            "summary": {
-                "total_references": total_refs,
-                "can_safely_delete": total_refs == 0
-            },
+            "referenced_by": referenced_by,
+            "total_references": len(referenced_by),
+            "can_safely_delete": len(referenced_by) == 0,
             "_note": "Shows immediate references (one level). UI's 'Show Where Used' does recursive tracing."
         }
 
