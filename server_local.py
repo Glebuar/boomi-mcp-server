@@ -521,6 +521,11 @@ if manage_trading_partner_action:
                     if gs_id:
                         updates["partner_info"]["gs_id"] = gs_id
 
+                # Add communication protocols if provided
+                if communication_protocols:
+                    protocols_list = [p.strip() for p in communication_protocols.split(',')]
+                    updates["communication_protocols"] = protocols_list
+
                 params["updates"] = updates
 
             elif action == "delete":

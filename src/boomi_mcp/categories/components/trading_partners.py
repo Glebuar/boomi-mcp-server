@@ -1897,6 +1897,54 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                             if "unb_qualifier" in info:
                                 unb_elem.set('unbqualifier', info["unb_qualifier"])
 
+            # Update communication protocols if provided
+            if "communication_protocols" in updates:
+                # Find PartnerCommunication element
+                partner_comm = trading_partner.find('PartnerCommunication')
+                if partner_comm is None:
+                    return {
+                        "_success": False,
+                        "error": "PartnerCommunication element not found",
+                        "message": "Cannot update communication protocols - PartnerCommunication element is missing"
+                    }
+
+                # Find the standard-specific element (X12PartnerCommunication, EdifactPartnerCommunication, etc.)
+                standard_elements = [
+                    'X12PartnerCommunication',
+                    'EdifactPartnerCommunication',
+                    'CustomPartnerCommunication',
+                    'HL7PartnerCommunication',
+                    'OdettePartnerCommunication',
+                    'RosettaNetPartnerCommunication',
+                    'TradacomsPartnerCommunication'
+                ]
+
+                standard_comm = None
+                for elem_name in standard_elements:
+                    standard_comm = partner_comm.find(elem_name)
+                    if standard_comm is not None:
+                        break
+
+                if standard_comm is None:
+                    return {
+                        "_success": False,
+                        "error": "Standard-specific communication element not found",
+                        "message": "Cannot update communication protocols - no standard communication element found"
+                    }
+
+                # Remove existing CommunicationOptions from the standard-specific element
+                existing_comm_opts = standard_comm.find('CommunicationOptions')
+                if existing_comm_opts is not None:
+                    standard_comm.remove(existing_comm_opts)
+
+                # Build new communication XML
+                comm_xml = build_communication_xml(updates["communication_protocols"])
+
+                # Parse and insert the new CommunicationOptions into the standard-specific element
+                comm_elem = ET.fromstring(f'<root>{comm_xml}</root>')
+                for child in comm_elem:
+                    standard_comm.append(child)
+
             # Convert back to XML string
             modified_xml = ET.tostring(root, encoding='unicode')
 
