@@ -194,17 +194,78 @@ def extract_communication_protocol_details(xml_string: str) -> List[Dict[str, An
 
             # Extract HTTP protocol settings
             elif protocol_type == 'http':
-                http_settings = comm_option.find('.//HTTPSettings')
+                http_settings = comm_option.find('.//HttpSettings')
                 if http_settings is not None:
                     settings['url'] = http_settings.get('url')
+                    settings['authentication_type'] = http_settings.get('authenticationType')
+                    settings['connect_timeout'] = http_settings.get('connectTimeout')
+                    settings['read_timeout'] = http_settings.get('readTimeout')
+
+                    # Extract auth settings (username only, password masked)
+                    auth_settings = http_settings.find('.//AuthSettings')
+                    if auth_settings is not None:
+                        settings['username'] = auth_settings.get('user')
+                        settings['password_configured'] = bool(auth_settings.get('password'))
+
+                    # Extract SSL options
+                    ssl_options = http_settings.find('.//SSLOptions')
+                    if ssl_options is not None:
+                        settings['client_auth'] = ssl_options.get('clientauth')
+                        settings['trust_server_cert'] = ssl_options.get('trustServerCert')
+
+                # Extract HTTP action settings (Get or Send)
+                http_get = comm_option.find('.//HttpGetAction')
+                http_send = comm_option.find('.//HttpSendAction')
+                http_action = http_get if http_get is not None else http_send
+
+                if http_action is not None:
+                    settings['method_type'] = http_action.get('methodType')
+                    settings['data_content_type'] = http_action.get('dataContentType')
+                    settings['follow_redirects'] = http_action.get('followRedirects')
+                    settings['return_errors'] = http_action.get('returnErrors')
 
             # Extract AS2 protocol settings
             elif protocol_type == 'as2':
-                as2_settings = comm_option.find('.//AS2Settings')
-                if as2_settings is not None:
-                    settings['url'] = as2_settings.get('url')
-                    settings['as2_identifier'] = as2_settings.get('as2Identifier')
-                    settings['partner_as2_identifier'] = as2_settings.get('partnerAS2Identifier')
+                # Extract from AS2ServerSettings/defaultPartnerSettings
+                partner_settings = comm_option.find('.//defaultPartnerSettings')
+                if partner_settings is not None:
+                    settings['url'] = partner_settings.get('url')
+                    settings['authentication_type'] = partner_settings.get('authenticationType')
+                    settings['verify_hostname'] = partner_settings.get('verifyHostname')
+                    settings['client_ssl_alias'] = partner_settings.get('clientsslAlias')
+
+                    # Extract auth settings (username only, password masked)
+                    auth_settings = partner_settings.find('.//AuthSettings')
+                    if auth_settings is not None:
+                        settings['username'] = auth_settings.get('user')
+                        settings['password_configured'] = bool(auth_settings.get('password'))
+
+                # Extract partner info (AS2 IDs)
+                partner_info = comm_option.find('.//partnerInfo')
+                if partner_info is not None:
+                    settings['as2_identifier'] = partner_info.get('as2Id')
+                    settings['encrypt_alias'] = partner_info.get('encryptAlias')
+                    settings['sign_alias'] = partner_info.get('signAlias')
+                    settings['mdn_alias'] = partner_info.get('mdnAlias')
+
+                # Extract AS2 message options
+                msg_options = comm_option.find('.//AS2MessageOptions')
+                if msg_options is not None:
+                    settings['signed'] = msg_options.get('signed')
+                    settings['encrypted'] = msg_options.get('encrypted')
+                    settings['compressed'] = msg_options.get('compressed')
+                    settings['encryption_algorithm'] = msg_options.get('encryptionAlgorithm')
+                    settings['signing_digest_alg'] = msg_options.get('signingDigestAlg')
+                    settings['data_content_type'] = msg_options.get('dataContentType')
+
+                # Extract AS2 MDN options
+                mdn_options = comm_option.find('.//AS2MDNOptions')
+                if mdn_options is not None:
+                    settings['request_mdn'] = mdn_options.get('requestMDN')
+                    settings['mdn_signed'] = mdn_options.get('signed')
+                    settings['mdn_digest_alg'] = mdn_options.get('mdnDigestAlg')
+                    settings['synchronous_mdn'] = mdn_options.get('synchronous')
+                    settings['fail_on_negative_mdn'] = mdn_options.get('failOnNegativeMDN')
 
             # Extract MLLP protocol settings
             elif protocol_type == 'mllp':
