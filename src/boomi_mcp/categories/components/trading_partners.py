@@ -171,8 +171,8 @@ def _build_ftp_option() -> str:
     return '''            <CommunicationOption commOption="default" method="ftp">
               <CommunicationSettings docType="default">
                 <SettingsObject useMyTradingPartnerSettings="false">
-                  <FTPSettings connectionMode="passive">
-                    <AuthSettings/>
+                  <FTPSettings connectionMode="passive" host="" port="21">
+                    <AuthSettings user=""/>
                     <SSLOptions clientauth="false" sslmode="none"/>
                   </FTPSettings>
                 </SettingsObject>
@@ -1963,6 +1963,63 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                 disk_send_action = trading_partner.find('.//DiskSendAction')
                 if disk_send_action is not None and "send_directory" in disk_settings_updates:
                     disk_send_action.set('sendDirectory', disk_settings_updates["send_directory"])
+
+            # Update FTP communication settings if provided
+            if "ftp_settings" in updates:
+                ftp_settings_updates = updates["ftp_settings"]
+
+                # Find FTPSettings element
+                ftp_settings_elem = trading_partner.find('.//CommunicationOption[@method="ftp"]//FTPSettings')
+                if ftp_settings_elem is not None:
+                    if "host" in ftp_settings_updates:
+                        ftp_settings_elem.set('host', ftp_settings_updates["host"])
+                    if "port" in ftp_settings_updates:
+                        ftp_settings_elem.set('port', str(ftp_settings_updates["port"]))
+
+                # Find AuthSettings within FTP
+                auth_settings = trading_partner.find('.//CommunicationOption[@method="ftp"]//AuthSettings')
+                if auth_settings is not None and "username" in ftp_settings_updates:
+                    auth_settings.set('user', ftp_settings_updates["username"])
+
+            # Update SFTP communication settings if provided
+            if "sftp_settings" in updates:
+                sftp_settings_updates = updates["sftp_settings"]
+
+                # Find SFTPSettings element
+                sftp_settings_elem = trading_partner.find('.//CommunicationOption[@method="sftp"]//SFTPSettings')
+                if sftp_settings_elem is not None:
+                    if "host" in sftp_settings_updates:
+                        sftp_settings_elem.set('host', sftp_settings_updates["host"])
+                    if "port" in sftp_settings_updates:
+                        sftp_settings_elem.set('port', str(sftp_settings_updates["port"]))
+
+                # Find AuthSettings within SFTP
+                auth_settings = trading_partner.find('.//CommunicationOption[@method="sftp"]//AuthSettings')
+                if auth_settings is not None and "username" in sftp_settings_updates:
+                    auth_settings.set('user', sftp_settings_updates["username"])
+
+            # Update HTTP communication settings if provided
+            if "http_settings" in updates:
+                http_settings_updates = updates["http_settings"]
+
+                # Find HTTPSendAction element
+                http_send_action = trading_partner.find('.//HTTPSendAction')
+                if http_send_action is not None and "url" in http_settings_updates:
+                    http_send_action.set('url', http_settings_updates["url"])
+
+            # Update AS2 communication settings if provided
+            if "as2_settings" in updates:
+                as2_settings_updates = updates["as2_settings"]
+
+                # Find AS2Settings element
+                as2_settings_elem = trading_partner.find('.//AS2Settings')
+                if as2_settings_elem is not None:
+                    if "url" in as2_settings_updates:
+                        as2_settings_elem.set('url', as2_settings_updates["url"])
+                    if "as2_identifier" in as2_settings_updates:
+                        as2_settings_elem.set('as2Identifier', as2_settings_updates["as2_identifier"])
+                    if "partner_as2_identifier" in as2_settings_updates:
+                        as2_settings_elem.set('partnerAS2Identifier', as2_settings_updates["partner_as2_identifier"])
 
             # Convert back to XML string
             modified_xml = ET.tostring(root, encoding='unicode')
