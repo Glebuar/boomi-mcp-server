@@ -367,7 +367,10 @@ if manage_trading_partner_action:
         contact_state: str = None,
         contact_country: str = None,
         contact_postalcode: str = None,
-        communication_protocols: str = None
+        communication_protocols: str = None,
+        disk_directory: str = None,
+        disk_get_directory: str = None,
+        disk_send_directory: str = None
     ):
         """
         Manage B2B/EDI trading partners (all 7 standards).
@@ -396,6 +399,9 @@ if manage_trading_partner_action:
             contact_country: Contact country (optional)
             contact_postalcode: Contact postal/zip code (optional)
             communication_protocols: Comma-separated list of communication protocols to enable (optional for create)
+            disk_directory: Main directory for Disk protocol (DiskSettings/@directory)
+            disk_get_directory: Get/Receive directory for Disk protocol (DiskGetAction/@getDirectory)
+            disk_send_directory: Send directory for Disk protocol (DiskSendAction/@sendDirectory)
                                     Available: ftp, sftp, http, as2, mllp, oftp, disk
                                     Example: "ftp,http" or "as2,sftp"
                                     If not provided, creates partner with no communication configured (can be added later via UI)
@@ -525,6 +531,16 @@ if manage_trading_partner_action:
                 if communication_protocols:
                     protocols_list = [p.strip() for p in communication_protocols.split(',')]
                     updates["communication_protocols"] = protocols_list
+
+                # Add Disk communication directories if provided
+                if disk_directory is not None or disk_get_directory is not None or disk_send_directory is not None:
+                    updates["disk_settings"] = {}
+                    if disk_directory is not None:
+                        updates["disk_settings"]["directory"] = disk_directory
+                    if disk_get_directory is not None:
+                        updates["disk_settings"]["get_directory"] = disk_get_directory
+                    if disk_send_directory is not None:
+                        updates["disk_settings"]["send_directory"] = disk_send_directory
 
                 params["updates"] = updates
 

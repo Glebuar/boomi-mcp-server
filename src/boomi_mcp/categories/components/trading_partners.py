@@ -1945,6 +1945,25 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                 for child in comm_elem:
                     standard_comm.append(child)
 
+            # Update Disk communication settings if provided
+            if "disk_settings" in updates:
+                disk_settings_updates = updates["disk_settings"]
+
+                # Find DiskSettings element
+                disk_settings_elem = trading_partner.find('.//DiskSettings')
+                if disk_settings_elem is not None and "directory" in disk_settings_updates:
+                    disk_settings_elem.set('directory', disk_settings_updates["directory"])
+
+                # Find DiskGetAction element
+                disk_get_action = trading_partner.find('.//DiskGetAction')
+                if disk_get_action is not None and "get_directory" in disk_settings_updates:
+                    disk_get_action.set('getDirectory', disk_settings_updates["get_directory"])
+
+                # Find DiskSendAction element
+                disk_send_action = trading_partner.find('.//DiskSendAction')
+                if disk_send_action is not None and "send_directory" in disk_settings_updates:
+                    disk_send_action.set('sendDirectory', disk_settings_updates["send_directory"])
+
             # Convert back to XML string
             modified_xml = ET.tostring(root, encoding='unicode')
 
