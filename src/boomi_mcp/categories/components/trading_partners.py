@@ -104,6 +104,137 @@ def extract_communication_protocols(xml_string: str) -> List[str]:
     return protocols
 
 
+def extract_communication_protocol_details(xml_string: str) -> List[Dict[str, Any]]:
+    """
+    Extract detailed communication protocol settings from trading partner XML.
+
+    Args:
+        xml_string: Full component XML or TradingPartner XML
+
+    Returns:
+        List of protocol dicts with type and settings, e.g.:
+        [
+            {
+                "type": "disk",
+                "settings": {
+                    "directory": "/data/partners/acme",
+                    "get_directory": "/data/partners/acme/inbound",
+                    "send_directory": "/data/partners/acme/outbound"
+                }
+            },
+            {
+                "type": "ftp",
+                "settings": {
+                    "host": "ftp.example.com",
+                    "port": "21",
+                    "username": "testuser"
+                }
+            }
+        ]
+    """
+    protocols = []
+
+    if not xml_string or '<CommunicationOptions' not in xml_string:
+        return protocols
+
+    # Check if it's empty
+    if '<CommunicationOptions />' in xml_string:
+        return protocols
+
+    try:
+        root = ET.fromstring(xml_string)
+
+        # Find all CommunicationOption elements
+        comm_options = root.findall('.//CommunicationOption')
+
+        for comm_option in comm_options:
+            protocol_type = comm_option.get('method', '').lower()
+            if not protocol_type:
+                continue
+
+            settings = {}
+
+            # Extract Disk protocol settings
+            if protocol_type == 'disk':
+                disk_settings = comm_option.find('.//DiskSettings')
+                if disk_settings is not None:
+                    settings['directory'] = disk_settings.get('directory')
+
+                disk_get = comm_option.find('.//DiskGetAction')
+                if disk_get is not None:
+                    settings['get_directory'] = disk_get.get('getDirectory')
+
+                disk_send = comm_option.find('.//DiskSendAction')
+                if disk_send is not None:
+                    settings['send_directory'] = disk_send.get('sendDirectory')
+
+            # Extract FTP protocol settings
+            elif protocol_type == 'ftp':
+                ftp_settings = comm_option.find('.//FTPSettings')
+                if ftp_settings is not None:
+                    settings['host'] = ftp_settings.get('host')
+                    settings['port'] = ftp_settings.get('port')
+                    settings['connection_mode'] = ftp_settings.get('connectionMode')
+
+                auth_settings = comm_option.find('.//FTPSettings/AuthSettings')
+                if auth_settings is not None:
+                    settings['username'] = auth_settings.get('user')
+
+            # Extract SFTP protocol settings
+            elif protocol_type == 'sftp':
+                sftp_settings = comm_option.find('.//SFTPSettings')
+                if sftp_settings is not None:
+                    settings['host'] = sftp_settings.get('host')
+                    settings['port'] = sftp_settings.get('port')
+
+                auth_settings = comm_option.find('.//SFTPSettings/AuthSettings')
+                if auth_settings is not None:
+                    settings['username'] = auth_settings.get('user')
+
+            # Extract HTTP protocol settings
+            elif protocol_type == 'http':
+                http_settings = comm_option.find('.//HTTPSettings')
+                if http_settings is not None:
+                    settings['url'] = http_settings.get('url')
+
+            # Extract AS2 protocol settings
+            elif protocol_type == 'as2':
+                as2_settings = comm_option.find('.//AS2Settings')
+                if as2_settings is not None:
+                    settings['url'] = as2_settings.get('url')
+                    settings['as2_identifier'] = as2_settings.get('as2Identifier')
+                    settings['partner_as2_identifier'] = as2_settings.get('partnerAS2Identifier')
+
+            # Extract MLLP protocol settings
+            elif protocol_type == 'mllp':
+                mllp_settings = comm_option.find('.//MLLPSettings')
+                if mllp_settings is not None:
+                    settings['host'] = mllp_settings.get('host')
+                    settings['port'] = mllp_settings.get('port')
+
+            # Extract OFTP protocol settings
+            elif protocol_type == 'oftp':
+                oftp_settings = comm_option.find('.//OFTPSettings')
+                if oftp_settings is not None:
+                    settings['host'] = oftp_settings.get('host')
+                    settings['port'] = oftp_settings.get('port')
+
+            # Remove None values from settings
+            settings = {k: v for k, v in settings.items() if v is not None}
+
+            if settings:  # Only add if we found some settings
+                protocols.append({
+                    "type": protocol_type,
+                    "settings": settings
+                })
+
+    except Exception as e:
+        # If parsing fails, return empty list
+        pass
+
+    return protocols
+
+
 def _build_as2_option() -> str:
     """Build AS2 CommunicationOption (exact UI structure)"""
     return '''            <CommunicationOption commOption="default" method="as2">
@@ -1585,8 +1716,8 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
                     # Remove None values
                     contact_info = {k: v for k, v in contact_info.items() if v is not None}
 
-                # Extract communication protocols
-                communication_protocols = extract_communication_protocols(xml_str)
+                # Extract communication protocols with detailed settings
+                communication_protocols = extract_communication_protocol_details(xml_str)
 
             except Exception as xml_error:
                 # If XML parsing fails, just continue without contact info
