@@ -103,7 +103,9 @@ def build_trading_partner_xml_x12(
         - contact_name: Contact person name
         - contact_email: Contact email
         - contact_phone: Contact phone
-        - contact_address: Street address
+        - contact_fax: Fax number
+        - contact_address: Street address (line 1)
+        - contact_address2: Street address (line 2)
         - contact_city: City
         - contact_state: State/province
         - contact_country: Country
@@ -120,8 +122,12 @@ def build_trading_partner_xml_x12(
         contact_attrs.append(f'email="{contact_email}"')
     if contact_phone:
         contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_fax:
+        contact_attrs.append(f'fax="{contact_fax}"')
     if contact_address:
         contact_attrs.append(f'address1="{contact_address}"')
+    if contact_address2:
+        contact_attrs.append(f'address2="{contact_address2}"')
     if contact_city:
         contact_attrs.append(f'city="{contact_city}"')
     if contact_state:
@@ -229,8 +235,12 @@ def build_trading_partner_xml_edifact(
         contact_attrs.append(f'email="{contact_email}"')
     if contact_phone:
         contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_fax:
+        contact_attrs.append(f'fax="{contact_fax}"')
     if contact_address:
         contact_attrs.append(f'address1="{contact_address}"')
+    if contact_address2:
+        contact_attrs.append(f'address2="{contact_address2}"')
     if contact_city:
         contact_attrs.append(f'city="{contact_city}"')
     if contact_state:
@@ -344,8 +354,12 @@ def build_trading_partner_xml_hl7(
         contact_attrs.append(f'email="{contact_email}"')
     if contact_phone:
         contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_fax:
+        contact_attrs.append(f'fax="{contact_fax}"')
     if contact_address:
         contact_attrs.append(f'address1="{contact_address}"')
+    if contact_address2:
+        contact_attrs.append(f'address2="{contact_address2}"')
     if contact_city:
         contact_attrs.append(f'city="{contact_city}"')
     if contact_state:
@@ -459,8 +473,12 @@ def build_trading_partner_xml_rosettanet(
         contact_attrs.append(f'email="{contact_email}"')
     if contact_phone:
         contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_fax:
+        contact_attrs.append(f'fax="{contact_fax}"')
     if contact_address:
         contact_attrs.append(f'address1="{contact_address}"')
+    if contact_address2:
+        contact_attrs.append(f'address2="{contact_address2}"')
     if contact_city:
         contact_attrs.append(f'city="{contact_city}"')
     if contact_state:
@@ -553,8 +571,12 @@ def build_trading_partner_xml_custom(
         contact_attrs.append(f'email="{contact_email}"')
     if contact_phone:
         contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_fax:
+        contact_attrs.append(f'fax="{contact_fax}"')
     if contact_address:
         contact_attrs.append(f'address1="{contact_address}"')
+    if contact_address2:
+        contact_attrs.append(f'address2="{contact_address2}"')
     if contact_city:
         contact_attrs.append(f'city="{contact_city}"')
     if contact_state:
@@ -636,8 +658,12 @@ def build_trading_partner_xml_tradacoms(
         contact_attrs.append(f'email="{contact_email}"')
     if contact_phone:
         contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_fax:
+        contact_attrs.append(f'fax="{contact_fax}"')
     if contact_address:
         contact_attrs.append(f'address1="{contact_address}"')
+    if contact_address2:
+        contact_attrs.append(f'address2="{contact_address2}"')
     if contact_city:
         contact_attrs.append(f'city="{contact_city}"')
     if contact_state:
@@ -727,8 +753,12 @@ def build_trading_partner_xml_odette(
         contact_attrs.append(f'email="{contact_email}"')
     if contact_phone:
         contact_attrs.append(f'phone="{contact_phone}"')
+    if contact_fax:
+        contact_attrs.append(f'fax="{contact_fax}"')
     if contact_address:
         contact_attrs.append(f'address1="{contact_address}"')
+    if contact_address2:
+        contact_attrs.append(f'address2="{contact_address2}"')
     if contact_city:
         contact_attrs.append(f'city="{contact_city}"')
     if contact_state:
@@ -819,7 +849,9 @@ def build_trading_partner_xml(request_data: Dict[str, Any]) -> str:
         "contact_name": contact_info.get("name", ""),
         "contact_email": contact_info.get("email", ""),
         "contact_phone": contact_info.get("phone", ""),
+        "contact_fax": contact_info.get("fax", ""),
         "contact_address": contact_info.get("address", ""),
+        "contact_address2": contact_info.get("address2", ""),
         "contact_city": contact_info.get("city", ""),
         "contact_state": contact_info.get("state", ""),
         "contact_country": contact_info.get("country", ""),
@@ -1393,7 +1425,7 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                 # Clear existing contact info
                 contact_info.clear()
 
-                # Add updated contact fields
+                # Add updated contact fields (all 10 fields)
                 contact = updates["contact_info"]
                 if contact.get("name"):
                     contact_info.set('name', contact["name"])
@@ -1401,6 +1433,20 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                     contact_info.set('email', contact["email"])
                 if contact.get("phone"):
                     contact_info.set('phone', contact["phone"])
+                if contact.get("fax"):
+                    contact_info.set('fax', contact["fax"])
+                if contact.get("address"):
+                    contact_info.set('address1', contact["address"])
+                if contact.get("address2"):
+                    contact_info.set('address2', contact["address2"])
+                if contact.get("city"):
+                    contact_info.set('city', contact["city"])
+                if contact.get("state"):
+                    contact_info.set('state', contact["state"])
+                if contact.get("country"):
+                    contact_info.set('country', contact["country"])
+                if contact.get("postal_code"):
+                    contact_info.set('postalcode', contact["postal_code"])
 
             # Update partner-specific info (X12, EDIFACT, etc.) if provided
             if "partner_info" in updates:

@@ -359,7 +359,14 @@ if manage_trading_partner_action:
         gs_id: str = None,
         contact_name: str = None,
         contact_email: str = None,
-        contact_phone: str = None
+        contact_phone: str = None,
+        contact_fax: str = None,
+        contact_address: str = None,
+        contact_address2: str = None,
+        contact_city: str = None,
+        contact_state: str = None,
+        contact_country: str = None,
+        contact_postalcode: str = None
     ):
         """
         Manage B2B/EDI trading partners (all 7 standards).
@@ -380,6 +387,13 @@ if manage_trading_partner_action:
             contact_name: Contact person name (optional)
             contact_email: Contact email address (optional)
             contact_phone: Contact phone number (optional)
+            contact_fax: Contact fax number (optional)
+            contact_address: Contact street address line 1 (optional)
+            contact_address2: Contact street address line 2 (optional)
+            contact_city: Contact city (optional)
+            contact_state: Contact state/province (optional)
+            contact_country: Contact country (optional)
+            contact_postalcode: Contact postal/zip code (optional)
 
         Returns:
             Action result with success status and data/error
@@ -434,7 +448,7 @@ if manage_trading_partner_action:
                     if gs_id:
                         request_data["partner_info"]["gs_id"] = gs_id
 
-                if contact_name or contact_email or contact_phone:
+                if contact_name or contact_email or contact_phone or contact_fax or contact_address or contact_address2 or contact_city or contact_state or contact_country or contact_postalcode:
                     request_data["contact_info"] = {}
                     if contact_name:
                         request_data["contact_info"]["name"] = contact_name
@@ -442,6 +456,20 @@ if manage_trading_partner_action:
                         request_data["contact_info"]["email"] = contact_email
                     if contact_phone:
                         request_data["contact_info"]["phone"] = contact_phone
+                    if contact_fax:
+                        request_data["contact_info"]["fax"] = contact_fax
+                    if contact_address:
+                        request_data["contact_info"]["address"] = contact_address
+                    if contact_address2:
+                        request_data["contact_info"]["address2"] = contact_address2
+                    if contact_city:
+                        request_data["contact_info"]["city"] = contact_city
+                    if contact_state:
+                        request_data["contact_info"]["state"] = contact_state
+                    if contact_country:
+                        request_data["contact_info"]["country"] = contact_country
+                    if contact_postalcode:
+                        request_data["contact_info"]["postal_code"] = contact_postalcode
 
                 params["request_data"] = request_data
 
@@ -451,7 +479,7 @@ if manage_trading_partner_action:
                 if component_name:
                     updates["component_name"] = component_name
 
-                if contact_name or contact_email or contact_phone:
+                if contact_name or contact_email or contact_phone or contact_fax or contact_address or contact_address2 or contact_city or contact_state or contact_country or contact_postalcode:
                     updates["contact_info"] = {}
                     if contact_name:
                         updates["contact_info"]["name"] = contact_name
@@ -459,6 +487,20 @@ if manage_trading_partner_action:
                         updates["contact_info"]["email"] = contact_email
                     if contact_phone:
                         updates["contact_info"]["phone"] = contact_phone
+                    if contact_fax:
+                        updates["contact_info"]["fax"] = contact_fax
+                    if contact_address:
+                        updates["contact_info"]["address"] = contact_address
+                    if contact_address2:
+                        updates["contact_info"]["address2"] = contact_address2
+                    if contact_city:
+                        updates["contact_info"]["city"] = contact_city
+                    if contact_state:
+                        updates["contact_info"]["state"] = contact_state
+                    if contact_country:
+                        updates["contact_info"]["country"] = contact_country
+                    if contact_postalcode:
+                        updates["contact_info"]["postal_code"] = contact_postalcode
 
                 if isa_id or isa_qualifier or gs_id:
                     updates["partner_info"] = {}
