@@ -345,8 +345,8 @@ def _build_sftp_option() -> str:
     return '''            <CommunicationOption commOption="default" method="sftp">
               <CommunicationSettings docType="default">
                 <SettingsObject useMyTradingPartnerSettings="false">
-                  <SFTPSettings>
-                    <AuthSettings/>
+                  <SFTPSettings host="" port="22">
+                    <AuthSettings user=""/>
                     <ProxySettings host="" password="" port="0" proxyEnabled="false" type="ATOM" user=""/>
                     <SSHOptions dhKeySizeMax1024="true" sshkeyauth="false"/>
                   </SFTPSettings>
