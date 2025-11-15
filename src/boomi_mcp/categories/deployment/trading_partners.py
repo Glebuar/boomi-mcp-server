@@ -30,6 +30,321 @@ from boomi.models import (
 
 
 # ============================================================================
+# Communication Options Helpers (matching UI structure exactly)
+# ============================================================================
+
+def build_communication_xml(protocols: list = None) -> str:
+    """
+    Build PartnerCommunication XML matching UI structure.
+
+    Args:
+        protocols: List of protocol names to include (e.g., ['ftp', 'http'])
+                  If None or empty, returns empty CommunicationOptions
+
+    Returns:
+        XML string for CommunicationOptions section
+    """
+    if not protocols:
+        return "<CommunicationOptions />"
+
+    options = []
+    for protocol in protocols:
+        proto_lower = protocol.lower()
+        if proto_lower == 'as2':
+            options.append(_build_as2_option())
+        elif proto_lower == 'disk':
+            options.append(_build_disk_option())
+        elif proto_lower == 'ftp':
+            options.append(_build_ftp_option())
+        elif proto_lower == 'http':
+            options.append(_build_http_option())
+        elif proto_lower == 'mllp':
+            options.append(_build_mllp_option())
+        elif proto_lower == 'oftp':
+            options.append(_build_oftp_option())
+        elif proto_lower == 'sftp':
+            options.append(_build_sftp_option())
+
+    if not options:
+        return "<CommunicationOptions />"
+
+    return f'''<CommunicationOptions>
+{chr(10).join(options)}
+          </CommunicationOptions>'''
+
+
+def _build_as2_option() -> str:
+    """Build AS2 CommunicationOption (exact UI structure)"""
+    return '''            <CommunicationOption commOption="default" method="as2">
+              <CommunicationSettings docType="default">
+                <SettingsObject useMyTradingPartnerSettings="false">
+                  <AS2ServerSettings useSharedServer="true">
+                    <defaultPartnerSettings authenticationType="BASIC" clientsslAlias="" url="" verifyHostname="true">
+                      <AuthSettings password="" user=""/>
+                    </defaultPartnerSettings>
+                  </AS2ServerSettings>
+                </SettingsObject>
+                <ActionObjects>
+                  <ActionObject useMyTradingPartnerOptions="false">
+                    <AS2PartnerObject>
+                      <partnerInfo as2Id="" encryptAlias="" mdnAlias="" numberOfMessagesToCheckForDuplicates="100000" rejectDuplicateMessageId="false" signAlias="">
+                        <ListenAuthSettings/>
+                        <ListenAttachmentSettings/>
+                      </partnerInfo>
+                      <defaultPartnerInfo as2Id="" basicAuthEnabled="false" numberOfMessagesToCheckForDuplicates="100000" rejectDuplicateMessageId="true" useAllowedIpAddresses="false">
+                        <ListenAuthSettings/>
+                        <ListenAttachmentSettings/>
+                      </defaultPartnerInfo>
+                      <AS2MessageOptions attachmentOption="BATCH" compressed="false" dataContentType="textplain" enabledFoldedHeaders="false" encrypted="false" encryptionAlgorithm="tripledes" maxDocumentCount="1" multipleAttachments="false" signed="false" signingDigestAlg="SHA1"/>
+                      <AS2MDNOptions externalURL="" failOnNegativeMDN="false" mdnDigestAlg="SHA1" requestMDN="false" signed="false" synchronous="sync" useExternalURL="false" useSSL="false"/>
+                    </AS2PartnerObject>
+                    <DataProcessing sequence="pre">
+                      <dataprocess/>
+                    </DataProcessing>
+                    <DataProcessing sequence="post">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                </ActionObjects>
+              </CommunicationSettings>
+            </CommunicationOption>'''
+
+
+def _build_disk_option() -> str:
+    """Build Disk CommunicationOption (exact UI structure)"""
+    return '''            <CommunicationOption commOption="default" method="disk">
+              <CommunicationSettings docType="default">
+                <SettingsObject useMyTradingPartnerSettings="false">
+                  <DiskSettings directory=""/>
+                </SettingsObject>
+                <ActionObjects>
+                  <ActionObject type="Get" useMyTradingPartnerOptions="false">
+                    <DiskGetAction deleteAfterRead="false" fileFilter="" filterMatchType="wildcard" getDirectory="" maxFileCount="0"/>
+                    <DataProcessing sequence="post">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                  <ActionObject type="Send" useMyTradingPartnerOptions="false">
+                    <DiskSendAction createDirectory="false" sendDirectory="" writeOption="unique"/>
+                    <DataProcessing sequence="pre">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                </ActionObjects>
+              </CommunicationSettings>
+            </CommunicationOption>'''
+
+
+def _build_ftp_option() -> str:
+    """Build FTP CommunicationOption (exact UI structure)"""
+    return '''            <CommunicationOption commOption="default" method="ftp">
+              <CommunicationSettings docType="default">
+                <SettingsObject useMyTradingPartnerSettings="false">
+                  <FTPSettings connectionMode="passive">
+                    <AuthSettings/>
+                    <SSLOptions clientauth="false" sslmode="none"/>
+                  </FTPSettings>
+                </SettingsObject>
+                <ActionObjects>
+                  <ActionObject type="Get" useMyTradingPartnerOptions="false">
+                    <FTPGetAction ftpaction="actionget" maxFileCount="0" transferType="binary"/>
+                    <DataProcessing sequence="post">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                  <ActionObject type="Send" useMyTradingPartnerOptions="false">
+                    <FTPSendAction ftpaction="actionputrename" transferType="binary"/>
+                    <DataProcessing sequence="pre">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                </ActionObjects>
+              </CommunicationSettings>
+            </CommunicationOption>'''
+
+
+def _build_http_option() -> str:
+    """Build HTTP CommunicationOption (exact UI structure)"""
+    return '''            <CommunicationOption commOption="default" method="http">
+              <CommunicationSettings docType="default">
+                <SettingsObject useMyTradingPartnerSettings="false">
+                  <HttpSettings authenticationType="NONE">
+                    <AuthSettings/>
+                    <OAuthSettings/>
+                    <OAuth2Settings grantType="code">
+                      <credentials clientId=""/>
+                      <authorizationTokenEndpoint url=""/>
+                      <authorizationParameters/>
+                      <accessTokenEndpoint url=""/>
+                      <accessTokenParameters/>
+                      <scope/>
+                    </OAuth2Settings>
+                    <SSLOptions clientauth="false" trustServerCert="false"/>
+                  </HttpSettings>
+                </SettingsObject>
+                <ActionObjects>
+                  <ActionObject type="Listen" useMyTradingPartnerOptions="false">
+                    <B2BServerListenAction/>
+                    <DataProcessing sequence="post">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                  <ActionObject type="Get" useMyTradingPartnerOptions="false">
+                    <HttpGetAction dataContentType="text/plain" followRedirects="false" methodType="GET" requestProfileType="NONE" responseProfileType="NONE" returnErrors="false">
+                      <requestHeaders/>
+                      <pathElements/>
+                      <responseHeaderMapping/>
+                      <reflectHeaders/>
+                    </HttpGetAction>
+                    <DataProcessing sequence="post">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                  <ActionObject type="Send" useMyTradingPartnerOptions="false">
+                    <HttpSendAction dataContentType="text/plain" followRedirects="false" methodType="POST" requestProfileType="NONE" responseProfileType="NONE" returnErrors="false">
+                      <requestHeaders/>
+                      <pathElements/>
+                      <responseHeaderMapping/>
+                      <reflectHeaders/>
+                    </HttpSendAction>
+                    <DataProcessing sequence="pre">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                </ActionObjects>
+              </CommunicationSettings>
+            </CommunicationOption>'''
+
+
+def _build_mllp_option() -> str:
+    """Build MLLP CommunicationOption (exact UI structure)"""
+    return '''            <CommunicationOption commOption="default" method="mllp">
+              <CommunicationSettings docType="default">
+                <SettingsObject useMyTradingPartnerSettings="false"/>
+                <ActionObjects>
+                  <ActionObject useMyTradingPartnerOptions="false">
+                    <MLLPPartnerObject>
+                      <partnerInfo/>
+                    </MLLPPartnerObject>
+                    <DataProcessing sequence="pre">
+                      <dataprocess/>
+                    </DataProcessing>
+                    <DataProcessing sequence="post">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                </ActionObjects>
+              </CommunicationSettings>
+            </CommunicationOption>'''
+
+
+def _build_oftp_option() -> str:
+    """Build OFTP CommunicationOption (exact UI structure)"""
+    return '''            <CommunicationOption commOption="default" method="oftp">
+              <CommunicationSettings docType="default">
+                <SettingsObject useMyTradingPartnerSettings="false">
+                  <OFTPConnectionSettings>
+                    <myPartnerInfo/>
+                    <defaultOFTPConnectionSettings sfidciph="0" ssidauth="false" tls="false">
+                      <myPartnerInfo/>
+                    </defaultOFTPConnectionSettings>
+                  </OFTPConnectionSettings>
+                </SettingsObject>
+                <ActionObjects>
+                  <ActionObject type="Listen" useMyTradingPartnerOptions="false">
+                    <OFTPServerListenAction>
+                      <OFTPPartnerGroup>
+                        <myCompanyInfo/>
+                        <myPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
+                        <defaultPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
+                      </OFTPPartnerGroup>
+                      <OFTPListenOptions operation="LISTEN">
+                        <GatewayPartnerGroup>
+                          <myPartnerInfo/>
+                        </GatewayPartnerGroup>
+                      </OFTPListenOptions>
+                    </OFTPServerListenAction>
+                    <DataProcessing sequence="pre">
+                      <dataprocess/>
+                    </DataProcessing>
+                    <DataProcessing sequence="post">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                  <ActionObject type="Get" useMyTradingPartnerOptions="false">
+                    <OFTPGetAction>
+                      <OFTPPartnerGroup>
+                        <myCompanyInfo/>
+                        <myPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
+                        <defaultPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
+                      </OFTPPartnerGroup>
+                    </OFTPGetAction>
+                    <DataProcessing sequence="pre">
+                      <dataprocess/>
+                    </DataProcessing>
+                    <DataProcessing sequence="post">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                  <ActionObject type="Send" useMyTradingPartnerOptions="false">
+                    <OFTPSendAction>
+                      <OFTPPartnerGroup>
+                        <myCompanyInfo/>
+                        <myPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
+                        <defaultPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
+                      </OFTPPartnerGroup>
+                      <OFTPSendOptions cd="false" operation="SEND">
+                        <defaultPartnerSettings cd="false"/>
+                      </OFTPSendOptions>
+                    </OFTPSendAction>
+                    <DataProcessing sequence="pre">
+                      <dataprocess/>
+                    </DataProcessing>
+                    <DataProcessing sequence="post">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                </ActionObjects>
+              </CommunicationSettings>
+            </CommunicationOption>'''
+
+
+def _build_sftp_option() -> str:
+    """Build SFTP CommunicationOption (exact UI structure)"""
+    return '''            <CommunicationOption commOption="default" method="sftp">
+              <CommunicationSettings docType="default">
+                <SettingsObject useMyTradingPartnerSettings="false">
+                  <SFTPSettings>
+                    <AuthSettings/>
+                    <ProxySettings host="" password="" port="0" proxyEnabled="false" type="ATOM" user=""/>
+                    <SSHOptions dhKeySizeMax1024="true" sshkeyauth="false"/>
+                  </SFTPSettings>
+                </SettingsObject>
+                <ActionObjects>
+                  <ActionObject type="Get" useMyTradingPartnerOptions="false">
+                    <SFTPGetAction maxFileCount="0" moveToForceOverride="false" sftpaction="actionget"/>
+                    <DataProcessing sequence="post">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                  <ActionObject type="Send" useMyTradingPartnerOptions="false">
+                    <SFTPSendAction moveToForceOverride="false" sftpaction="actionputrename"/>
+                    <DataProcessing sequence="pre">
+                      <dataprocess/>
+                    </DataProcessing>
+                  </ActionObject>
+                </ActionObjects>
+              </CommunicationSettings>
+            </CommunicationOption>'''
+
+
+# ============================================================================
+# XML Template Builders (aligned with boomi-python SDK examples)
+# ============================================================================
+
+
+
+# ============================================================================
 # XML Template Builders (aligned with boomi-python SDK examples)
 # ============================================================================
 
@@ -142,6 +457,9 @@ def build_trading_partner_xml_x12(
     else:
         contact_info_xml = "<ContactInfo />"
 
+    # Build Communication XML (empty by default, can be configured later via UI)
+    communication_xml = build_communication_xml()
+
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
                name="{name}"
@@ -177,7 +495,7 @@ def build_trading_partner_xml_x12(
             </PartnerInfo>
             <PartnerCommunication>
                 <X12PartnerCommunication>
-                    <CommunicationOptions />
+                    {communication_xml}
                 </X12PartnerCommunication>
             </PartnerCommunication>
             <DocumentTypes />
