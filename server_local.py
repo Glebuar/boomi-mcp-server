@@ -52,7 +52,7 @@ except ImportError as e:
 
 # --- Trading Partner Tools ---
 try:
-    from boomi_mcp.categories.deployment.trading_partners import manage_trading_partner_action
+    from boomi_mcp.categories.components.trading_partners import manage_trading_partner_action
     print(f"[INFO] Trading partner tools loaded successfully")
 except ImportError as e:
     print(f"[WARNING] Failed to import trading_partner_tools: {e}")
@@ -366,7 +366,8 @@ if manage_trading_partner_action:
         contact_city: str = None,
         contact_state: str = None,
         contact_country: str = None,
-        contact_postalcode: str = None
+        contact_postalcode: str = None,
+        communication_protocols: str = None
     ):
         """
         Manage B2B/EDI trading partners (all 7 standards).
@@ -394,6 +395,10 @@ if manage_trading_partner_action:
             contact_state: Contact state/province (optional)
             contact_country: Contact country (optional)
             contact_postalcode: Contact postal/zip code (optional)
+            communication_protocols: Comma-separated list of communication protocols to enable (optional for create)
+                                    Available: ftp, sftp, http, as2, mllp, oftp, disk
+                                    Example: "ftp,http" or "as2,sftp"
+                                    If not provided, creates partner with no communication configured (can be added later via UI)
 
         Returns:
             Action result with success status and data/error
@@ -470,6 +475,11 @@ if manage_trading_partner_action:
                         request_data["contact_info"]["country"] = contact_country
                     if contact_postalcode:
                         request_data["contact_info"]["postal_code"] = contact_postalcode
+
+                # Add communication protocols if provided
+                if communication_protocols:
+                    protocols_list = [p.strip() for p in communication_protocols.split(',')]
+                    request_data["communication_protocols"] = protocols_list
 
                 params["request_data"] = request_data
 

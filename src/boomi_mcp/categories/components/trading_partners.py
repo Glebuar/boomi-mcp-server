@@ -73,6 +73,37 @@ def build_communication_xml(protocols: list = None) -> str:
           </CommunicationOptions>'''
 
 
+def extract_communication_protocols(xml_string: str) -> List[str]:
+    """
+    Extract list of configured communication protocols from trading partner XML.
+
+    Args:
+        xml_string: Full component XML or TradingPartner XML
+
+    Returns:
+        List of protocol names (e.g., ['as2', 'disk', 'ftp'])
+    """
+    protocols = []
+
+    if not xml_string or '<CommunicationOptions' not in xml_string:
+        return protocols
+
+    # Check if it's empty
+    if '<CommunicationOptions />' in xml_string:
+        return protocols
+
+    # Extract methods from CommunicationOption elements
+    # Format: <CommunicationOption commOption="default" method="as2">
+    import re
+    pattern = r'<CommunicationOption[^>]*method="([^"]+)"'
+    matches = re.findall(pattern, xml_string)
+
+    # Return unique protocols in lowercase
+    protocols = list(dict.fromkeys([m.lower() for m in matches]))
+
+    return protocols
+
+
 def _build_as2_option() -> str:
     """Build AS2 CommunicationOption (exact UI structure)"""
     return '''            <CommunicationOption commOption="default" method="as2">
@@ -375,11 +406,15 @@ def build_trading_partner_xml_x12(
     contact_name: str = "",
     contact_email: str = "",
     contact_phone: str = "",
+    contact_fax: str = "",
     contact_address: str = "",
+    contact_address2: str = "",
     contact_city: str = "",
     contact_state: str = "",
     contact_country: str = "",
-    contact_postalcode: str = ""
+    contact_postalcode: str = "",
+    # Communication protocols (optional)
+    communication_protocols: list = None
 ) -> str:
     """
     Build X12 trading partner component XML.
@@ -458,7 +493,7 @@ def build_trading_partner_xml_x12(
         contact_info_xml = "<ContactInfo />"
 
     # Build Communication XML (empty by default, can be configured later via UI)
-    communication_xml = build_communication_xml()
+    communication_xml = build_communication_xml(communication_protocols)
 
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
@@ -521,11 +556,15 @@ def build_trading_partner_xml_edifact(
     contact_name: str = "",
     contact_email: str = "",
     contact_phone: str = "",
+    contact_fax: str = "",
     contact_address: str = "",
+    contact_address2: str = "",
     contact_city: str = "",
     contact_state: str = "",
     contact_country: str = "",
-    contact_postalcode: str = ""
+    contact_postalcode: str = "",
+    # Communication protocols (optional)
+    communication_protocols: list = None
 ) -> str:
     """
     Build EDIFACT trading partner component XML.
@@ -535,6 +574,7 @@ def build_trading_partner_xml_edifact(
         folder_name: Folder to create the component in
         description: Component description
         classification: Partner classification
+        communication_protocols: List of communication protocols to enable (optional)
         unb_interchangeid: UNB interchange ID
         unb_interchangeidqual: UNB interchange ID qualifier
         unb_partnerid: UNB partner ID
@@ -572,6 +612,9 @@ def build_trading_partner_xml_edifact(
         contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
     else:
         contact_info_xml = "<ContactInfo />"
+
+    # Build Communication XML (empty by default, can be configured later via UI)
+    communication_xml = build_communication_xml(communication_protocols)
 
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
@@ -616,7 +659,7 @@ def build_trading_partner_xml_edifact(
             </PartnerInfo>
             <PartnerCommunication>
                 <EdifactPartnerCommunication>
-                    <CommunicationOptions />
+                    {communication_xml}
                 </EdifactPartnerCommunication>
             </PartnerCommunication>
             <DocumentTypes />
@@ -641,11 +684,16 @@ def build_trading_partner_xml_hl7(
     contact_name: str = "",
     contact_email: str = "",
     contact_phone: str = "",
+    contact_fax: str = "",
     contact_address: str = "",
+    contact_address2: str = "",
     contact_city: str = "",
     contact_state: str = "",
     contact_country: str = "",
     contact_postalcode: str = ""
+,
+    # Communication protocols (optional)
+    communication_protocols: list = None
 ) -> str:
     """
     Build HL7 trading partner component XML.
@@ -691,6 +739,9 @@ def build_trading_partner_xml_hl7(
         contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
     else:
         contact_info_xml = "<ContactInfo />"
+
+    # Build Communication XML (empty by default, can be configured later via UI)
+    communication_xml = build_communication_xml(communication_protocols)
 
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
@@ -739,7 +790,7 @@ def build_trading_partner_xml_hl7(
             </PartnerInfo>
             <PartnerCommunication>
                 <HL7PartnerCommunication>
-                    <CommunicationOptions />
+                    {communication_xml}
                 </HL7PartnerCommunication>
             </PartnerCommunication>
             <DocumentTypes />
@@ -762,11 +813,16 @@ def build_trading_partner_xml_rosettanet(
     contact_name: str = "",
     contact_email: str = "",
     contact_phone: str = "",
+    contact_fax: str = "",
     contact_address: str = "",
+    contact_address2: str = "",
     contact_city: str = "",
     contact_state: str = "",
     contact_country: str = "",
     contact_postalcode: str = ""
+,
+    # Communication protocols (optional)
+    communication_protocols: list = None
 ) -> str:
     """
     Build RosettaNet trading partner component XML.
@@ -811,6 +867,9 @@ def build_trading_partner_xml_rosettanet(
     else:
         contact_info_xml = "<ContactInfo />"
 
+    # Build Communication XML (empty by default, can be configured later via UI)
+    communication_xml = build_communication_xml(communication_protocols)
+
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
                name="{name}"
@@ -842,7 +901,7 @@ def build_trading_partner_xml_rosettanet(
             </PartnerInfo>
             <PartnerCommunication>
                 <RosettaNetPartnerCommunication>
-                    <CommunicationOptions />
+                    {communication_xml}
                 </RosettaNetPartnerCommunication>
             </PartnerCommunication>
             <DocumentTypes />
@@ -862,11 +921,16 @@ def build_trading_partner_xml_custom(
     contact_name: str = "",
     contact_email: str = "",
     contact_phone: str = "",
+    contact_fax: str = "",
     contact_address: str = "",
+    contact_address2: str = "",
     contact_city: str = "",
     contact_state: str = "",
     contact_country: str = "",
     contact_postalcode: str = ""
+,
+    # Communication protocols (optional)
+    communication_protocols: list = None
 ) -> str:
     """
     Build custom standard trading partner component XML.
@@ -909,6 +973,9 @@ def build_trading_partner_xml_custom(
     else:
         contact_info_xml = "<ContactInfo />"
 
+    # Build Communication XML (empty by default, can be configured later via UI)
+    communication_xml = build_communication_xml(communication_protocols)
+
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
                name="{name}"
@@ -924,7 +991,7 @@ def build_trading_partner_xml_custom(
             </PartnerInfo>
             <PartnerCommunication>
                 <CustomPartnerCommunication>
-                    <CommunicationOptions />
+                    {communication_xml}
                 </CustomPartnerCommunication>
             </PartnerCommunication>
             <DocumentTypes />
@@ -947,11 +1014,16 @@ def build_trading_partner_xml_tradacoms(
     contact_name: str = "",
     contact_email: str = "",
     contact_phone: str = "",
+    contact_fax: str = "",
     contact_address: str = "",
+    contact_address2: str = "",
     contact_city: str = "",
     contact_state: str = "",
     contact_country: str = "",
     contact_postalcode: str = ""
+,
+    # Communication protocols (optional)
+    communication_protocols: list = None
 ) -> str:
     """
     Build TRADACOMS trading partner component XML.
@@ -996,6 +1068,9 @@ def build_trading_partner_xml_tradacoms(
     else:
         contact_info_xml = "<ContactInfo />"
 
+    # Build Communication XML (empty by default, can be configured later via UI)
+    communication_xml = build_communication_xml(communication_protocols)
+
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
                name="{name}"
@@ -1019,7 +1094,7 @@ def build_trading_partner_xml_tradacoms(
             </PartnerInfo>
             <PartnerCommunication>
                 <TradacomsPartnerCommunication>
-                    <CommunicationOptions />
+                    {communication_xml}
                 </TradacomsPartnerCommunication>
             </PartnerCommunication>
             <DocumentTypes />
@@ -1042,11 +1117,16 @@ def build_trading_partner_xml_odette(
     contact_name: str = "",
     contact_email: str = "",
     contact_phone: str = "",
+    contact_fax: str = "",
     contact_address: str = "",
+    contact_address2: str = "",
     contact_city: str = "",
     contact_state: str = "",
     contact_country: str = "",
     contact_postalcode: str = ""
+,
+    # Communication protocols (optional)
+    communication_protocols: list = None
 ) -> str:
     """
     Build ODETTE trading partner component XML.
@@ -1091,6 +1171,9 @@ def build_trading_partner_xml_odette(
     else:
         contact_info_xml = "<ContactInfo />"
 
+    # Build Communication XML (empty by default, can be configured later via UI)
+    communication_xml = build_communication_xml(communication_protocols)
+
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <bns:Component xmlns:bns="http://api.platform.boomi.com/"
                name="{name}"
@@ -1131,7 +1214,7 @@ def build_trading_partner_xml_odette(
             </PartnerInfo>
             <PartnerCommunication>
                 <OdettePartnerCommunication>
-                    <CommunicationOptions />
+                    {communication_xml}
                 </OdettePartnerCommunication>
             </PartnerCommunication>
             <DocumentTypes />
@@ -1176,6 +1259,9 @@ def build_trading_partner_xml(request_data: Dict[str, Any]) -> str:
         "contact_postalcode": contact_info.get("postal_code", "")
     }
 
+    # Extract communication protocols if provided
+    communication_protocols = request_data.get("communication_protocols", None)
+
     # Route to appropriate builder based on standard
     if standard == "x12":
         partner_info = request_data.get("partner_info", {})
@@ -1205,7 +1291,9 @@ def build_trading_partner_xml(request_data: Dict[str, Any]) -> str:
             # GSControlInfo
             gs_respagencycode=partner_info.get("gs_respagencycode", "T"),
             # ContactInfo
-            **contact_params
+            **contact_params,
+            # Communication protocols
+            communication_protocols=communication_protocols
         )
 
     elif standard == "edifact":
@@ -1220,7 +1308,8 @@ def build_trading_partner_xml(request_data: Dict[str, Any]) -> str:
             unb_partnerid=partner_info.get("unb_partner_id", ""),
             unb_partneridqual=partner_info.get("unb_partner_qualifier", "14"),
             unb_testindicator=partner_info.get("unb_testindicator", "1"),
-            **contact_params
+            **contact_params,
+            communication_protocols=communication_protocols
         )
 
     elif standard == "hl7":
@@ -1234,7 +1323,8 @@ def build_trading_partner_xml(request_data: Dict[str, Any]) -> str:
             sending_facility=partner_info.get("sending_facility", ""),
             receiving_application=partner_info.get("receiving_application", ""),
             receiving_facility=partner_info.get("receiving_facility", ""),
-            **contact_params
+            **contact_params,
+            communication_protocols=communication_protocols
         )
 
     elif standard == "rosettanet":
@@ -1246,7 +1336,8 @@ def build_trading_partner_xml(request_data: Dict[str, Any]) -> str:
             classification=classification,
             duns_number=partner_info.get("duns", ""),
             global_location_number=partner_info.get("gln", ""),
-            **contact_params
+            **contact_params,
+            communication_protocols=communication_protocols
         )
 
     elif standard == "custom":
@@ -1255,7 +1346,8 @@ def build_trading_partner_xml(request_data: Dict[str, Any]) -> str:
             folder_name=folder_name,
             description=description,
             classification=classification,
-            **contact_params
+            **contact_params,
+            communication_protocols=communication_protocols
         )
 
     elif standard == "tradacoms":
@@ -1267,7 +1359,8 @@ def build_trading_partner_xml(request_data: Dict[str, Any]) -> str:
             classification=classification,
             sender_code=partner_info.get("sender_code", ""),
             recipient_code=partner_info.get("recipient_code", ""),
-            **contact_params
+            **contact_params,
+            communication_protocols=communication_protocols
         )
 
     elif standard == "odette":
@@ -1279,7 +1372,8 @@ def build_trading_partner_xml(request_data: Dict[str, Any]) -> str:
             classification=classification,
             originator_code=partner_info.get("originator_code", ""),
             destination_code=partner_info.get("destination_code", ""),
-            **contact_params
+            **contact_params,
+            communication_protocols=communication_protocols
         )
 
     else:
@@ -1465,7 +1559,9 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
             }
 
         contact_info = {}
-        # If we used Component API, parse ContactInfo from XML
+        communication_protocols = []
+
+        # If we used Component API, parse ContactInfo and CommunicationProtocols from XML
         if used_component_api:
             try:
                 xml_str = result.to_xml()
@@ -1488,6 +1584,10 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
                     }
                     # Remove None values
                     contact_info = {k: v for k, v in contact_info.items() if v is not None}
+
+                # Extract communication protocols
+                communication_protocols = extract_communication_protocols(xml_str)
+
             except Exception as xml_error:
                 # If XML parsing fails, just continue without contact info
                 pass
@@ -1522,7 +1622,8 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
                 "organization_id": getattr(result, 'organization_id', None),
                 "deleted": getattr(result, 'deleted', False),
                 "partner_info": partner_info if partner_info else None,
-                "contact_info": contact_info if contact_info else None
+                "contact_info": contact_info if contact_info else None,
+                "communication_protocols": communication_protocols if communication_protocols else []
             }
         }
 
