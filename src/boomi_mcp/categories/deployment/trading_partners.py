@@ -1617,9 +1617,9 @@ def analyze_trading_partner_usage(boomi_client, profile: str, component_id: str)
         Usage analysis including processes, connections, and dependencies
     """
     try:
-        # Get the trading partner details first
-        partner = boomi_client.trading_partner_component.get_trading_partner_component(component_id)
-        partner_name = getattr(partner, 'component_name', 'Unknown')
+        # Get the trading partner details first using Component API (avoids ContactInfo parsing issues)
+        partner = boomi_client.component.get_component(component_id=component_id)
+        partner_name = getattr(partner, 'name', 'Unknown')
 
         # Query for processes that reference this trading partner
         # This would typically involve searching for the partner ID in process configurations
