@@ -380,7 +380,9 @@ if manage_trading_partner_action:
         http_url: str = None,
         as2_url: str = None,
         as2_identifier: str = None,
-        as2_partner_identifier: str = None
+        as2_partner_identifier: str = None,
+        oftp_host: str = None,
+        oftp_tls: str = None
     ):
         """
         Manage B2B/EDI trading partners (all 7 standards).
@@ -425,6 +427,8 @@ if manage_trading_partner_action:
             as2_url: AS2 endpoint URL (AS2Settings/@url)
             as2_identifier: Local AS2 identifier (AS2Settings/@as2Identifier)
             as2_partner_identifier: Partner AS2 identifier (AS2Settings/@partnerAS2Identifier)
+            oftp_host: OFTP server hostname/IP (defaultOFTPConnectionSettings/@host)
+            oftp_tls: Enable TLS for OFTP (defaultOFTPConnectionSettings/@tls) - "true" or "false"
 
         Returns:
             Action result with success status and data/error
@@ -596,6 +600,14 @@ if manage_trading_partner_action:
                         updates["as2_settings"]["as2_identifier"] = as2_identifier
                     if as2_partner_identifier is not None:
                         updates["as2_settings"]["partner_as2_identifier"] = as2_partner_identifier
+
+                # Add OFTP settings if provided
+                if oftp_host is not None or oftp_tls is not None:
+                    updates["oftp_settings"] = {}
+                    if oftp_host is not None:
+                        updates["oftp_settings"]["host"] = oftp_host
+                    if oftp_tls is not None:
+                        updates["oftp_settings"]["tls"] = oftp_tls
 
                 params["updates"] = updates
 

@@ -215,10 +215,10 @@ def extract_communication_protocol_details(xml_string: str) -> List[Dict[str, An
 
             # Extract OFTP protocol settings
             elif protocol_type == 'oftp':
-                oftp_settings = comm_option.find('.//OFTPSettings')
+                oftp_settings = comm_option.find('.//defaultOFTPConnectionSettings')
                 if oftp_settings is not None:
                     settings['host'] = oftp_settings.get('host')
-                    settings['port'] = oftp_settings.get('port')
+                    settings['tls'] = oftp_settings.get('tls')
 
             # Remove None values from settings
             settings = {k: v for k, v in settings.items() if v is not None}
@@ -408,7 +408,7 @@ def _build_oftp_option() -> str:
                 <SettingsObject useMyTradingPartnerSettings="false">
                   <OFTPConnectionSettings>
                     <myPartnerInfo/>
-                    <defaultOFTPConnectionSettings sfidciph="0" ssidauth="false" tls="false">
+                    <defaultOFTPConnectionSettings host="" sfidciph="0" ssidauth="false" tls="false">
                       <myPartnerInfo/>
                     </defaultOFTPConnectionSettings>
                   </OFTPConnectionSettings>
@@ -2129,6 +2129,18 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                 auth_settings = trading_partner.find('.//CommunicationOption[@method="sftp"]//AuthSettings')
                 if auth_settings is not None and "username" in sftp_settings_updates:
                     auth_settings.set('user', sftp_settings_updates["username"])
+
+            # Update OFTP communication settings if provided
+            if "oftp_settings" in updates:
+                oftp_settings_updates = updates["oftp_settings"]
+
+                # Find defaultOFTPConnectionSettings element
+                oftp_settings_elem = trading_partner.find('.//CommunicationOption[@method="oftp"]//defaultOFTPConnectionSettings')
+                if oftp_settings_elem is not None:
+                    if "host" in oftp_settings_updates:
+                        oftp_settings_elem.set('host', oftp_settings_updates["host"])
+                    if "tls" in oftp_settings_updates:
+                        oftp_settings_elem.set('tls', str(oftp_settings_updates["tls"]).lower())
 
             # Update HTTP communication settings if provided
             if "http_settings" in updates:
