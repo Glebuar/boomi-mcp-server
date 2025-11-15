@@ -382,7 +382,35 @@ if manage_trading_partner_action:
         as2_identifier: str = None,
         as2_partner_identifier: str = None,
         oftp_host: str = None,
-        oftp_tls: str = None
+        oftp_tls: str = None,
+        http_authentication_type: str = None,
+        http_connect_timeout: str = None,
+        http_read_timeout: str = None,
+        http_username: str = None,
+        http_client_auth: str = None,
+        http_trust_server_cert: str = None,
+        http_method_type: str = None,
+        http_data_content_type: str = None,
+        http_follow_redirects: str = None,
+        http_return_errors: str = None,
+        as2_authentication_type: str = None,
+        as2_verify_hostname: str = None,
+        as2_client_ssl_alias: str = None,
+        as2_username: str = None,
+        as2_encrypt_alias: str = None,
+        as2_sign_alias: str = None,
+        as2_mdn_alias: str = None,
+        as2_signed: str = None,
+        as2_encrypted: str = None,
+        as2_compressed: str = None,
+        as2_encryption_algorithm: str = None,
+        as2_signing_digest_alg: str = None,
+        as2_data_content_type: str = None,
+        as2_request_mdn: str = None,
+        as2_mdn_signed: str = None,
+        as2_mdn_digest_alg: str = None,
+        as2_synchronous_mdn: str = None,
+        as2_fail_on_negative_mdn: str = None
     ):
         """
         Manage B2B/EDI trading partners (all 7 standards).
@@ -429,6 +457,34 @@ if manage_trading_partner_action:
             as2_partner_identifier: Partner AS2 identifier (AS2Settings/@partnerAS2Identifier)
             oftp_host: OFTP server hostname/IP (defaultOFTPConnectionSettings/@host)
             oftp_tls: Enable TLS for OFTP (defaultOFTPConnectionSettings/@tls) - "true" or "false"
+            http_authentication_type: HTTP authentication type - NONE, BASIC, OAUTH2 (HttpSettings/@authenticationType)
+            http_connect_timeout: HTTP connection timeout in ms (HttpSettings/@connectTimeout)
+            http_read_timeout: HTTP read timeout in ms (HttpSettings/@readTimeout)
+            http_username: HTTP username (HttpSettings/AuthSettings/@user)
+            http_client_auth: Enable client SSL authentication (HttpSettings/SSLOptions/@clientauth) - "true" or "false"
+            http_trust_server_cert: Trust server certificate (HttpSettings/SSLOptions/@trustServerCert) - "true" or "false"
+            http_method_type: HTTP method (HttpGetAction|HttpSendAction/@methodType) - GET, POST, PUT, DELETE, PATCH
+            http_data_content_type: HTTP content type (HttpGetAction|HttpSendAction/@dataContentType)
+            http_follow_redirects: Follow redirects (HttpGetAction|HttpSendAction/@followRedirects) - "true" or "false"
+            http_return_errors: Return errors in response (HttpGetAction|HttpSendAction/@returnErrors) - "true" or "false"
+            as2_authentication_type: AS2 authentication type - NONE, BASIC (defaultPartnerSettings/@authenticationType)
+            as2_verify_hostname: Verify SSL hostname (defaultPartnerSettings/@verifyHostname) - "true" or "false"
+            as2_client_ssl_alias: Client SSL certificate alias (defaultPartnerSettings/@clientsslAlias)
+            as2_username: AS2 username (defaultPartnerSettings/AuthSettings/@user)
+            as2_encrypt_alias: AS2 encryption certificate alias (partnerInfo/@encryptAlias)
+            as2_sign_alias: AS2 signing certificate alias (partnerInfo/@signAlias)
+            as2_mdn_alias: AS2 MDN certificate alias (partnerInfo/@mdnAlias)
+            as2_signed: Sign AS2 messages (AS2MessageOptions/@signed) - "true" or "false"
+            as2_encrypted: Encrypt AS2 messages (AS2MessageOptions/@encrypted) - "true" or "false"
+            as2_compressed: Compress AS2 messages (AS2MessageOptions/@compressed) - "true" or "false"
+            as2_encryption_algorithm: Encryption algorithm (AS2MessageOptions/@encryptionAlgorithm) - tripledes, rc2, aes128, aes192, aes256
+            as2_signing_digest_alg: Signing digest algorithm (AS2MessageOptions/@signingDigestAlg) - SHA1, SHA256, SHA384, SHA512
+            as2_data_content_type: AS2 content type (AS2MessageOptions/@dataContentType)
+            as2_request_mdn: Request MDN (AS2MDNOptions/@requestMDN) - "true" or "false"
+            as2_mdn_signed: Signed MDN (AS2MDNOptions/@signed) - "true" or "false"
+            as2_mdn_digest_alg: MDN digest algorithm (AS2MDNOptions/@mdnDigestAlg) - SHA1, SHA256, SHA384, SHA512
+            as2_synchronous_mdn: Synchronous MDN (AS2MDNOptions/@synchronous) - "true" or "false"
+            as2_fail_on_negative_mdn: Fail on negative MDN (AS2MDNOptions/@failOnNegativeMDN) - "true" or "false"
 
         Returns:
             Action result with success status and data/error
@@ -587,12 +643,48 @@ if manage_trading_partner_action:
                         updates["sftp_settings"]["username"] = sftp_username
 
                 # Add HTTP settings if provided
-                if http_url is not None:
+                if (http_url is not None or http_authentication_type is not None or
+                    http_connect_timeout is not None or http_read_timeout is not None or
+                    http_username is not None or http_client_auth is not None or
+                    http_trust_server_cert is not None or http_method_type is not None or
+                    http_data_content_type is not None or http_follow_redirects is not None or
+                    http_return_errors is not None):
                     updates["http_settings"] = {}
-                    updates["http_settings"]["url"] = http_url
+                    if http_url is not None:
+                        updates["http_settings"]["url"] = http_url
+                    if http_authentication_type is not None:
+                        updates["http_settings"]["authentication_type"] = http_authentication_type
+                    if http_connect_timeout is not None:
+                        updates["http_settings"]["connect_timeout"] = http_connect_timeout
+                    if http_read_timeout is not None:
+                        updates["http_settings"]["read_timeout"] = http_read_timeout
+                    if http_username is not None:
+                        updates["http_settings"]["username"] = http_username
+                    if http_client_auth is not None:
+                        updates["http_settings"]["client_auth"] = http_client_auth
+                    if http_trust_server_cert is not None:
+                        updates["http_settings"]["trust_server_cert"] = http_trust_server_cert
+                    if http_method_type is not None:
+                        updates["http_settings"]["method_type"] = http_method_type
+                    if http_data_content_type is not None:
+                        updates["http_settings"]["data_content_type"] = http_data_content_type
+                    if http_follow_redirects is not None:
+                        updates["http_settings"]["follow_redirects"] = http_follow_redirects
+                    if http_return_errors is not None:
+                        updates["http_settings"]["return_errors"] = http_return_errors
 
                 # Add AS2 settings if provided
-                if as2_url is not None or as2_identifier is not None or as2_partner_identifier is not None:
+                if (as2_url is not None or as2_identifier is not None or
+                    as2_partner_identifier is not None or as2_authentication_type is not None or
+                    as2_verify_hostname is not None or as2_client_ssl_alias is not None or
+                    as2_username is not None or as2_encrypt_alias is not None or
+                    as2_sign_alias is not None or as2_mdn_alias is not None or
+                    as2_signed is not None or as2_encrypted is not None or
+                    as2_compressed is not None or as2_encryption_algorithm is not None or
+                    as2_signing_digest_alg is not None or as2_data_content_type is not None or
+                    as2_request_mdn is not None or as2_mdn_signed is not None or
+                    as2_mdn_digest_alg is not None or as2_synchronous_mdn is not None or
+                    as2_fail_on_negative_mdn is not None):
                     updates["as2_settings"] = {}
                     if as2_url is not None:
                         updates["as2_settings"]["url"] = as2_url
@@ -600,6 +692,42 @@ if manage_trading_partner_action:
                         updates["as2_settings"]["as2_identifier"] = as2_identifier
                     if as2_partner_identifier is not None:
                         updates["as2_settings"]["partner_as2_identifier"] = as2_partner_identifier
+                    if as2_authentication_type is not None:
+                        updates["as2_settings"]["authentication_type"] = as2_authentication_type
+                    if as2_verify_hostname is not None:
+                        updates["as2_settings"]["verify_hostname"] = as2_verify_hostname
+                    if as2_client_ssl_alias is not None:
+                        updates["as2_settings"]["client_ssl_alias"] = as2_client_ssl_alias
+                    if as2_username is not None:
+                        updates["as2_settings"]["username"] = as2_username
+                    if as2_encrypt_alias is not None:
+                        updates["as2_settings"]["encrypt_alias"] = as2_encrypt_alias
+                    if as2_sign_alias is not None:
+                        updates["as2_settings"]["sign_alias"] = as2_sign_alias
+                    if as2_mdn_alias is not None:
+                        updates["as2_settings"]["mdn_alias"] = as2_mdn_alias
+                    if as2_signed is not None:
+                        updates["as2_settings"]["signed"] = as2_signed
+                    if as2_encrypted is not None:
+                        updates["as2_settings"]["encrypted"] = as2_encrypted
+                    if as2_compressed is not None:
+                        updates["as2_settings"]["compressed"] = as2_compressed
+                    if as2_encryption_algorithm is not None:
+                        updates["as2_settings"]["encryption_algorithm"] = as2_encryption_algorithm
+                    if as2_signing_digest_alg is not None:
+                        updates["as2_settings"]["signing_digest_alg"] = as2_signing_digest_alg
+                    if as2_data_content_type is not None:
+                        updates["as2_settings"]["data_content_type"] = as2_data_content_type
+                    if as2_request_mdn is not None:
+                        updates["as2_settings"]["request_mdn"] = as2_request_mdn
+                    if as2_mdn_signed is not None:
+                        updates["as2_settings"]["mdn_signed"] = as2_mdn_signed
+                    if as2_mdn_digest_alg is not None:
+                        updates["as2_settings"]["mdn_digest_alg"] = as2_mdn_digest_alg
+                    if as2_synchronous_mdn is not None:
+                        updates["as2_settings"]["synchronous_mdn"] = as2_synchronous_mdn
+                    if as2_fail_on_negative_mdn is not None:
+                        updates["as2_settings"]["fail_on_negative_mdn"] = as2_fail_on_negative_mdn
 
                 # Add OFTP settings if provided
                 if oftp_host is not None or oftp_tls is not None:

@@ -2207,24 +2207,108 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
             if "http_settings" in updates:
                 http_settings_updates = updates["http_settings"]
 
-                # Find HTTPSendAction element
-                http_send_action = trading_partner.find('.//HTTPSendAction')
-                if http_send_action is not None and "url" in http_settings_updates:
-                    http_send_action.set('url', http_settings_updates["url"])
+                # Find HttpSettings element
+                http_settings_elem = trading_partner.find('.//CommunicationOption[@method="http"]//HttpSettings')
+                if http_settings_elem is not None:
+                    if "url" in http_settings_updates:
+                        http_settings_elem.set('url', http_settings_updates["url"])
+                    if "authentication_type" in http_settings_updates:
+                        http_settings_elem.set('authenticationType', http_settings_updates["authentication_type"])
+                    if "connect_timeout" in http_settings_updates:
+                        http_settings_elem.set('connectTimeout', str(http_settings_updates["connect_timeout"]))
+                    if "read_timeout" in http_settings_updates:
+                        http_settings_elem.set('readTimeout', str(http_settings_updates["read_timeout"]))
+
+                    # Update AuthSettings within HttpSettings
+                    auth_settings = http_settings_elem.find('.//AuthSettings')
+                    if auth_settings is not None and "username" in http_settings_updates:
+                        auth_settings.set('user', http_settings_updates["username"])
+
+                    # Update SSLOptions within HttpSettings
+                    ssl_options = http_settings_elem.find('.//SSLOptions')
+                    if ssl_options is not None:
+                        if "client_auth" in http_settings_updates:
+                            ssl_options.set('clientauth', str(http_settings_updates["client_auth"]).lower())
+                        if "trust_server_cert" in http_settings_updates:
+                            ssl_options.set('trustServerCert', str(http_settings_updates["trust_server_cert"]).lower())
+
+                # Update HttpGetAction or HttpSendAction
+                http_get = trading_partner.find('.//CommunicationOption[@method="http"]//HttpGetAction')
+                http_send = trading_partner.find('.//CommunicationOption[@method="http"]//HttpSendAction')
+                http_action = http_get if http_get is not None else http_send
+
+                if http_action is not None:
+                    if "method_type" in http_settings_updates:
+                        http_action.set('methodType', http_settings_updates["method_type"])
+                    if "data_content_type" in http_settings_updates:
+                        http_action.set('dataContentType', http_settings_updates["data_content_type"])
+                    if "follow_redirects" in http_settings_updates:
+                        http_action.set('followRedirects', str(http_settings_updates["follow_redirects"]).lower())
+                    if "return_errors" in http_settings_updates:
+                        http_action.set('returnErrors', str(http_settings_updates["return_errors"]).lower())
 
             # Update AS2 communication settings if provided
             if "as2_settings" in updates:
                 as2_settings_updates = updates["as2_settings"]
 
-                # Find AS2Settings element
-                as2_settings_elem = trading_partner.find('.//AS2Settings')
-                if as2_settings_elem is not None:
+                # Find defaultPartnerSettings element
+                partner_settings = trading_partner.find('.//CommunicationOption[@method="as2"]//defaultPartnerSettings')
+                if partner_settings is not None:
                     if "url" in as2_settings_updates:
-                        as2_settings_elem.set('url', as2_settings_updates["url"])
+                        partner_settings.set('url', as2_settings_updates["url"])
+                    if "authentication_type" in as2_settings_updates:
+                        partner_settings.set('authenticationType', as2_settings_updates["authentication_type"])
+                    if "verify_hostname" in as2_settings_updates:
+                        partner_settings.set('verifyHostname', str(as2_settings_updates["verify_hostname"]).lower())
+                    if "client_ssl_alias" in as2_settings_updates:
+                        partner_settings.set('clientsslAlias', as2_settings_updates["client_ssl_alias"])
+
+                    # Update AuthSettings within defaultPartnerSettings
+                    auth_settings = partner_settings.find('.//AuthSettings')
+                    if auth_settings is not None and "username" in as2_settings_updates:
+                        auth_settings.set('user', as2_settings_updates["username"])
+
+                # Find partnerInfo element
+                partner_info = trading_partner.find('.//CommunicationOption[@method="as2"]//partnerInfo')
+                if partner_info is not None:
                     if "as2_identifier" in as2_settings_updates:
-                        as2_settings_elem.set('as2Identifier', as2_settings_updates["as2_identifier"])
-                    if "partner_as2_identifier" in as2_settings_updates:
-                        as2_settings_elem.set('partnerAS2Identifier', as2_settings_updates["partner_as2_identifier"])
+                        partner_info.set('as2Id', as2_settings_updates["as2_identifier"])
+                    if "encrypt_alias" in as2_settings_updates:
+                        partner_info.set('encryptAlias', as2_settings_updates["encrypt_alias"])
+                    if "sign_alias" in as2_settings_updates:
+                        partner_info.set('signAlias', as2_settings_updates["sign_alias"])
+                    if "mdn_alias" in as2_settings_updates:
+                        partner_info.set('mdnAlias', as2_settings_updates["mdn_alias"])
+
+                # Find AS2MessageOptions element
+                msg_options = trading_partner.find('.//CommunicationOption[@method="as2"]//AS2MessageOptions')
+                if msg_options is not None:
+                    if "signed" in as2_settings_updates:
+                        msg_options.set('signed', str(as2_settings_updates["signed"]).lower())
+                    if "encrypted" in as2_settings_updates:
+                        msg_options.set('encrypted', str(as2_settings_updates["encrypted"]).lower())
+                    if "compressed" in as2_settings_updates:
+                        msg_options.set('compressed', str(as2_settings_updates["compressed"]).lower())
+                    if "encryption_algorithm" in as2_settings_updates:
+                        msg_options.set('encryptionAlgorithm', as2_settings_updates["encryption_algorithm"])
+                    if "signing_digest_alg" in as2_settings_updates:
+                        msg_options.set('signingDigestAlg', as2_settings_updates["signing_digest_alg"])
+                    if "data_content_type" in as2_settings_updates:
+                        msg_options.set('dataContentType', as2_settings_updates["data_content_type"])
+
+                # Find AS2MDNOptions element
+                mdn_options = trading_partner.find('.//CommunicationOption[@method="as2"]//AS2MDNOptions')
+                if mdn_options is not None:
+                    if "request_mdn" in as2_settings_updates:
+                        mdn_options.set('requestMDN', str(as2_settings_updates["request_mdn"]).lower())
+                    if "mdn_signed" in as2_settings_updates:
+                        mdn_options.set('signed', str(as2_settings_updates["mdn_signed"]).lower())
+                    if "mdn_digest_alg" in as2_settings_updates:
+                        mdn_options.set('mdnDigestAlg', as2_settings_updates["mdn_digest_alg"])
+                    if "synchronous_mdn" in as2_settings_updates:
+                        mdn_options.set('synchronous', str(as2_settings_updates["synchronous_mdn"]).lower())
+                    if "fail_on_negative_mdn" in as2_settings_updates:
+                        mdn_options.set('failOnNegativeMDN', str(as2_settings_updates["fail_on_negative_mdn"]).lower())
 
             # Convert back to XML string
             modified_xml = ET.tostring(root, encoding='unicode')
