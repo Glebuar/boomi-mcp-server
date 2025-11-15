@@ -2125,18 +2125,43 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                         "message": "Cannot update communication protocols - no standard communication element found"
                     }
 
-                # Remove existing CommunicationOptions from the standard-specific element
+                # Get existing CommunicationOptions
                 existing_comm_opts = standard_comm.find('CommunicationOptions')
-                if existing_comm_opts is not None:
-                    standard_comm.remove(existing_comm_opts)
+                if existing_comm_opts is None:
+                    # No existing protocols - create new ones from scratch
+                    comm_xml = build_communication_xml(updates["communication_protocols"])
+                    comm_elem = ET.fromstring(f'<root>{comm_xml}</root>')
+                    for child in comm_elem:
+                        standard_comm.append(child)
+                else:
+                    # TARGETED APPROACH: Modify existing CommunicationOptions element
+                    # - Remove protocols not in desired list
+                    # - Add new protocols from template
+                    # - Keep existing protocols untouched (preserves all configurations)
 
-                # Build new communication XML
-                comm_xml = build_communication_xml(updates["communication_protocols"])
+                    desired_protocols_lower = [p.lower() for p in updates["communication_protocols"]]
 
-                # Parse and insert the new CommunicationOptions into the standard-specific element
-                comm_elem = ET.fromstring(f'<root>{comm_xml}</root>')
-                for child in comm_elem:
-                    standard_comm.append(child)
+                    # Step 1: Remove protocols that are not in the desired list
+                    for comm_option in list(existing_comm_opts.findall('.//CommunicationOption')):
+                        protocol_method = comm_option.get('method', '').lower()
+                        if protocol_method and protocol_method not in desired_protocols_lower:
+                            # This protocol should be removed
+                            existing_comm_opts.remove(comm_option)
+
+                    # Step 2: Add new protocols that don't exist yet
+                    existing_methods = [opt.get('method', '').lower()
+                                       for opt in existing_comm_opts.findall('.//CommunicationOption')]
+
+                    for protocol in updates["communication_protocols"]:
+                        proto_lower = protocol.lower()
+                        if proto_lower not in existing_methods:
+                            # Protocol doesn't exist - create new one from template
+                            template_xml = build_communication_xml([proto_lower])
+                            template_elem = ET.fromstring(f'<root>{template_xml}</root>')
+                            comm_opts_elem = template_elem.find('.//CommunicationOptions')
+                            if comm_opts_elem is not None:
+                                for comm_option in comm_opts_elem.findall('.//CommunicationOption'):
+                                    existing_comm_opts.append(comm_option)
 
             # Update Disk communication settings if provided
             if "disk_settings" in updates:
