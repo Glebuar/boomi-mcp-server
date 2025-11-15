@@ -370,7 +370,17 @@ if manage_trading_partner_action:
         communication_protocols: str = None,
         disk_directory: str = None,
         disk_get_directory: str = None,
-        disk_send_directory: str = None
+        disk_send_directory: str = None,
+        ftp_host: str = None,
+        ftp_port: str = None,
+        ftp_username: str = None,
+        sftp_host: str = None,
+        sftp_port: str = None,
+        sftp_username: str = None,
+        http_url: str = None,
+        as2_url: str = None,
+        as2_identifier: str = None,
+        as2_partner_identifier: str = None
     ):
         """
         Manage B2B/EDI trading partners (all 7 standards).
@@ -399,12 +409,22 @@ if manage_trading_partner_action:
             contact_country: Contact country (optional)
             contact_postalcode: Contact postal/zip code (optional)
             communication_protocols: Comma-separated list of communication protocols to enable (optional for create)
-            disk_directory: Main directory for Disk protocol (DiskSettings/@directory)
-            disk_get_directory: Get/Receive directory for Disk protocol (DiskGetAction/@getDirectory)
-            disk_send_directory: Send directory for Disk protocol (DiskSendAction/@sendDirectory)
                                     Available: ftp, sftp, http, as2, mllp, oftp, disk
                                     Example: "ftp,http" or "as2,sftp"
                                     If not provided, creates partner with no communication configured (can be added later via UI)
+            disk_directory: Main directory for Disk protocol (DiskSettings/@directory)
+            disk_get_directory: Get/Receive directory for Disk protocol (DiskGetAction/@getDirectory)
+            disk_send_directory: Send directory for Disk protocol (DiskSendAction/@sendDirectory)
+            ftp_host: FTP server hostname/IP (ConnectionSettings/@host)
+            ftp_port: FTP server port (ConnectionSettings/@port)
+            ftp_username: FTP username (AuthSettings/@username)
+            sftp_host: SFTP server hostname/IP (ConnectionSettings/@host)
+            sftp_port: SFTP server port (ConnectionSettings/@port)
+            sftp_username: SFTP username (AuthSettings/@username)
+            http_url: HTTP/HTTPS URL (HTTPSettings/@url)
+            as2_url: AS2 endpoint URL (AS2Settings/@url)
+            as2_identifier: Local AS2 identifier (AS2Settings/@as2Identifier)
+            as2_partner_identifier: Partner AS2 identifier (AS2Settings/@partnerAS2Identifier)
 
         Returns:
             Action result with success status and data/error
@@ -541,6 +561,41 @@ if manage_trading_partner_action:
                         updates["disk_settings"]["get_directory"] = disk_get_directory
                     if disk_send_directory is not None:
                         updates["disk_settings"]["send_directory"] = disk_send_directory
+
+                # Add FTP settings if provided
+                if ftp_host is not None or ftp_port is not None or ftp_username is not None:
+                    updates["ftp_settings"] = {}
+                    if ftp_host is not None:
+                        updates["ftp_settings"]["host"] = ftp_host
+                    if ftp_port is not None:
+                        updates["ftp_settings"]["port"] = ftp_port
+                    if ftp_username is not None:
+                        updates["ftp_settings"]["username"] = ftp_username
+
+                # Add SFTP settings if provided
+                if sftp_host is not None or sftp_port is not None or sftp_username is not None:
+                    updates["sftp_settings"] = {}
+                    if sftp_host is not None:
+                        updates["sftp_settings"]["host"] = sftp_host
+                    if sftp_port is not None:
+                        updates["sftp_settings"]["port"] = sftp_port
+                    if sftp_username is not None:
+                        updates["sftp_settings"]["username"] = sftp_username
+
+                # Add HTTP settings if provided
+                if http_url is not None:
+                    updates["http_settings"] = {}
+                    updates["http_settings"]["url"] = http_url
+
+                # Add AS2 settings if provided
+                if as2_url is not None or as2_identifier is not None or as2_partner_identifier is not None:
+                    updates["as2_settings"] = {}
+                    if as2_url is not None:
+                        updates["as2_settings"]["url"] = as2_url
+                    if as2_identifier is not None:
+                        updates["as2_settings"]["as2_identifier"] = as2_identifier
+                    if as2_partner_identifier is not None:
+                        updates["as2_settings"]["partner_as2_identifier"] = as2_partner_identifier
 
                 params["updates"] = updates
 
