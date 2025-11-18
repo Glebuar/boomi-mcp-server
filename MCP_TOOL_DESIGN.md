@@ -1350,6 +1350,1087 @@ def build_component_xml(component_type, name, folder, **config):
 3. Validate parameters before building
 4. LLM never sees XML complexity
 
+---
+
+## Hybrid Architecture for LLM-Powered Process Creation
+
+**Date Added**: 2025-01-17
+**Status**: Recommended Architecture for Phase 2 (Process Components)
+**Purpose**: Enable future LLM agents to learn from examples and create Boomi processes
+
+### Executive Summary
+
+Based on analysis of real Boomi process XML structure and future LLM agent requirements, we recommend a **Hybrid Architecture** that combines:
+- **XML Templates** (as Python constants) for readability and agent training
+- **Python Builders** for logic, validation, and complexity handling
+
+This approach provides the **best foundation for LLM agent training** while maintaining code quality and maintainability.
+
+---
+
+### Background: The Challenge
+
+**Problem Statement:**
+Future implementation will include an LLM agent that creates Boomi integration processes. The agent needs to:
+1. Learn from XML examples (understand structure)
+2. Apply business rules (spacing, connections, validation)
+3. Generate valid process XML
+4. Handle complexity (6+ shape types, dragpoint calculations, component references)
+
+**Key Question:**
+What's the best way to structure XML builders so an LLM agent can learn and create processes effectively?
+
+---
+
+### Real-World Boomi Process Analysis
+
+#### Complexity Metrics from SDK Examples
+
+**Simple Process (Start → Message → Stop):**
+```
+- XML Lines: ~50
+- XML Characters: ~1,800
+- Elements: ~15
+- Shapes: 3
+- Nesting Depth: 6-7 levels
+- Boilerplate: 60-70% (fixed structure)
+- Variable: 30-40% (shape configs, connections)
+```
+
+**Medium Process (Start → Connector → Map → Stop):**
+```
+- XML Lines: ~100-150
+- XML Characters: ~4,000-6,000
+- Elements: ~35-50
+- Shapes: 6+
+- Complexity: Linear scaling (~15-20 lines per shape)
+```
+
+#### Identified Patterns
+
+**Pattern 1: Component Wrapper (100% boilerplate)**
+```xml
+<Component xmlns="http://api.platform.boomi.com/"
+           name="[VAR]" type="process">
+  <description>[VAR]</description>
+  <object>
+    <process xmlns="" allowSimultaneous="false">
+      <!-- Shapes go here -->
+    </process>
+  </object>
+</Component>
+```
+
+**Pattern 2: Repeating Shape Structure (80% boilerplate)**
+```xml
+<shape image="[ICON]" name="[NAME]" shapetype="[TYPE]"
+       x="[X]" y="[Y]">
+  <configuration>
+    <[TYPE-SPECIFIC-CONFIG]/>
+  </configuration>
+  <dragpoints>
+    <dragpoint name="[AUTO]" toShape="[NEXT]" x="[AUTO]" y="[AUTO]"/>
+  </dragpoints>
+</shape>
+```
+
+**Pattern 3: Linear Flow (Common integration pattern)**
+```
+Start → Source Connector → Map → Destination Connector → Stop
+
+X-spacing: 150px between shapes
+Y-coordinate: Constant (100px)
+Connections: Automatic between consecutive shapes
+```
+
+---
+
+### Architecture Evaluation
+
+Four approaches were evaluated based on LLM agent requirements:
+
+#### **Approach A: External XML Template Files**
+
+**Structure:**
+```
+templates/processes/
+├── etl_linear_flow.xml.jinja2
+├── api_integration.xml.jinja2
+└── batch_processing.xml.jinja2
+```
+
+**Pros:** Natural XML, version control friendly, non-programmers can edit
+**Cons:** Limited flexibility, template explosion, Jinja2 dependency
+**LLM Score:** 7.9/10
+
+#### **Approach B: F-String Builders (Current)**
+
+**Structure:**
+```python
+def build_process(name, shapes):
+    return f'''<Component name="{name}">
+        <object>
+          {shapes_xml}
+        </object>
+    </Component>'''
+```
+
+**Pros:** Flexible, type-safe, IDE support
+**Cons:** XML embedded in strings, harder for LLM to learn from
+**LLM Score:** 7.5/10
+
+#### **Approach C: AST/ElementTree Builders**
+
+**Structure:**
+```python
+component = Element('Component', attrib={'name': name})
+obj = SubElement(component, 'object')
+# ... programmatic building
+```
+
+**Pros:** Programmatic, validated structure
+**Cons:** LLM hostile (can't see XML), very verbose
+**LLM Score:** 6.1/10
+
+#### **Approach D: Hybrid (Templates + Builders)** ⭐ **RECOMMENDED**
+
+**Structure:**
+```python
+# Template as Python constant
+PROCESS_TEMPLATE = """<Component name="{name}">
+  <object>
+    <process>
+      <shapes>
+{shapes}
+      </shapes>
+    </process>
+  </object>
+</Component>"""
+
+# Builder with logic
+class ProcessBuilder:
+    def build_linear_process(self, name, shapes_config):
+        shapes_xml = []
+        x_pos = 100
+        for shape in shapes_config:
+            shapes_xml.append(self._build_shape(shape, x=x_pos))
+            x_pos += 150  # Auto-spacing
+        return PROCESS_TEMPLATE.format(
+            name=name,
+            shapes='\n'.join(shapes_xml)
+        )
+```
+
+**Pros:** Best of both worlds - readable XML + Python logic
+**Cons:** Dual maintenance (mitigated by clear separation)
+**LLM Score:** 9.2/10 ⭐
+
+---
+
+### Hybrid Architecture: Detailed Design
+
+#### **Directory Structure**
+
+```
+src/boomi_mcp/
+├── xml_builders/                    # Process XML generation (Phase 2)
+│   ├── __init__.py
+│   ├── templates/                   # XML templates as Python constants
+│   │   ├── __init__.py
+│   │   ├── process_wrapper.py      # Component envelope
+│   │   ├── shapes/                  # Individual shape templates
+│   │   │   ├── __init__.py
+│   │   │   ├── start_shape.py
+│   │   │   ├── stop_shape.py
+│   │   │   ├── connector_shape.py
+│   │   │   ├── map_shape.py
+│   │   │   ├── message_shape.py
+│   │   │   ├── decision_shape.py
+│   │   │   └── ... (15-20 total)
+│   │   └── patterns/                # Common process patterns
+│   │       ├── etl_linear.py
+│   │       ├── api_integration.py
+│   │       └── batch_processing.py
+│   │
+│   └── builders/                    # Python builder classes
+│       ├── __init__.py
+│       ├── process_builder.py      # Main orchestration
+│       ├── shape_builder.py        # Shape assembly
+│       ├── coordinate_calculator.py # Layout logic
+│       └── validators.py           # XML validation
+│
+├── categories/components/
+│   ├── trading_partners.py         # JSON API (no XML builders)
+│   ├── processes.py                # Uses xml_builders/
+│   └── ...
+│
+└── docs/agent_knowledge/            # LLM training material
+    ├── README.md
+    ├── process_patterns.md         # Pattern library
+    ├── shape_reference.md          # Shape type catalog
+    └── examples/                    # 50+ working examples
+        ├── etl_salesforce_netsuite.md
+        ├── api_integration_http.md
+        └── ...
+```
+
+#### **Template Layer: XML Constants**
+
+**File: `xml_builders/templates/process_wrapper.py`**
+
+```python
+"""
+Process component XML wrapper template.
+
+This template defines the standard Boomi Component structure for processes.
+60-70% of process XML is fixed boilerplate - this template captures that.
+"""
+
+PROCESS_COMPONENT_WRAPPER = """<?xml version="1.0" encoding="UTF-8"?>
+<Component xmlns="http://api.platform.boomi.com/"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           name="{name}"
+           type="process"
+           folderName="{folder}">
+  <description>{description}</description>
+  <encryptedValues/>
+  <object>
+    <process xmlns=""
+             allowSimultaneous="{allow_simultaneous}"
+             enableUserLog="{enable_user_log}"
+             processLogOnErrorOnly="{log_on_error_only}"
+             purgeDataImmediately="false"
+             updateRunDates="true"
+             workload="general">
+      <shapes>
+{shapes}
+      </shapes>
+    </process>
+  </object>
+</Component>"""
+
+# Default values for common attributes
+PROCESS_DEFAULTS = {
+    "folder": "Home",
+    "description": "Process created via MCP",
+    "allow_simultaneous": "false",
+    "enable_user_log": "false",
+    "log_on_error_only": "false"
+}
+```
+
+**File: `xml_builders/templates/shapes/start_shape.py`**
+
+```python
+"""
+Start shape template.
+
+Every Boomi process begins with a Start shape.
+This template represents the standard structure.
+"""
+
+START_SHAPE_TEMPLATE = """<shape image="start"
+       name="{name}"
+       shapetype="start"
+       userlabel="{label}"
+       x="{x}"
+       y="{y}">
+  <configuration>
+    <noaction/>
+  </configuration>
+  <dragpoints>
+    <dragpoint name="{name}.dragpoint1"
+               toShape="{next_shape}"
+               x="{drag_x}"
+               y="{drag_y}"/>
+  </dragpoints>
+</shape>"""
+
+START_SHAPE_DEFAULTS = {
+    "label": "Start",
+    "name": "start"
+}
+```
+
+**File: `xml_builders/templates/shapes/connector_shape.py`**
+
+```python
+"""
+Connector shape template.
+
+Connectors integrate with external systems (Salesforce, databases, APIs, etc.).
+Configuration varies by connector type but structure is consistent.
+"""
+
+CONNECTOR_SHAPE_TEMPLATE = """<shape image="connector_icon"
+       name="{name}"
+       shapetype="connector"
+       userlabel="{label}"
+       x="{x}"
+       y="{y}">
+  <configuration>
+    <connector>
+      <connectorId>{connector_id}</connectorId>
+      <operation>{operation}</operation>
+      <objectType>{object_type}</objectType>
+    </connector>
+  </configuration>
+  <dragpoints>
+    <dragpoint name="{name}.dragpoint1"
+               toShape="{next_shape}"
+               x="{drag_x}"
+               y="{drag_y}"/>
+  </dragpoints>
+</shape>"""
+
+CONNECTOR_SHAPE_DEFAULTS = {
+    "operation": "query",
+    "object_type": ""
+}
+```
+
+**File: `xml_builders/templates/shapes/map_shape.py`**
+
+```python
+"""
+Map shape template.
+
+Maps transform data structure between shapes.
+References a Map component by ID.
+"""
+
+MAP_SHAPE_TEMPLATE = """<shape image="map_icon"
+       name="{name}"
+       shapetype="map"
+       userlabel="{label}"
+       x="{x}"
+       y="{y}">
+  <configuration>
+    <map>
+      <mapId>{map_id}</mapId>
+    </map>
+  </configuration>
+  <dragpoints>
+    <dragpoint name="{name}.dragpoint1"
+               toShape="{next_shape}"
+               x="{drag_x}"
+               y="{drag_y}"/>
+  </dragpoints>
+</shape>"""
+
+MAP_SHAPE_DEFAULTS = {
+    "label": "Map"
+}
+```
+
+**File: `xml_builders/templates/shapes/stop_shape.py`**
+
+```python
+"""
+Stop shape template.
+
+Every Boomi process ends with a Stop shape.
+The 'continue' attribute determines if execution continues to parent process.
+"""
+
+STOP_SHAPE_TEMPLATE = """<shape image="stop_icon"
+       name="{name}"
+       shapetype="stop"
+       userlabel="{label}"
+       x="{x}"
+       y="{y}">
+  <configuration>
+    <stop continue="{continue}"/>
+  </configuration>
+  <dragpoints/>
+</shape>"""
+
+STOP_SHAPE_DEFAULTS = {
+    "label": "Stop",
+    "name": "stop",
+    "continue": "true"
+}
+```
+
+#### **Builder Layer: Python Logic**
+
+**File: `xml_builders/builders/process_builder.py`**
+
+```python
+"""
+Process builder - Orchestrates process XML generation.
+
+This builder handles:
+- Shape assembly in linear or complex flows
+- Automatic coordinate calculation
+- Connection (dragpoint) generation
+- Template rendering
+- Validation
+"""
+
+from typing import List, Dict, Any, Optional
+from ..templates.process_wrapper import PROCESS_COMPONENT_WRAPPER, PROCESS_DEFAULTS
+from ..templates.shapes import *
+from .coordinate_calculator import CoordinateCalculator
+from .validators import ProcessValidator
+
+
+class ProcessBuilder:
+    """Build Boomi process components from high-level configuration."""
+
+    def __init__(self):
+        self.coord_calc = CoordinateCalculator()
+        self.validator = ProcessValidator()
+
+    def build_linear_process(
+        self,
+        name: str,
+        shapes_config: List[Dict[str, Any]],
+        folder: str = "Home",
+        description: str = "",
+        **process_attrs
+    ) -> str:
+        """
+        Build process with shapes in linear flow (most common pattern).
+
+        Args:
+            name: Process name
+            shapes_config: List of shape configurations
+                Example:
+                [
+                    {'type': 'start', 'name': 'start'},
+                    {'type': 'connector', 'name': 'salesforce',
+                     'connector_id': 'conn-123', 'operation': 'query'},
+                    {'type': 'map', 'name': 'transform', 'map_id': 'map-456'},
+                    {'type': 'connector', 'name': 'netsuite',
+                     'connector_id': 'conn-789', 'operation': 'create'},
+                    {'type': 'stop', 'name': 'stop'}
+                ]
+            folder: Folder path (default: "Home")
+            description: Process description
+            **process_attrs: Override process attributes
+
+        Returns:
+            Complete process XML string
+
+        Raises:
+            ValueError: If validation fails
+        """
+        # Validate configuration
+        self.validator.validate_linear_flow(shapes_config)
+
+        # Calculate coordinates for linear flow
+        coordinates = self.coord_calc.calculate_linear_layout(
+            num_shapes=len(shapes_config),
+            start_x=100,
+            y_position=100,
+            spacing=150
+        )
+
+        # Build individual shapes
+        shapes_xml = []
+        for i, shape_cfg in enumerate(shapes_config):
+            # Determine next shape for connection
+            next_shape = (
+                shapes_config[i + 1]['name']
+                if i < len(shapes_config) - 1
+                else None
+            )
+
+            # Get coordinates
+            x, y = coordinates[i]
+
+            # Build shape XML
+            shape_xml = self._build_shape(
+                shape_type=shape_cfg['type'],
+                name=shape_cfg['name'],
+                x=x,
+                y=y,
+                next_shape=next_shape,
+                **shape_cfg.get('config', {})
+            )
+            shapes_xml.append(shape_xml)
+
+        # Merge with defaults
+        attrs = {**PROCESS_DEFAULTS, **process_attrs}
+        attrs.update({
+            'name': name,
+            'folder': folder,
+            'description': description or f"Linear process with {len(shapes_config)} shapes",
+            'shapes': '\n'.join(shapes_xml)
+        })
+
+        # Render process template
+        return PROCESS_COMPONENT_WRAPPER.format(**attrs)
+
+    def _build_shape(
+        self,
+        shape_type: str,
+        name: str,
+        x: float,
+        y: float,
+        next_shape: Optional[str] = None,
+        **config
+    ) -> str:
+        """
+        Build individual shape XML from template.
+
+        Args:
+            shape_type: Type of shape (start, stop, connector, map, etc.)
+            name: Unique shape name
+            x: X coordinate
+            y: Y coordinate
+            next_shape: Name of next shape in flow (for dragpoint)
+            **config: Shape-specific configuration
+
+        Returns:
+            Shape XML string
+
+        Raises:
+            ValueError: If unknown shape type
+        """
+        # Template registry
+        template_registry = {
+            'start': (START_SHAPE_TEMPLATE, START_SHAPE_DEFAULTS),
+            'stop': (STOP_SHAPE_TEMPLATE, STOP_SHAPE_DEFAULTS),
+            'connector': (CONNECTOR_SHAPE_TEMPLATE, CONNECTOR_SHAPE_DEFAULTS),
+            'map': (MAP_SHAPE_TEMPLATE, MAP_SHAPE_DEFAULTS),
+            'message': (MESSAGE_SHAPE_TEMPLATE, MESSAGE_SHAPE_DEFAULTS),
+            # ... add more shape types
+        }
+
+        if shape_type not in template_registry:
+            raise ValueError(
+                f"Unknown shape type: {shape_type}. "
+                f"Supported types: {', '.join(template_registry.keys())}"
+            )
+
+        template, defaults = template_registry[shape_type]
+
+        # Calculate dragpoint coordinates (if shape has connections)
+        drag_x, drag_y = None, None
+        if next_shape and shape_type != 'stop':
+            drag_x, drag_y = self.coord_calc.calculate_dragpoint(x, y)
+
+        # Merge configuration with defaults
+        params = {
+            **defaults,
+            **config,
+            'name': name,
+            'x': x,
+            'y': y,
+            'next_shape': next_shape or '',
+            'drag_x': drag_x or 0,
+            'drag_y': drag_y or 0,
+            'label': config.get('label', name.replace('_', ' ').title())
+        }
+
+        # Render template
+        return template.format(**params)
+```
+
+**File: `xml_builders/builders/coordinate_calculator.py`**
+
+```python
+"""
+Coordinate calculator - Handles process layout geometry.
+
+Boomi processes use X/Y coordinates to position shapes visually.
+This module encapsulates the math for automatic layout.
+"""
+
+from typing import List, Tuple
+
+
+class CoordinateCalculator:
+    """Calculate shape positions and dragpoint coordinates."""
+
+    DEFAULT_SPACING = 150  # Horizontal spacing between shapes
+    DEFAULT_Y = 100        # Vertical baseline
+    DRAGPOINT_OFFSET_X = 75  # Offset from shape center to dragpoint
+    DRAGPOINT_OFFSET_Y = 26
+
+    def calculate_linear_layout(
+        self,
+        num_shapes: int,
+        start_x: float = 100,
+        y_position: float = None,
+        spacing: float = None
+    ) -> List[Tuple[float, float]]:
+        """
+        Calculate coordinates for linear (horizontal) flow.
+
+        Args:
+            num_shapes: Number of shapes in flow
+            start_x: Starting X coordinate (default: 100)
+            y_position: Y coordinate (default: DEFAULT_Y)
+            spacing: Horizontal spacing (default: DEFAULT_SPACING)
+
+        Returns:
+            List of (x, y) coordinate tuples
+        """
+        y = y_position or self.DEFAULT_Y
+        spacing = spacing or self.DEFAULT_SPACING
+
+        coordinates = []
+        for i in range(num_shapes):
+            x = start_x + (i * spacing)
+            coordinates.append((x, y))
+
+        return coordinates
+
+    def calculate_dragpoint(
+        self,
+        shape_x: float,
+        shape_y: float
+    ) -> Tuple[float, float]:
+        """
+        Calculate dragpoint (connection) coordinates from shape position.
+
+        Dragpoints are connection points that link shapes.
+        They're offset from the shape center to the right side.
+
+        Args:
+            shape_x: Shape X coordinate
+            shape_y: Shape Y coordinate
+
+        Returns:
+            (drag_x, drag_y) tuple
+        """
+        drag_x = shape_x + self.DRAGPOINT_OFFSET_X
+        drag_y = shape_y + self.DRAGPOINT_OFFSET_Y
+        return (drag_x, drag_y)
+
+    def calculate_grid_layout(
+        self,
+        num_shapes: int,
+        columns: int = 3,
+        start_x: float = 100,
+        start_y: float = 100,
+        spacing_x: float = 200,
+        spacing_y: float = 150
+    ) -> List[Tuple[float, float]]:
+        """
+        Calculate coordinates for grid layout (for complex processes).
+
+        Args:
+            num_shapes: Total number of shapes
+            columns: Number of columns in grid
+            start_x: Starting X coordinate
+            start_y: Starting Y coordinate
+            spacing_x: Horizontal spacing
+            spacing_y: Vertical spacing
+
+        Returns:
+            List of (x, y) coordinate tuples
+        """
+        coordinates = []
+        for i in range(num_shapes):
+            row = i // columns
+            col = i % columns
+            x = start_x + (col * spacing_x)
+            y = start_y + (row * spacing_y)
+            coordinates.append((x, y))
+
+        return coordinates
+```
+
+**File: `xml_builders/builders/validators.py`**
+
+```python
+"""
+Process validators - Ensure valid process configurations.
+"""
+
+from typing import List, Dict, Any
+
+
+class ProcessValidator:
+    """Validate process configurations before building XML."""
+
+    def validate_linear_flow(self, shapes_config: List[Dict[str, Any]]) -> None:
+        """
+        Validate linear flow configuration.
+
+        Args:
+            shapes_config: List of shape configurations
+
+        Raises:
+            ValueError: If validation fails
+        """
+        if not shapes_config:
+            raise ValueError("Process must have at least one shape")
+
+        if len(shapes_config) < 2:
+            raise ValueError(
+                "Process must have at least Start and Stop shapes"
+            )
+
+        # First shape must be 'start'
+        if shapes_config[0]['type'] != 'start':
+            raise ValueError(
+                f"First shape must be 'start', got: {shapes_config[0]['type']}"
+            )
+
+        # Last shape must be 'stop'
+        if shapes_config[-1]['type'] != 'stop':
+            raise ValueError(
+                f"Last shape must be 'stop', got: {shapes_config[-1]['type']}"
+            )
+
+        # Validate all shapes have required fields
+        for i, shape in enumerate(shapes_config):
+            if 'type' not in shape:
+                raise ValueError(f"Shape {i} missing required field: 'type'")
+
+            if 'name' not in shape:
+                raise ValueError(f"Shape {i} missing required field: 'name'")
+
+            # Validate connector shapes have connector_id
+            if shape['type'] == 'connector':
+                config = shape.get('config', {})
+                if 'connector_id' not in config:
+                    raise ValueError(
+                        f"Connector shape '{shape['name']}' must specify 'connector_id'"
+                    )
+
+            # Validate map shapes have map_id
+            if shape['type'] == 'map':
+                config = shape.get('config', {})
+                if 'map_id' not in config:
+                    raise ValueError(
+                        f"Map shape '{shape['name']}' must specify 'map_id'"
+                    )
+
+        # Validate unique shape names
+        names = [s['name'] for s in shapes_config]
+        if len(names) != len(set(names)):
+            duplicates = [n for n in names if names.count(n) > 1]
+            raise ValueError(
+                f"Duplicate shape names found: {', '.join(set(duplicates))}"
+            )
+```
+
+#### **Usage Examples**
+
+**Example 1: Simple ETL Process**
+
+```python
+from xml_builders.builders.process_builder import ProcessBuilder
+
+# Initialize builder
+builder = ProcessBuilder()
+
+# Define process flow
+shapes = [
+    {'type': 'start', 'name': 'start'},
+    {'type': 'connector', 'name': 'salesforce_source',
+     'config': {
+         'connector_id': 'conn-abc-123',
+         'operation': 'query',
+         'object_type': 'Order'
+     }},
+    {'type': 'map', 'name': 'transform_order',
+     'config': {
+         'map_id': 'map-def-456'
+     }},
+    {'type': 'connector', 'name': 'netsuite_destination',
+     'config': {
+         'connector_id': 'conn-ghi-789',
+         'operation': 'create',
+         'object_type': 'SalesOrder'
+     }},
+    {'type': 'stop', 'name': 'stop'}
+]
+
+# Build process XML
+process_xml = builder.build_linear_process(
+    name="Salesforce to NetSuite Orders",
+    shapes_config=shapes,
+    folder="Integrations/Production",
+    description="ETL process for order synchronization"
+)
+
+# Create via Boomi API
+result = boomi_client.component.create_component(process_xml)
+print(f"Process created: {result.id_}")
+```
+
+**Generated XML Preview:**
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Component xmlns="http://api.platform.boomi.com/"
+           name="Salesforce to NetSuite Orders"
+           type="process"
+           folderName="Integrations/Production">
+  <description>ETL process for order synchronization</description>
+  <object>
+    <process xmlns="" allowSimultaneous="false">
+      <shapes>
+        <shape image="start" name="start" shapetype="start"
+               x="100.0" y="100.0">
+          <configuration><noaction/></configuration>
+          <dragpoints>
+            <dragpoint name="start.dragpoint1" toShape="salesforce_source"
+                       x="175.0" y="126.0"/>
+          </dragpoints>
+        </shape>
+
+        <shape image="connector_icon" name="salesforce_source" shapetype="connector"
+               x="250.0" y="100.0">
+          <configuration>
+            <connector>
+              <connectorId>conn-abc-123</connectorId>
+              <operation>query</operation>
+              <objectType>Order</objectType>
+            </connector>
+          </configuration>
+          <dragpoints>
+            <dragpoint name="salesforce_source.dragpoint1" toShape="transform_order"
+                       x="325.0" y="126.0"/>
+          </dragpoints>
+        </shape>
+
+        <!-- ... map and destination connector shapes ... -->
+
+        <shape image="stop_icon" name="stop" shapetype="stop"
+               x="700.0" y="100.0">
+          <configuration><stop continue="true"/></configuration>
+          <dragpoints/>
+        </shape>
+      </shapes>
+    </process>
+  </object>
+</Component>
+```
+
+---
+
+### LLM Agent Training Strategy
+
+#### **Knowledge Base Structure**
+
+```
+docs/agent_knowledge/
+├── README.md                        # Agent orientation
+├── process_patterns.md             # Pattern library (10+ patterns)
+├── shape_reference.md              # Complete shape catalog
+├── template_reference.md           # All available templates
+├── builder_api.md                  # Builder class documentation
+└── examples/                        # 50+ working examples
+    ├── 01_simple_etl.md
+    ├── 02_api_integration.md
+    ├── 03_batch_processing.md
+    ├── 04_error_handling.md
+    └── ...
+```
+
+#### **Example Training Document**
+
+**File: `docs/agent_knowledge/process_patterns.md`**
+
+````markdown
+# Boomi Process Patterns
+
+## Pattern 1: ETL (Extract-Transform-Load)
+
+### When to Use
+Moving data between systems with transformation.
+
+### Structure
+```
+Start → Source Connector → Map → Destination Connector → Stop
+```
+
+### Template
+Use `ProcessBuilder.build_linear_process()` with shapes:
+
+```python
+shapes = [
+    {'type': 'start', 'name': 'start'},
+    {'type': 'connector', 'name': 'source', 'config': {...}},
+    {'type': 'map', 'name': 'transform', 'config': {...}},
+    {'type': 'connector', 'name': 'dest', 'config': {...}},
+    {'type': 'stop', 'name': 'stop'}
+]
+```
+
+### Real Example: Salesforce to NetSuite
+```python
+# User request: "Sync Salesforce orders to NetSuite"
+
+# Agent identifies: ETL pattern
+# Agent maps:
+#   - Source: Salesforce Order object
+#   - Transform: Order to SalesOrder mapping
+#   - Destination: NetSuite SalesOrder object
+
+# Agent generates:
+shapes = [
+    {'type': 'start', 'name': 'start'},
+    {'type': 'connector', 'name': 'get_sf_orders',
+     'config': {
+         'connector_id': 'salesforce-production',
+         'operation': 'query',
+         'object_type': 'Order'
+     }},
+    {'type': 'map', 'name': 'order_to_salesorder',
+     'config': {
+         'map_id': 'map-order-transformation'
+     }},
+    {'type': 'connector', 'name': 'create_ns_orders',
+     'config': {
+         'connector_id': 'netsuite-production',
+         'operation': 'create',
+         'object_type': 'SalesOrder'
+     }},
+    {'type': 'stop', 'name': 'stop'}
+]
+
+# Agent calls:
+create_process_from_config(
+    profile='production',
+    name='Salesforce to NetSuite Orders',
+    shapes=shapes,
+    folder='Integrations/Sales'
+)
+```
+
+### Success Criteria
+- ✅ Process created successfully
+- ✅ All connectors valid
+- ✅ Map component exists
+- ✅ Proper error handling
+
+## Pattern 2: API Integration
+
+...
+````
+
+#### **Agent Workflow**
+
+```
+User: "Create integration from Salesforce to NetSuite for orders"
+
+↓
+
+Agent Step 1: Analyze Request
+  - Identifies entities: Salesforce (source), NetSuite (destination)
+  - Identifies object: Orders
+  - Determines pattern: ETL (data sync)
+
+↓
+
+Agent Step 2: Retrieve Pattern Template
+  - Searches agent_knowledge/process_patterns.md
+  - Finds: "Pattern 1: ETL (Extract-Transform-Load)"
+  - Loads template structure
+
+↓
+
+Agent Step 3: Gather Component IDs
+  - Queries: "What Salesforce connectors are available?"
+  - Queries: "What NetSuite connectors are available?"
+  - Queries: "Does an Order→SalesOrder map exist?"
+
+↓
+
+Agent Step 4: Generate Configuration
+  shapes = [
+      {'type': 'start', 'name': 'start'},
+      {'type': 'connector', 'name': 'salesforce_source',
+       'config': {'connector_id': 'conn-sf-prod', 'operation': 'query'}},
+      {'type': 'map', 'name': 'transform',
+       'config': {'map_id': 'map-order-so'}},
+      {'type': 'connector', 'name': 'netsuite_dest',
+       'config': {'connector_id': 'conn-ns-prod', 'operation': 'create'}},
+      {'type': 'stop', 'name': 'stop'}
+  ]
+
+↓
+
+Agent Step 5: Call MCP Tool
+  create_process_from_config(
+      profile='production',
+      name='Salesforce to NetSuite Orders',
+      shapes=shapes,
+      folder='Integrations/Sales'
+  )
+
+↓
+
+Result: Process created successfully! ID: proc-xyz-789
+```
+
+---
+
+### Implementation Checklist
+
+**Phase 1: Templates (Week 1)**
+- [  ] Create `xml_builders/templates/process_wrapper.py`
+- [  ] Create 15-20 shape templates in `templates/shapes/`
+- [  ] Create 5-10 pattern templates in `templates/patterns/`
+- [  ] Add comprehensive docstrings explaining each template
+- [  ] Test templates render valid XML
+
+**Phase 2: Builders (Week 2)**
+- [  ] Create `ProcessBuilder` class
+- [  ] Create `CoordinateCalculator` class
+- [  ] Create `ProcessValidator` class
+- [  ] Implement linear flow builder
+- [  ] Implement automatic dragpoint calculation
+- [  ] Add unit tests (90% coverage)
+
+**Phase 3: MCP Integration (Week 3)**
+- [  ] Create `create_process_from_config()` MCP tool
+- [  ] Add process validation before API call
+- [  ] Handle errors gracefully with helpful messages
+- [  ] Test with real Boomi account
+- [  ] Document tool usage in MCP docs
+
+**Phase 4: Agent Knowledge Base (Week 4)**
+- [  ] Create `docs/agent_knowledge/` directory
+- [  ] Write 10+ process pattern documents
+- [  ] Create complete shape reference
+- [  ] Generate 50+ working examples
+- [  ] Test examples with real Boomi API
+
+**Phase 5: Testing & Refinement (Week 5-6)**
+- [  ] Integration tests with Boomi API
+- [  ] Performance testing (large processes)
+- [  ] Error handling validation
+- [  ] Documentation review
+- [  ] User acceptance testing
+
+---
+
+### Success Metrics
+
+**Code Quality:**
+- ✅ 90%+ test coverage
+- ✅ All templates render valid XML
+- ✅ Type hints on all public APIs
+- ✅ Comprehensive docstrings
+
+**LLM Training:**
+- ✅ Agent can identify 10+ patterns from examples
+- ✅ Agent generates valid process configurations
+- ✅ <10% error rate in XML generation
+- ✅ Agent handles edge cases gracefully
+
+**Maintainability:**
+- ✅ Clear separation: templates vs logic
+- ✅ Easy to add new shape types (1 template + registry)
+- ✅ Easy to add new patterns (copy existing)
+- ✅ Non-programmers can suggest template improvements
+
+**Performance:**
+- ✅ Process generation <100ms
+- ✅ XML validation <50ms
+- ✅ API call successful >95% of time
+
+---
+
 ### Tool Registration Pattern
 
 Consistent registration in server.py:
