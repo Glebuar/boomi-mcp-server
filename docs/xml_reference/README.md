@@ -135,10 +135,19 @@ result = boomi_client.component.create(xml)
 
 ## Migration Path
 
-**Phase 1**: ✅ Extract builders to reusable modules
-**Phase 2**: 🔄 Refactor Trading Partners to JSON API
-**Phase 3**: ⏳ Implement Process components using extracted builders
-**Phase 4**: ⏳ Implement Connection components using extracted builders
+**Current Status (as of 2025-11-17):**
+
+**Phase 1**: ✅ Extract builders to reusable modules - COMPLETE
+**Phase 2**: ✅ Refactor Trading Partners to JSON API - COMPLETE
+   - Trading Partners now use JSON API with XML builders for communication protocols only
+   - See [manage_trading_partner](../../src/boomi_mcp/categories/components/trading_partners.py) implementation
+**Phase 3**: ⏳ Implement Process components using extracted builders - IN DEVELOPMENT
+   - Hybrid architecture defined in [MCP_TOOL_DESIGN.md](../../MCP_TOOL_DESIGN.md)
+   - Templates + Builders pattern established
+**Phase 4**: ⏳ Implement Connection components using extracted builders - PLANNED
+   - Will follow Process component pattern
+
+**Note**: Per [OpenAPI specification analysis](../../MCP_TOOL_DESIGN.md#architecture-decision-guide-when-to-use-each-approach), only Component CREATE/UPDATE operations require XML. All other Boomi API operations use JSON models.
 
 ---
 
