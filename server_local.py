@@ -424,6 +424,7 @@ if manage_trading_partner_action:
         Manage B2B/EDI trading partners (all 7 standards).
 
         Consolidated tool for all trading partner operations (local dev mode).
+        Now uses JSON-based TradingPartnerComponent API for cleaner, type-safe operations.
 
         Args:
             profile: Boomi profile name (required)
@@ -431,11 +432,17 @@ if manage_trading_partner_action:
             partner_id: Trading partner component ID (required for get, update, delete, analyze_usage)
             component_name: Trading partner name (required for create, optional for update)
             standard: Trading standard (required for create, optional filter for list)
+                      Options: x12, edifact, hl7, rosettanet, custom, tradacoms, odette
             classification: Partner classification (optional for create/list)
+                           Options: tradingpartner, mycompany
             folder_name: Folder to place partner in (optional for create/list)
+
+            # Standard-specific fields (X12, EDIFACT, HL7, RosettaNet, TRADACOMS, ODETTE)
             isa_id: ISA ID for X12 partners (X12 only)
             isa_qualifier: ISA Qualifier for X12 partners (X12 only)
             gs_id: GS ID for X12 partners (X12 only)
+
+            # Contact Information (10 fields)
             contact_name: Contact person name (optional)
             contact_email: Contact email address (optional)
             contact_phone: Contact phone number (optional)
@@ -446,56 +453,66 @@ if manage_trading_partner_action:
             contact_state: Contact state/province (optional)
             contact_country: Contact country (optional)
             contact_postalcode: Contact postal/zip code (optional)
+
+            # Communication Protocols
             communication_protocols: Comma-separated list of communication protocols to enable (optional for create)
                                     Available: ftp, sftp, http, as2, mllp, oftp, disk
                                     Example: "ftp,http" or "as2,sftp"
-                                    If not provided, creates partner with no communication configured (can be added later via UI)
-            disk_directory: Main directory for Disk protocol (DiskSettings/@directory)
-            disk_get_directory: Get/Receive directory for Disk protocol (DiskGetAction/@getDirectory)
-            disk_send_directory: Send directory for Disk protocol (DiskSendAction/@sendDirectory)
-            ftp_host: FTP server hostname/IP (ConnectionSettings/@host)
-            ftp_port: FTP server port (ConnectionSettings/@port)
-            ftp_username: FTP username (AuthSettings/@username)
-            sftp_host: SFTP server hostname/IP (ConnectionSettings/@host)
-            sftp_port: SFTP server port (ConnectionSettings/@port)
-            sftp_username: SFTP username (AuthSettings/@username)
-            http_url: HTTP/HTTPS URL (HTTPSettings/@url)
-            as2_url: AS2 endpoint URL (AS2Settings/@url)
-            as2_identifier: Local AS2 identifier (AS2Settings/@as2Identifier)
-            as2_partner_identifier: Partner AS2 identifier (AS2Settings/@partnerAS2Identifier)
-            oftp_host: OFTP server hostname/IP (defaultOFTPConnectionSettings/@host)
-            oftp_tls: Enable TLS for OFTP (defaultOFTPConnectionSettings/@tls) - "true" or "false"
-            http_authentication_type: HTTP authentication type - NONE, BASIC, OAUTH2 (HttpSettings/@authenticationType)
-            http_connect_timeout: HTTP connection timeout in ms (HttpSettings/@connectTimeout)
-            http_read_timeout: HTTP read timeout in ms (HttpSettings/@readTimeout)
-            http_username: HTTP username (HttpSettings/AuthSettings/@user)
-            http_client_auth: Enable client SSL authentication (HttpSettings/SSLOptions/@clientauth) - "true" or "false"
-            http_trust_server_cert: Trust server certificate (HttpSettings/SSLOptions/@trustServerCert) - "true" or "false"
-            http_method_type: HTTP method (HttpGetAction|HttpSendAction/@methodType) - GET, POST, PUT, DELETE, PATCH
-            http_data_content_type: HTTP content type (HttpGetAction|HttpSendAction/@dataContentType)
-            http_follow_redirects: Follow redirects (HttpGetAction|HttpSendAction/@followRedirects) - "true" or "false"
-            http_return_errors: Return errors in response (HttpGetAction|HttpSendAction/@returnErrors) - "true" or "false"
-            as2_authentication_type: AS2 authentication type - NONE, BASIC (defaultPartnerSettings/@authenticationType)
-            as2_verify_hostname: Verify SSL hostname (defaultPartnerSettings/@verifyHostname) - "true" or "false"
-            as2_client_ssl_alias: Client SSL certificate alias (defaultPartnerSettings/@clientsslAlias)
-            as2_username: AS2 username (defaultPartnerSettings/AuthSettings/@user)
-            as2_encrypt_alias: AS2 encryption certificate alias (partnerInfo/@encryptAlias)
-            as2_sign_alias: AS2 signing certificate alias (partnerInfo/@signAlias)
-            as2_mdn_alias: AS2 MDN certificate alias (partnerInfo/@mdnAlias)
-            as2_signed: Sign AS2 messages (AS2MessageOptions/@signed) - "true" or "false"
-            as2_encrypted: Encrypt AS2 messages (AS2MessageOptions/@encrypted) - "true" or "false"
-            as2_compressed: Compress AS2 messages (AS2MessageOptions/@compressed) - "true" or "false"
-            as2_encryption_algorithm: Encryption algorithm (AS2MessageOptions/@encryptionAlgorithm) - tripledes, rc2, aes128, aes192, aes256
-            as2_signing_digest_alg: Signing digest algorithm (AS2MessageOptions/@signingDigestAlg) - SHA1, SHA256, SHA384, SHA512
-            as2_data_content_type: AS2 content type (AS2MessageOptions/@dataContentType)
-            as2_request_mdn: Request MDN (AS2MDNOptions/@requestMDN) - "true" or "false"
-            as2_mdn_signed: Signed MDN (AS2MDNOptions/@signed) - "true" or "false"
-            as2_mdn_digest_alg: MDN digest algorithm (AS2MDNOptions/@mdnDigestAlg) - SHA1, SHA256, SHA384, SHA512
-            as2_synchronous_mdn: Synchronous MDN (AS2MDNOptions/@synchronous) - "true" or "false"
-            as2_fail_on_negative_mdn: Fail on negative MDN (AS2MDNOptions/@failOnNegativeMDN) - "true" or "false"
+                                    If not provided, creates partner with no communication configured
+
+            # Protocol-specific fields (Note: Full protocol support coming in future update)
+            disk_directory: Main directory for Disk protocol
+            disk_get_directory: Get/Receive directory for Disk protocol
+            disk_send_directory: Send directory for Disk protocol
+            ftp_host: FTP server hostname/IP
+            ftp_port: FTP server port
+            ftp_username: FTP username
+            sftp_host: SFTP server hostname/IP
+            sftp_port: SFTP server port
+            sftp_username: SFTP username
+            http_url: HTTP/HTTPS URL
+            as2_url: AS2 endpoint URL
+            as2_identifier: Local AS2 identifier
+            as2_partner_identifier: Partner AS2 identifier
+            oftp_host: OFTP server hostname/IP
+            oftp_tls: Enable TLS for OFTP - "true" or "false"
+            http_authentication_type: HTTP authentication type - NONE, BASIC, OAUTH2
+            http_connect_timeout: HTTP connection timeout in ms
+            http_read_timeout: HTTP read timeout in ms
+            http_username: HTTP username
+            http_client_auth: Enable client SSL authentication - "true" or "false"
+            http_trust_server_cert: Trust server certificate - "true" or "false"
+            http_method_type: HTTP method - GET, POST, PUT, DELETE, PATCH
+            http_data_content_type: HTTP content type
+            http_follow_redirects: Follow redirects - "true" or "false"
+            http_return_errors: Return errors in response - "true" or "false"
+            as2_authentication_type: AS2 authentication type - NONE, BASIC
+            as2_verify_hostname: Verify SSL hostname - "true" or "false"
+            as2_client_ssl_alias: Client SSL certificate alias
+            as2_username: AS2 username
+            as2_encrypt_alias: AS2 encryption certificate alias
+            as2_sign_alias: AS2 signing certificate alias
+            as2_mdn_alias: AS2 MDN certificate alias
+            as2_signed: Sign AS2 messages - "true" or "false"
+            as2_encrypted: Encrypt AS2 messages - "true" or "false"
+            as2_compressed: Compress AS2 messages - "true" or "false"
+            as2_encryption_algorithm: Encryption algorithm - tripledes, rc2, aes128, aes192, aes256
+            as2_signing_digest_alg: Signing digest algorithm - SHA1, SHA256, SHA384, SHA512
+            as2_data_content_type: AS2 content type
+            as2_request_mdn: Request MDN - "true" or "false"
+            as2_mdn_signed: Signed MDN - "true" or "false"
+            as2_mdn_digest_alg: MDN digest algorithm - SHA1, SHA256, SHA384, SHA512
+            as2_synchronous_mdn: Synchronous MDN - "true" or "false"
+            as2_fail_on_negative_mdn: Fail on negative MDN - "true" or "false"
 
         Returns:
             Action result with success status and data/error
+
+        Implementation Note:
+            This tool now uses JSON-based TradingPartnerComponent models internally,
+            providing better type safety and maintainability compared to the previous
+            XML-based approach. Protocol-specific and standard-specific field support
+            is currently limited to basic fields and will be expanded in future updates.
         """
         try:
             subject = TEST_USER

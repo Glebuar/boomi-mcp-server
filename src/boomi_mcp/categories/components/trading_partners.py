@@ -31,1559 +31,15 @@ from boomi.models import (
 
 
 # ============================================================================
-# Communication Options Helpers (matching UI structure exactly)
-# ============================================================================
-
-def build_communication_xml(protocols: list = None) -> str:
-    """
-    Build PartnerCommunication XML matching UI structure.
-
-    Args:
-        protocols: List of protocol names to include (e.g., ['ftp', 'http'])
-                  If None or empty, returns empty CommunicationOptions
-
-    Returns:
-        XML string for CommunicationOptions section
-    """
-    if not protocols:
-        return "<CommunicationOptions />"
-
-    options = []
-    for protocol in protocols:
-        proto_lower = protocol.lower()
-        if proto_lower == 'as2':
-            options.append(_build_as2_option())
-        elif proto_lower == 'disk':
-            options.append(_build_disk_option())
-        elif proto_lower == 'ftp':
-            options.append(_build_ftp_option())
-        elif proto_lower == 'http':
-            options.append(_build_http_option())
-        elif proto_lower == 'mllp':
-            options.append(_build_mllp_option())
-        elif proto_lower == 'oftp':
-            options.append(_build_oftp_option())
-        elif proto_lower == 'sftp':
-            options.append(_build_sftp_option())
-
-    if not options:
-        return "<CommunicationOptions />"
-
-    return f'''<CommunicationOptions>
-{chr(10).join(options)}
-          </CommunicationOptions>'''
-
-
-def extract_communication_protocols(xml_string: str) -> List[str]:
-    """
-    Extract list of configured communication protocols from trading partner XML.
-
-    Args:
-        xml_string: Full component XML or TradingPartner XML
-
-    Returns:
-        List of protocol names (e.g., ['as2', 'disk', 'ftp'])
-    """
-    protocols = []
-
-    if not xml_string or '<CommunicationOptions' not in xml_string:
-        return protocols
-
-    # Check if it's empty
-    if '<CommunicationOptions />' in xml_string:
-        return protocols
-
-    # Extract methods from CommunicationOption elements
-    # Format: <CommunicationOption commOption="default" method="as2">
-    import re
-    pattern = r'<CommunicationOption[^>]*method="([^"]+)"'
-    matches = re.findall(pattern, xml_string)
-
-    # Return unique protocols in lowercase
-    protocols = list(dict.fromkeys([m.lower() for m in matches]))
-
-    return protocols
-
-
-def extract_communication_protocol_details(xml_string: str) -> List[Dict[str, Any]]:
-    """
-    Extract detailed communication protocol settings from trading partner XML.
-
-    Args:
-        xml_string: Full component XML or TradingPartner XML
-
-    Returns:
-        List of protocol dicts with type and settings, e.g.:
-        [
-            {
-                "type": "disk",
-                "settings": {
-                    "directory": "/data/partners/acme",
-                    "get_directory": "/data/partners/acme/inbound",
-                    "send_directory": "/data/partners/acme/outbound"
-                }
-            },
-            {
-                "type": "ftp",
-                "settings": {
-                    "host": "ftp.example.com",
-                    "port": "21",
-                    "username": "testuser"
-                }
-            }
-        ]
-    """
-    protocols = []
-
-    if not xml_string or '<CommunicationOptions' not in xml_string:
-        return protocols
-
-    # Check if it's empty
-    if '<CommunicationOptions />' in xml_string:
-        return protocols
-
-    try:
-        root = ET.fromstring(xml_string)
-
-        # Find all CommunicationOption elements
-        comm_options = root.findall('.//CommunicationOption')
-
-        for comm_option in comm_options:
-            protocol_type = comm_option.get('method', '').lower()
-            if not protocol_type:
-                continue
-
-            settings = {}
-
-            # Extract Disk protocol settings
-            if protocol_type == 'disk':
-                disk_settings = comm_option.find('.//DiskSettings')
-                if disk_settings is not None:
-                    settings['directory'] = disk_settings.get('directory')
-
-                disk_get = comm_option.find('.//DiskGetAction')
-                if disk_get is not None:
-                    settings['get_directory'] = disk_get.get('getDirectory')
-
-                disk_send = comm_option.find('.//DiskSendAction')
-                if disk_send is not None:
-                    settings['send_directory'] = disk_send.get('sendDirectory')
-
-            # Extract FTP protocol settings
-            elif protocol_type == 'ftp':
-                ftp_settings = comm_option.find('.//FTPSettings')
-                if ftp_settings is not None:
-                    settings['host'] = ftp_settings.get('host')
-                    settings['port'] = ftp_settings.get('port')
-                    settings['connection_mode'] = ftp_settings.get('connectionMode')
-
-                auth_settings = comm_option.find('.//FTPSettings/AuthSettings')
-                if auth_settings is not None:
-                    settings['username'] = auth_settings.get('user')
-
-            # Extract SFTP protocol settings
-            elif protocol_type == 'sftp':
-                sftp_settings = comm_option.find('.//SFTPSettings')
-                if sftp_settings is not None:
-                    settings['host'] = sftp_settings.get('host')
-                    settings['port'] = sftp_settings.get('port')
-
-                auth_settings = comm_option.find('.//SFTPSettings/AuthSettings')
-                if auth_settings is not None:
-                    settings['username'] = auth_settings.get('user')
-
-            # Extract HTTP protocol settings
-            elif protocol_type == 'http':
-                http_settings = comm_option.find('.//HttpSettings')
-                if http_settings is not None:
-                    settings['url'] = http_settings.get('url')
-                    settings['authentication_type'] = http_settings.get('authenticationType')
-                    settings['connect_timeout'] = http_settings.get('connectTimeout')
-                    settings['read_timeout'] = http_settings.get('readTimeout')
-
-                    # Extract auth settings (username only, password masked)
-                    auth_settings = http_settings.find('.//AuthSettings')
-                    if auth_settings is not None:
-                        settings['username'] = auth_settings.get('user')
-                        settings['password_configured'] = bool(auth_settings.get('password'))
-
-                    # Extract SSL options
-                    ssl_options = http_settings.find('.//SSLOptions')
-                    if ssl_options is not None:
-                        settings['client_auth'] = ssl_options.get('clientauth')
-                        settings['trust_server_cert'] = ssl_options.get('trustServerCert')
-
-                # Extract HTTP action settings (Get or Send)
-                http_get = comm_option.find('.//HttpGetAction')
-                http_send = comm_option.find('.//HttpSendAction')
-                http_action = http_get if http_get is not None else http_send
-
-                if http_action is not None:
-                    settings['method_type'] = http_action.get('methodType')
-                    settings['data_content_type'] = http_action.get('dataContentType')
-                    settings['follow_redirects'] = http_action.get('followRedirects')
-                    settings['return_errors'] = http_action.get('returnErrors')
-
-            # Extract AS2 protocol settings
-            elif protocol_type == 'as2':
-                # Extract from AS2ServerSettings/defaultPartnerSettings
-                partner_settings = comm_option.find('.//defaultPartnerSettings')
-                if partner_settings is not None:
-                    settings['url'] = partner_settings.get('url')
-                    settings['authentication_type'] = partner_settings.get('authenticationType')
-                    settings['verify_hostname'] = partner_settings.get('verifyHostname')
-                    settings['client_ssl_alias'] = partner_settings.get('clientsslAlias')
-
-                    # Extract auth settings (username only, password masked)
-                    auth_settings = partner_settings.find('.//AuthSettings')
-                    if auth_settings is not None:
-                        settings['username'] = auth_settings.get('user')
-                        settings['password_configured'] = bool(auth_settings.get('password'))
-
-                # Extract partner info (AS2 IDs)
-                partner_info = comm_option.find('.//partnerInfo')
-                if partner_info is not None:
-                    settings['as2_identifier'] = partner_info.get('as2Id')
-                    settings['encrypt_alias'] = partner_info.get('encryptAlias')
-                    settings['sign_alias'] = partner_info.get('signAlias')
-                    settings['mdn_alias'] = partner_info.get('mdnAlias')
-
-                # Extract AS2 message options
-                msg_options = comm_option.find('.//AS2MessageOptions')
-                if msg_options is not None:
-                    settings['signed'] = msg_options.get('signed')
-                    settings['encrypted'] = msg_options.get('encrypted')
-                    settings['compressed'] = msg_options.get('compressed')
-                    settings['encryption_algorithm'] = msg_options.get('encryptionAlgorithm')
-                    settings['signing_digest_alg'] = msg_options.get('signingDigestAlg')
-                    settings['data_content_type'] = msg_options.get('dataContentType')
-
-                # Extract AS2 MDN options
-                mdn_options = comm_option.find('.//AS2MDNOptions')
-                if mdn_options is not None:
-                    settings['request_mdn'] = mdn_options.get('requestMDN')
-                    settings['mdn_signed'] = mdn_options.get('signed')
-                    settings['mdn_digest_alg'] = mdn_options.get('mdnDigestAlg')
-                    settings['synchronous_mdn'] = mdn_options.get('synchronous')
-                    settings['fail_on_negative_mdn'] = mdn_options.get('failOnNegativeMDN')
-
-            # Extract MLLP protocol settings
-            elif protocol_type == 'mllp':
-                mllp_settings = comm_option.find('.//MLLPSettings')
-                if mllp_settings is not None:
-                    settings['host'] = mllp_settings.get('host')
-                    settings['port'] = mllp_settings.get('port')
-
-            # Extract OFTP protocol settings
-            elif protocol_type == 'oftp':
-                oftp_settings = comm_option.find('.//defaultOFTPConnectionSettings')
-                if oftp_settings is not None:
-                    settings['host'] = oftp_settings.get('host')
-                    settings['tls'] = oftp_settings.get('tls')
-
-            # Remove None values from settings
-            settings = {k: v for k, v in settings.items() if v is not None}
-
-            if settings:  # Only add if we found some settings
-                protocols.append({
-                    "type": protocol_type,
-                    "settings": settings
-                })
-
-    except Exception as e:
-        # If parsing fails, return empty list
-        pass
-
-    return protocols
-
-
-def _build_as2_option() -> str:
-    """Build AS2 CommunicationOption (exact UI structure)"""
-    return '''            <CommunicationOption commOption="default" method="as2">
-              <CommunicationSettings docType="default">
-                <SettingsObject useMyTradingPartnerSettings="false">
-                  <AS2ServerSettings useSharedServer="true">
-                    <defaultPartnerSettings authenticationType="BASIC" clientsslAlias="" url="" verifyHostname="true">
-                      <AuthSettings password="" user=""/>
-                    </defaultPartnerSettings>
-                  </AS2ServerSettings>
-                </SettingsObject>
-                <ActionObjects>
-                  <ActionObject useMyTradingPartnerOptions="false">
-                    <AS2PartnerObject>
-                      <partnerInfo as2Id="" encryptAlias="" mdnAlias="" numberOfMessagesToCheckForDuplicates="100000" rejectDuplicateMessageId="false" signAlias="">
-                        <ListenAuthSettings/>
-                        <ListenAttachmentSettings/>
-                      </partnerInfo>
-                      <defaultPartnerInfo as2Id="" basicAuthEnabled="false" numberOfMessagesToCheckForDuplicates="100000" rejectDuplicateMessageId="true" useAllowedIpAddresses="false">
-                        <ListenAuthSettings/>
-                        <ListenAttachmentSettings/>
-                      </defaultPartnerInfo>
-                      <AS2MessageOptions attachmentOption="BATCH" compressed="false" dataContentType="textplain" enabledFoldedHeaders="false" encrypted="false" encryptionAlgorithm="tripledes" maxDocumentCount="1" multipleAttachments="false" signed="false" signingDigestAlg="SHA1"/>
-                      <AS2MDNOptions externalURL="" failOnNegativeMDN="false" mdnDigestAlg="SHA1" requestMDN="false" signed="false" synchronous="sync" useExternalURL="false" useSSL="false"/>
-                    </AS2PartnerObject>
-                    <DataProcessing sequence="pre">
-                      <dataprocess/>
-                    </DataProcessing>
-                    <DataProcessing sequence="post">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                </ActionObjects>
-              </CommunicationSettings>
-            </CommunicationOption>'''
-
-
-def _build_disk_option() -> str:
-    """Build Disk CommunicationOption (exact UI structure)"""
-    return '''            <CommunicationOption commOption="default" method="disk">
-              <CommunicationSettings docType="default">
-                <SettingsObject useMyTradingPartnerSettings="false">
-                  <DiskSettings directory=""/>
-                </SettingsObject>
-                <ActionObjects>
-                  <ActionObject type="Get" useMyTradingPartnerOptions="false">
-                    <DiskGetAction deleteAfterRead="false" fileFilter="" filterMatchType="wildcard" getDirectory="" maxFileCount="0"/>
-                    <DataProcessing sequence="post">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                  <ActionObject type="Send" useMyTradingPartnerOptions="false">
-                    <DiskSendAction createDirectory="false" sendDirectory="" writeOption="unique"/>
-                    <DataProcessing sequence="pre">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                </ActionObjects>
-              </CommunicationSettings>
-            </CommunicationOption>'''
-
-
-def _build_ftp_option() -> str:
-    """Build FTP CommunicationOption (exact UI structure)"""
-    return '''            <CommunicationOption commOption="default" method="ftp">
-              <CommunicationSettings docType="default">
-                <SettingsObject useMyTradingPartnerSettings="false">
-                  <FTPSettings connectionMode="passive" host="" port="21">
-                    <AuthSettings user=""/>
-                    <SSLOptions clientauth="false" sslmode="none"/>
-                  </FTPSettings>
-                </SettingsObject>
-                <ActionObjects>
-                  <ActionObject type="Get" useMyTradingPartnerOptions="false">
-                    <FTPGetAction ftpaction="actionget" maxFileCount="0" transferType="binary"/>
-                    <DataProcessing sequence="post">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                  <ActionObject type="Send" useMyTradingPartnerOptions="false">
-                    <FTPSendAction ftpaction="actionputrename" transferType="binary"/>
-                    <DataProcessing sequence="pre">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                </ActionObjects>
-              </CommunicationSettings>
-            </CommunicationOption>'''
-
-
-def _build_http_option() -> str:
-    """Build HTTP CommunicationOption (exact UI structure)"""
-    return '''            <CommunicationOption commOption="default" method="http">
-              <CommunicationSettings docType="default">
-                <SettingsObject useMyTradingPartnerSettings="false">
-                  <HttpSettings authenticationType="NONE">
-                    <AuthSettings/>
-                    <OAuthSettings/>
-                    <OAuth2Settings grantType="code">
-                      <credentials clientId=""/>
-                      <authorizationTokenEndpoint url=""/>
-                      <authorizationParameters/>
-                      <accessTokenEndpoint url=""/>
-                      <accessTokenParameters/>
-                      <scope/>
-                    </OAuth2Settings>
-                    <SSLOptions clientauth="false" trustServerCert="false"/>
-                  </HttpSettings>
-                </SettingsObject>
-                <ActionObjects>
-                  <ActionObject type="Listen" useMyTradingPartnerOptions="false">
-                    <B2BServerListenAction/>
-                    <DataProcessing sequence="post">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                  <ActionObject type="Get" useMyTradingPartnerOptions="false">
-                    <HttpGetAction dataContentType="text/plain" followRedirects="false" methodType="GET" requestProfileType="NONE" responseProfileType="NONE" returnErrors="false">
-                      <requestHeaders/>
-                      <pathElements/>
-                      <responseHeaderMapping/>
-                      <reflectHeaders/>
-                    </HttpGetAction>
-                    <DataProcessing sequence="post">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                  <ActionObject type="Send" useMyTradingPartnerOptions="false">
-                    <HttpSendAction dataContentType="text/plain" followRedirects="false" methodType="POST" requestProfileType="NONE" responseProfileType="NONE" returnErrors="false">
-                      <requestHeaders/>
-                      <pathElements/>
-                      <responseHeaderMapping/>
-                      <reflectHeaders/>
-                    </HttpSendAction>
-                    <DataProcessing sequence="pre">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                </ActionObjects>
-              </CommunicationSettings>
-            </CommunicationOption>'''
-
-
-def _build_mllp_option() -> str:
-    """Build MLLP CommunicationOption (exact UI structure)"""
-    return '''            <CommunicationOption commOption="default" method="mllp">
-              <CommunicationSettings docType="default">
-                <SettingsObject useMyTradingPartnerSettings="false"/>
-                <ActionObjects>
-                  <ActionObject useMyTradingPartnerOptions="false">
-                    <MLLPPartnerObject>
-                      <partnerInfo/>
-                    </MLLPPartnerObject>
-                    <DataProcessing sequence="pre">
-                      <dataprocess/>
-                    </DataProcessing>
-                    <DataProcessing sequence="post">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                </ActionObjects>
-              </CommunicationSettings>
-            </CommunicationOption>'''
-
-
-def _build_oftp_option() -> str:
-    """Build OFTP CommunicationOption (exact UI structure)"""
-    return '''            <CommunicationOption commOption="default" method="oftp">
-              <CommunicationSettings docType="default">
-                <SettingsObject useMyTradingPartnerSettings="false">
-                  <OFTPConnectionSettings>
-                    <myPartnerInfo/>
-                    <defaultOFTPConnectionSettings host="" sfidciph="0" ssidauth="false" tls="false">
-                      <myPartnerInfo/>
-                    </defaultOFTPConnectionSettings>
-                  </OFTPConnectionSettings>
-                </SettingsObject>
-                <ActionObjects>
-                  <ActionObject type="Listen" useMyTradingPartnerOptions="false">
-                    <OFTPServerListenAction>
-                      <OFTPPartnerGroup>
-                        <myCompanyInfo/>
-                        <myPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
-                        <defaultPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
-                      </OFTPPartnerGroup>
-                      <OFTPListenOptions operation="LISTEN">
-                        <GatewayPartnerGroup>
-                          <myPartnerInfo/>
-                        </GatewayPartnerGroup>
-                      </OFTPListenOptions>
-                    </OFTPServerListenAction>
-                    <DataProcessing sequence="pre">
-                      <dataprocess/>
-                    </DataProcessing>
-                    <DataProcessing sequence="post">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                  <ActionObject type="Get" useMyTradingPartnerOptions="false">
-                    <OFTPGetAction>
-                      <OFTPPartnerGroup>
-                        <myCompanyInfo/>
-                        <myPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
-                        <defaultPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
-                      </OFTPPartnerGroup>
-                    </OFTPGetAction>
-                    <DataProcessing sequence="pre">
-                      <dataprocess/>
-                    </DataProcessing>
-                    <DataProcessing sequence="post">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                  <ActionObject type="Send" useMyTradingPartnerOptions="false">
-                    <OFTPSendAction>
-                      <OFTPPartnerGroup>
-                        <myCompanyInfo/>
-                        <myPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
-                        <defaultPartnerInfo sfidsec-encrypt="false" sfidsec-sign="false" sfidsign="false" ssidcmpr="false"/>
-                      </OFTPPartnerGroup>
-                      <OFTPSendOptions cd="false" operation="SEND">
-                        <defaultPartnerSettings cd="false"/>
-                      </OFTPSendOptions>
-                    </OFTPSendAction>
-                    <DataProcessing sequence="pre">
-                      <dataprocess/>
-                    </DataProcessing>
-                    <DataProcessing sequence="post">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                </ActionObjects>
-              </CommunicationSettings>
-            </CommunicationOption>'''
-
-
-def _build_sftp_option() -> str:
-    """Build SFTP CommunicationOption (exact UI structure)"""
-    return '''            <CommunicationOption commOption="default" method="sftp">
-              <CommunicationSettings docType="default">
-                <SettingsObject useMyTradingPartnerSettings="false">
-                  <SFTPSettings host="" port="22">
-                    <AuthSettings user=""/>
-                    <ProxySettings host="" password="" port="0" proxyEnabled="false" type="ATOM" user=""/>
-                    <SSHOptions dhKeySizeMax1024="true" sshkeyauth="false"/>
-                  </SFTPSettings>
-                </SettingsObject>
-                <ActionObjects>
-                  <ActionObject type="Get" useMyTradingPartnerOptions="false">
-                    <SFTPGetAction maxFileCount="0" moveToForceOverride="false" sftpaction="actionget"/>
-                    <DataProcessing sequence="post">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                  <ActionObject type="Send" useMyTradingPartnerOptions="false">
-                    <SFTPSendAction moveToForceOverride="false" sftpaction="actionputrename"/>
-                    <DataProcessing sequence="pre">
-                      <dataprocess/>
-                    </DataProcessing>
-                  </ActionObject>
-                </ActionObjects>
-              </CommunicationSettings>
-            </CommunicationOption>'''
-
-
-# ============================================================================
-# XML Template Builders (aligned with boomi-python SDK examples)
-# ============================================================================
-
-
-
-# ============================================================================
-# XML Template Builders (aligned with boomi-python SDK examples)
-# ============================================================================
-
-def build_trading_partner_xml_x12(
-    name: str,
-    folder_name: str = "Home",
-    description: str = "",
-    classification: str = "mytradingpartner",
-    # X12Options parameters
-    acknowledgementoption: str = "donotackitem",
-    envelopeoption: str = "groupall",
-    file_delimiter: str = "stardelimited",
-    filter_acknowledgements: str = "false",
-    outbound_interchange_validation: str = "false",
-    outbound_validation_option: str = "filterError",
-    reject_duplicate_interchange: str = "false",
-    segment_char: str = "newline",
-    # ISAControlInfo parameters
-    isa_ackrequested: str = "false",
-    isa_authorinfoqual: str = "00",
-    isa_interchangeid: str = "",
-    isa_interchangeidqual: str = "01",
-    isa_securityinfoqual: str = "00",
-    isa_testindicator: str = "P",
-    # GSControlInfo parameters
-    gs_respagencycode: str = "T",
-    # ContactInfo parameters (optional)
-    contact_name: str = "",
-    contact_email: str = "",
-    contact_phone: str = "",
-    contact_fax: str = "",
-    contact_address: str = "",
-    contact_address2: str = "",
-    contact_city: str = "",
-    contact_state: str = "",
-    contact_country: str = "",
-    contact_postalcode: str = "",
-    # Communication protocols (optional)
-    communication_protocols: list = None
-) -> str:
-    """
-    Build X12 trading partner component XML.
-
-    This follows the exact structure from the boomi-python SDK example
-    for creating X12 trading partner components via the Component API.
-
-    Args:
-        name: Trading partner component name
-        folder_name: Folder to create the component in
-        description: Component description
-        classification: Partner classification (mytradingpartner, tradingpartner, etc.)
-
-        X12Options parameters:
-        - acknowledgementoption: Acknowledgement option (donotackitem, ackall, etc.)
-        - envelopeoption: Envelope option (groupall, groupbydocument, etc.)
-        - file_delimiter: File delimiter type (stardelimited, etc.)
-        - filter_acknowledgements: Filter acknowledgements (true/false)
-        - outbound_interchange_validation: Validate outbound interchanges (true/false)
-        - outbound_validation_option: Validation option (filterError, rejectAll, etc.)
-        - reject_duplicate_interchange: Reject duplicates (true/false)
-        - segment_char: Segment character (newline, etc.)
-
-        ISAControlInfo parameters:
-        - isa_ackrequested: Acknowledgement requested (true/false)
-        - isa_authorinfoqual: Authorization info qualifier
-        - isa_interchangeid: ISA interchange ID
-        - isa_interchangeidqual: ISA interchange ID qualifier
-        - isa_securityinfoqual: Security info qualifier
-        - isa_testindicator: Test indicator (P=Production, T=Test)
-
-        GSControlInfo parameters:
-        - gs_respagencycode: Responsible agency code
-
-        ContactInfo parameters (all optional):
-        - contact_name: Contact person name
-        - contact_email: Contact email
-        - contact_phone: Contact phone
-        - contact_fax: Fax number
-        - contact_address: Street address (line 1)
-        - contact_address2: Street address (line 2)
-        - contact_city: City
-        - contact_state: State/province
-        - contact_country: Country
-        - contact_postalcode: Postal/ZIP code
-
-    Returns:
-        XML string for creating the trading partner component
-    """
-    # Build ContactInfo XML with provided attributes
-    contact_attrs = []
-    if contact_name:
-        contact_attrs.append(f'name="{contact_name}"')
-    if contact_email:
-        contact_attrs.append(f'email="{contact_email}"')
-    if contact_phone:
-        contact_attrs.append(f'phone="{contact_phone}"')
-    if contact_fax:
-        contact_attrs.append(f'fax="{contact_fax}"')
-    if contact_address:
-        contact_attrs.append(f'address1="{contact_address}"')
-    if contact_address2:
-        contact_attrs.append(f'address2="{contact_address2}"')
-    if contact_city:
-        contact_attrs.append(f'city="{contact_city}"')
-    if contact_state:
-        contact_attrs.append(f'state="{contact_state}"')
-    if contact_country:
-        contact_attrs.append(f'country="{contact_country}"')
-    if contact_postalcode:
-        contact_attrs.append(f'postalcode="{contact_postalcode}"')
-
-    if contact_attrs:
-        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
-    else:
-        contact_info_xml = "<ContactInfo />"
-
-    # Build Communication XML (empty by default, can be configured later via UI)
-    communication_xml = build_communication_xml(communication_protocols)
-
-    return f'''<?xml version="1.0" encoding="UTF-8"?>
-<bns:Component xmlns:bns="http://api.platform.boomi.com/"
-               name="{name}"
-               type="tradingpartner"
-               folderName="{folder_name}">
-    <bns:encryptedValues />
-    <bns:description>{description}</bns:description>
-    <bns:object>
-        <TradingPartner classification="{classification}" standard="x12">
-            {contact_info_xml}
-            <PartnerInfo>
-                <X12PartnerInfo>
-                    <X12Options
-                        acknowledgementoption="{acknowledgementoption}"
-                        envelopeoption="{envelopeoption}"
-                        fileDelimiter="{file_delimiter}"
-                        filteracknowledgements="{filter_acknowledgements}"
-                        outboundInterchangeValidation="{outbound_interchange_validation}"
-                        outboundValidationOption="{outbound_validation_option}"
-                        rejectDuplicateInterchange="{reject_duplicate_interchange}"
-                        segmentchar="{segment_char}" />
-                    <X12ControlInfo>
-                        <ISAControlInfo
-                            ackrequested="{isa_ackrequested}"
-                            authorinfoqual="{isa_authorinfoqual}"
-                            interchangeid="{isa_interchangeid}"
-                            interchangeidqual="{isa_interchangeidqual}"
-                            securityinfoqual="{isa_securityinfoqual}"
-                            testindicator="{isa_testindicator}" />
-                        <GSControlInfo respagencycode="{gs_respagencycode}" />
-                    </X12ControlInfo>
-                </X12PartnerInfo>
-            </PartnerInfo>
-            <PartnerCommunication>
-                <X12PartnerCommunication>
-                    {communication_xml}
-                </X12PartnerCommunication>
-            </PartnerCommunication>
-            <DocumentTypes />
-            <Archiving />
-        </TradingPartner>
-    </bns:object>
-    <bns:processOverrides />
-</bns:Component>'''
-
-
-def build_trading_partner_xml_edifact(
-    name: str,
-    folder_name: str = "Home",
-    description: str = "",
-    classification: str = "mytradingpartner",
-    # UNB parameters
-    unb_interchangeid: str = "",
-    unb_interchangeidqual: str = "14",
-    unb_partnerid: str = "",
-    unb_partneridqual: str = "14",
-    unb_testindicator: str = "1",
-    # ContactInfo parameters
-    contact_name: str = "",
-    contact_email: str = "",
-    contact_phone: str = "",
-    contact_fax: str = "",
-    contact_address: str = "",
-    contact_address2: str = "",
-    contact_city: str = "",
-    contact_state: str = "",
-    contact_country: str = "",
-    contact_postalcode: str = "",
-    # Communication protocols (optional)
-    communication_protocols: list = None
-) -> str:
-    """
-    Build EDIFACT trading partner component XML.
-
-    Args:
-        name: Trading partner component name
-        folder_name: Folder to create the component in
-        description: Component description
-        classification: Partner classification
-        communication_protocols: List of communication protocols to enable (optional)
-        unb_interchangeid: UNB interchange ID
-        unb_interchangeidqual: UNB interchange ID qualifier
-        unb_partnerid: UNB partner ID
-        unb_partneridqual: UNB partner ID qualifier
-        unb_testindicator: Test indicator (1=Production, others for test)
-        contact_*: Optional contact information fields
-
-    Returns:
-        XML string for creating EDIFACT trading partner
-    """
-    # Build ContactInfo XML with provided attributes
-    contact_attrs = []
-    if contact_name:
-        contact_attrs.append(f'name="{contact_name}"')
-    if contact_email:
-        contact_attrs.append(f'email="{contact_email}"')
-    if contact_phone:
-        contact_attrs.append(f'phone="{contact_phone}"')
-    if contact_fax:
-        contact_attrs.append(f'fax="{contact_fax}"')
-    if contact_address:
-        contact_attrs.append(f'address1="{contact_address}"')
-    if contact_address2:
-        contact_attrs.append(f'address2="{contact_address2}"')
-    if contact_city:
-        contact_attrs.append(f'city="{contact_city}"')
-    if contact_state:
-        contact_attrs.append(f'state="{contact_state}"')
-    if contact_country:
-        contact_attrs.append(f'country="{contact_country}"')
-    if contact_postalcode:
-        contact_attrs.append(f'postalcode="{contact_postalcode}"')
-
-    if contact_attrs:
-        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
-    else:
-        contact_info_xml = "<ContactInfo />"
-
-    # Build Communication XML (empty by default, can be configured later via UI)
-    communication_xml = build_communication_xml(communication_protocols)
-
-    return f'''<?xml version="1.0" encoding="UTF-8"?>
-<bns:Component xmlns:bns="http://api.platform.boomi.com/"
-               name="{name}"
-               type="tradingpartner"
-               folderName="{folder_name}">
-    <bns:encryptedValues />
-    <bns:description>{description}</bns:description>
-    <bns:object>
-        <TradingPartner classification="{classification}" standard="edifact">
-            {contact_info_xml}
-            <PartnerInfo>
-                <EdifactPartnerInfo>
-                    <EdifactOptions
-                        acknowledgementoption="donotackitem"
-                        compositeDelimiter="colondelimited"
-                        envelopeoption="groupall"
-                        fileDelimiter="plusdelimited"
-                        filteracknowledgements="false"
-                        includeUNA="false"
-                        outboundValidationOption="filterError"
-                        rejectDuplicateInterchange="false"
-                        segmentchar="singlequote" />
-                    <EdifactControlInfo>
-                        <UNBControlInfo
-                            ackRequest="false"
-                            interchangeIdQual="NA"
-                            priority="NA"
-                            refPassQual="NA"
-                            syntaxId="UNOA"
-                            syntaxVersion="1"
-                            testIndicator="NA" />
-                        <UNGControlInfo
-                            applicationIdQual="NA"
-                            useFunctionalGroups="false" />
-                        <UNHControlInfo
-                            controllingAgency="UN"
-                            release="09B"
-                            version="D" />
-                    </EdifactControlInfo>
-                </EdifactPartnerInfo>
-            </PartnerInfo>
-            <PartnerCommunication>
-                <EdifactPartnerCommunication>
-                    {communication_xml}
-                </EdifactPartnerCommunication>
-            </PartnerCommunication>
-            <DocumentTypes />
-            <Archiving />
-        </TradingPartner>
-    </bns:object>
-    <bns:processOverrides />
-</bns:Component>'''
-
-
-def build_trading_partner_xml_hl7(
-    name: str,
-    folder_name: str = "Home",
-    description: str = "",
-    classification: str = "mytradingpartner",
-    # HL7 parameters
-    sending_application: str = "",
-    sending_facility: str = "",
-    receiving_application: str = "",
-    receiving_facility: str = "",
-    # ContactInfo parameters
-    contact_name: str = "",
-    contact_email: str = "",
-    contact_phone: str = "",
-    contact_fax: str = "",
-    contact_address: str = "",
-    contact_address2: str = "",
-    contact_city: str = "",
-    contact_state: str = "",
-    contact_country: str = "",
-    contact_postalcode: str = ""
-,
-    # Communication protocols (optional)
-    communication_protocols: list = None
-) -> str:
-    """
-    Build HL7 trading partner component XML.
-
-    Args:
-        name: Trading partner component name
-        folder_name: Folder to create the component in
-        description: Component description
-        classification: Partner classification
-        sending_application: MSH-3 Sending Application
-        sending_facility: MSH-4 Sending Facility
-        receiving_application: MSH-5 Receiving Application
-        receiving_facility: MSH-6 Receiving Facility
-        contact_*: Optional contact information fields
-
-    Returns:
-        XML string for creating HL7 trading partner
-    """
-    # Build ContactInfo XML with provided attributes
-    contact_attrs = []
-    if contact_name:
-        contact_attrs.append(f'name="{contact_name}"')
-    if contact_email:
-        contact_attrs.append(f'email="{contact_email}"')
-    if contact_phone:
-        contact_attrs.append(f'phone="{contact_phone}"')
-    if contact_fax:
-        contact_attrs.append(f'fax="{contact_fax}"')
-    if contact_address:
-        contact_attrs.append(f'address1="{contact_address}"')
-    if contact_address2:
-        contact_attrs.append(f'address2="{contact_address2}"')
-    if contact_city:
-        contact_attrs.append(f'city="{contact_city}"')
-    if contact_state:
-        contact_attrs.append(f'state="{contact_state}"')
-    if contact_country:
-        contact_attrs.append(f'country="{contact_country}"')
-    if contact_postalcode:
-        contact_attrs.append(f'postalcode="{contact_postalcode}"')
-
-    if contact_attrs:
-        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
-    else:
-        contact_info_xml = "<ContactInfo />"
-
-    # Build Communication XML (empty by default, can be configured later via UI)
-    communication_xml = build_communication_xml(communication_protocols)
-
-    return f'''<?xml version="1.0" encoding="UTF-8"?>
-<bns:Component xmlns:bns="http://api.platform.boomi.com/"
-               name="{name}"
-               type="tradingpartner"
-               folderName="{folder_name}">
-    <bns:encryptedValues />
-    <bns:description>{description}</bns:description>
-    <bns:object>
-        <TradingPartner classification="{classification}" standard="hl7">
-            {contact_info_xml}
-            <PartnerInfo>
-                <HL7PartnerInfo>
-                    <HL7Options
-                        acceptackoption="NE"
-                        batchoption="none"
-                        compositeDelimiter="caratdelimited"
-                        fileDelimiter="bardelimited"
-                        filteracknowledgements="false"
-                        outboundValidationOption="filterError"
-                        segmentchar="carriagereturn"
-                        subCompositeDelimiter="ampersanddelimited" />
-                    <HL7ControlInfo>
-                        <MSHControlInfo
-                            alternateCharSetHandlingScheme=""
-                            characterSet=""
-                            countryCode="">
-                            <Application />
-                            <Facility />
-                            <ProcessingId processingId="P" processingMode="NOT_PRESENT" />
-                            <VersionId versionId="v26">
-                                <InternationalizationCode />
-                                <InternationalizationVersionId />
-                            </VersionId>
-                            <PrincipalLanguage />
-                            <MessageProfileIdentifier />
-                            <ResponsibleOrg>
-                                <OrgNameTypeCode />
-                                <AssigningAuthority />
-                                <AssigningFacility />
-                            </ResponsibleOrg>
-                            <NetworkAddress />
-                        </MSHControlInfo>
-                    </HL7ControlInfo>
-                </HL7PartnerInfo>
-            </PartnerInfo>
-            <PartnerCommunication>
-                <HL7PartnerCommunication>
-                    {communication_xml}
-                </HL7PartnerCommunication>
-            </PartnerCommunication>
-            <DocumentTypes />
-            <Archiving />
-        </TradingPartner>
-    </bns:object>
-    <bns:processOverrides />
-</bns:Component>'''
-
-
-def build_trading_partner_xml_rosettanet(
-    name: str,
-    folder_name: str = "Home",
-    description: str = "",
-    classification: str = "mytradingpartner",
-    # RosettaNet parameters
-    duns_number: str = "",
-    global_location_number: str = "",
-    # ContactInfo parameters
-    contact_name: str = "",
-    contact_email: str = "",
-    contact_phone: str = "",
-    contact_fax: str = "",
-    contact_address: str = "",
-    contact_address2: str = "",
-    contact_city: str = "",
-    contact_state: str = "",
-    contact_country: str = "",
-    contact_postalcode: str = ""
-,
-    # Communication protocols (optional)
-    communication_protocols: list = None
-) -> str:
-    """
-    Build RosettaNet trading partner component XML.
-
-    Args:
-        name: Trading partner component name
-        folder_name: Folder to create the component in
-        description: Component description
-        classification: Partner classification
-        duns_number: DUNS number for the partner
-        global_location_number: GLN (Global Location Number)
-        contact_*: Optional contact information fields
-
-    Returns:
-        XML string for creating RosettaNet trading partner
-    """
-    # Build ContactInfo XML with provided attributes
-    contact_attrs = []
-    if contact_name:
-        contact_attrs.append(f'name="{contact_name}"')
-    if contact_email:
-        contact_attrs.append(f'email="{contact_email}"')
-    if contact_phone:
-        contact_attrs.append(f'phone="{contact_phone}"')
-    if contact_fax:
-        contact_attrs.append(f'fax="{contact_fax}"')
-    if contact_address:
-        contact_attrs.append(f'address1="{contact_address}"')
-    if contact_address2:
-        contact_attrs.append(f'address2="{contact_address2}"')
-    if contact_city:
-        contact_attrs.append(f'city="{contact_city}"')
-    if contact_state:
-        contact_attrs.append(f'state="{contact_state}"')
-    if contact_country:
-        contact_attrs.append(f'country="{contact_country}"')
-    if contact_postalcode:
-        contact_attrs.append(f'postalcode="{contact_postalcode}"')
-
-    if contact_attrs:
-        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
-    else:
-        contact_info_xml = "<ContactInfo />"
-
-    # Build Communication XML (empty by default, can be configured later via UI)
-    communication_xml = build_communication_xml(communication_protocols)
-
-    return f'''<?xml version="1.0" encoding="UTF-8"?>
-<bns:Component xmlns:bns="http://api.platform.boomi.com/"
-               name="{name}"
-               type="tradingpartner"
-               folderName="{folder_name}">
-    <bns:encryptedValues />
-    <bns:description>{description}</bns:description>
-    <bns:object>
-        <TradingPartner classification="{classification}" standard="rosettanet">
-            {contact_info_xml}
-            <PartnerInfo>
-                <RosettaNetPartnerInfo>
-                    <RosettaNetOptions
-                        filtersignals="false"
-                        outboundDocumentValidation="false"
-                        rejectDuplicateTransactionId="false"
-                        version="v20" />
-                    <RosettaNetControlInfo
-                        partnerIdType="DUNS"
-                        usageCode="Test" />
-                    <RosettaNetMessageOptions
-                        compressed="false"
-                        encryptServiceHeader="false"
-                        encrypted="false"
-                        encryptionAlgorithm="tripledes"
-                        signed="false"
-                        signingDigestAlg="SHA1" />
-                </RosettaNetPartnerInfo>
-            </PartnerInfo>
-            <PartnerCommunication>
-                <RosettaNetPartnerCommunication>
-                    {communication_xml}
-                </RosettaNetPartnerCommunication>
-            </PartnerCommunication>
-            <DocumentTypes />
-            <Archiving />
-        </TradingPartner>
-    </bns:object>
-    <bns:processOverrides />
-</bns:Component>'''
-
-
-def build_trading_partner_xml_custom(
-    name: str,
-    folder_name: str = "Home",
-    description: str = "",
-    classification: str = "mytradingpartner",
-    # ContactInfo parameters
-    contact_name: str = "",
-    contact_email: str = "",
-    contact_phone: str = "",
-    contact_fax: str = "",
-    contact_address: str = "",
-    contact_address2: str = "",
-    contact_city: str = "",
-    contact_state: str = "",
-    contact_country: str = "",
-    contact_postalcode: str = ""
-,
-    # Communication protocols (optional)
-    communication_protocols: list = None
-) -> str:
-    """
-    Build custom standard trading partner component XML.
-
-    Args:
-        name: Trading partner component name
-        folder_name: Folder to create the component in
-        description: Component description
-        classification: Partner classification
-        contact_*: Optional contact information fields
-
-    Returns:
-        XML string for creating custom trading partner
-    """
-    # Build ContactInfo XML with provided attributes
-    contact_attrs = []
-    if contact_name:
-        contact_attrs.append(f'name="{contact_name}"')
-    if contact_email:
-        contact_attrs.append(f'email="{contact_email}"')
-    if contact_phone:
-        contact_attrs.append(f'phone="{contact_phone}"')
-    if contact_fax:
-        contact_attrs.append(f'fax="{contact_fax}"')
-    if contact_address:
-        contact_attrs.append(f'address1="{contact_address}"')
-    if contact_address2:
-        contact_attrs.append(f'address2="{contact_address2}"')
-    if contact_city:
-        contact_attrs.append(f'city="{contact_city}"')
-    if contact_state:
-        contact_attrs.append(f'state="{contact_state}"')
-    if contact_country:
-        contact_attrs.append(f'country="{contact_country}"')
-    if contact_postalcode:
-        contact_attrs.append(f'postalcode="{contact_postalcode}"')
-
-    if contact_attrs:
-        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
-    else:
-        contact_info_xml = "<ContactInfo />"
-
-    # Build Communication XML (empty by default, can be configured later via UI)
-    communication_xml = build_communication_xml(communication_protocols)
-
-    return f'''<?xml version="1.0" encoding="UTF-8"?>
-<bns:Component xmlns:bns="http://api.platform.boomi.com/"
-               name="{name}"
-               type="tradingpartner"
-               folderName="{folder_name}">
-    <bns:encryptedValues />
-    <bns:description>{description}</bns:description>
-    <bns:object>
-        <TradingPartner classification="{classification}" standard="edicustom">
-            {contact_info_xml}
-            <PartnerInfo>
-                <CustomPartnerInfo />
-            </PartnerInfo>
-            <PartnerCommunication>
-                <CustomPartnerCommunication>
-                    {communication_xml}
-                </CustomPartnerCommunication>
-            </PartnerCommunication>
-            <DocumentTypes />
-            <Archiving />
-        </TradingPartner>
-    </bns:object>
-    <bns:processOverrides />
-</bns:Component>'''
-
-
-def build_trading_partner_xml_tradacoms(
-    name: str,
-    folder_name: str = "Home",
-    description: str = "",
-    classification: str = "mytradingpartner",
-    # TRADACOMS parameters
-    sender_code: str = "",
-    recipient_code: str = "",
-    # ContactInfo parameters
-    contact_name: str = "",
-    contact_email: str = "",
-    contact_phone: str = "",
-    contact_fax: str = "",
-    contact_address: str = "",
-    contact_address2: str = "",
-    contact_city: str = "",
-    contact_state: str = "",
-    contact_country: str = "",
-    contact_postalcode: str = ""
-,
-    # Communication protocols (optional)
-    communication_protocols: list = None
-) -> str:
-    """
-    Build TRADACOMS trading partner component XML.
-
-    Args:
-        name: Trading partner component name
-        folder_name: Folder to create the component in
-        description: Component description
-        classification: Partner classification
-        sender_code: TRADACOMS sender code
-        recipient_code: TRADACOMS recipient code
-        contact_*: Optional contact information fields
-
-    Returns:
-        XML string for creating TRADACOMS trading partner
-    """
-    # Build ContactInfo XML with provided attributes
-    contact_attrs = []
-    if contact_name:
-        contact_attrs.append(f'name="{contact_name}"')
-    if contact_email:
-        contact_attrs.append(f'email="{contact_email}"')
-    if contact_phone:
-        contact_attrs.append(f'phone="{contact_phone}"')
-    if contact_fax:
-        contact_attrs.append(f'fax="{contact_fax}"')
-    if contact_address:
-        contact_attrs.append(f'address1="{contact_address}"')
-    if contact_address2:
-        contact_attrs.append(f'address2="{contact_address2}"')
-    if contact_city:
-        contact_attrs.append(f'city="{contact_city}"')
-    if contact_state:
-        contact_attrs.append(f'state="{contact_state}"')
-    if contact_country:
-        contact_attrs.append(f'country="{contact_country}"')
-    if contact_postalcode:
-        contact_attrs.append(f'postalcode="{contact_postalcode}"')
-
-    if contact_attrs:
-        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
-    else:
-        contact_info_xml = "<ContactInfo />"
-
-    # Build Communication XML (empty by default, can be configured later via UI)
-    communication_xml = build_communication_xml(communication_protocols)
-
-    return f'''<?xml version="1.0" encoding="UTF-8"?>
-<bns:Component xmlns:bns="http://api.platform.boomi.com/"
-               name="{name}"
-               type="tradingpartner"
-               folderName="{folder_name}">
-    <bns:encryptedValues />
-    <bns:description>{description}</bns:description>
-    <bns:object>
-        <TradingPartner classification="{classification}" standard="tradacoms">
-            {contact_info_xml}
-            <PartnerInfo>
-                <TradacomsPartnerInfo>
-                    <TradacomsOptions
-                        compositeDelimiter="colondelimited"
-                        fileDelimiter="plusdelimited"
-                        segmentchar="singlequote" />
-                    <TradacomsControlInfo>
-                        <STXControlInfo />
-                    </TradacomsControlInfo>
-                </TradacomsPartnerInfo>
-            </PartnerInfo>
-            <PartnerCommunication>
-                <TradacomsPartnerCommunication>
-                    {communication_xml}
-                </TradacomsPartnerCommunication>
-            </PartnerCommunication>
-            <DocumentTypes />
-            <Archiving />
-        </TradingPartner>
-    </bns:object>
-    <bns:processOverrides />
-</bns:Component>'''
-
-
-def build_trading_partner_xml_odette(
-    name: str,
-    folder_name: str = "Home",
-    description: str = "",
-    classification: str = "mytradingpartner",
-    # ODETTE parameters
-    originator_code: str = "",
-    destination_code: str = "",
-    # ContactInfo parameters
-    contact_name: str = "",
-    contact_email: str = "",
-    contact_phone: str = "",
-    contact_fax: str = "",
-    contact_address: str = "",
-    contact_address2: str = "",
-    contact_city: str = "",
-    contact_state: str = "",
-    contact_country: str = "",
-    contact_postalcode: str = ""
-,
-    # Communication protocols (optional)
-    communication_protocols: list = None
-) -> str:
-    """
-    Build ODETTE trading partner component XML.
-
-    Args:
-        name: Trading partner component name
-        folder_name: Folder to create the component in
-        description: Component description
-        classification: Partner classification
-        originator_code: ODETTE originator code
-        destination_code: ODETTE destination code
-        contact_*: Optional contact information fields
-
-    Returns:
-        XML string for creating ODETTE trading partner
-    """
-    # Build ContactInfo XML with provided attributes
-    contact_attrs = []
-    if contact_name:
-        contact_attrs.append(f'name="{contact_name}"')
-    if contact_email:
-        contact_attrs.append(f'email="{contact_email}"')
-    if contact_phone:
-        contact_attrs.append(f'phone="{contact_phone}"')
-    if contact_fax:
-        contact_attrs.append(f'fax="{contact_fax}"')
-    if contact_address:
-        contact_attrs.append(f'address1="{contact_address}"')
-    if contact_address2:
-        contact_attrs.append(f'address2="{contact_address2}"')
-    if contact_city:
-        contact_attrs.append(f'city="{contact_city}"')
-    if contact_state:
-        contact_attrs.append(f'state="{contact_state}"')
-    if contact_country:
-        contact_attrs.append(f'country="{contact_country}"')
-    if contact_postalcode:
-        contact_attrs.append(f'postalcode="{contact_postalcode}"')
-
-    if contact_attrs:
-        contact_info_xml = f'<ContactInfo {" ".join(contact_attrs)} />'
-    else:
-        contact_info_xml = "<ContactInfo />"
-
-    # Build Communication XML (empty by default, can be configured later via UI)
-    communication_xml = build_communication_xml(communication_protocols)
-
-    return f'''<?xml version="1.0" encoding="UTF-8"?>
-<bns:Component xmlns:bns="http://api.platform.boomi.com/"
-               name="{name}"
-               type="tradingpartner"
-               folderName="{folder_name}">
-    <bns:encryptedValues />
-    <bns:description>{description}</bns:description>
-    <bns:object>
-        <TradingPartner classification="{classification}" standard="odette">
-            {contact_info_xml}
-            <PartnerInfo>
-                <OdettePartnerInfo>
-                    <OdetteOptions
-                        acknowledgementoption="donotackitem"
-                        compositeDelimiter="colondelimited"
-                        envelopeoption="groupall"
-                        fileDelimiter="plusdelimited"
-                        filteracknowledgements="false"
-                        includeUNA="false"
-                        outboundValidationOption="filterError"
-                        rejectDuplicateInterchange="false"
-                        segmentchar="singlequote" />
-                    <OdetteControlInfo>
-                        <UNBControlInfo
-                            ackRequest="false"
-                            interchangeIdQual="NA"
-                            priority="NA"
-                            refPassQual="NA"
-                            syntaxId="UNOA"
-                            syntaxVersion="1"
-                            testIndicator="NA" />
-                        <UNHControlInfo
-                            controllingAgency="UN"
-                            release="09B"
-                            version="D" />
-                    </OdetteControlInfo>
-                </OdettePartnerInfo>
-            </PartnerInfo>
-            <PartnerCommunication>
-                <OdettePartnerCommunication>
-                    {communication_xml}
-                </OdettePartnerCommunication>
-            </PartnerCommunication>
-            <DocumentTypes />
-            <Archiving />
-        </TradingPartner>
-    </bns:object>
-    <bns:processOverrides />
-</bns:Component>'''
-
-
-def build_trading_partner_xml(request_data: Dict[str, Any]) -> str:
-    """
-    Main dispatcher function to build trading partner XML based on standard.
-
-    Args:
-        request_data: Dictionary containing all trading partner parameters
-
-    Returns:
-        XML string for creating the trading partner component
-
-    Raises:
-        ValueError: If standard is not supported
-    """
-    standard = request_data.get("standard", "x12").lower()
-    name = request_data.get("component_name")
-    folder_name = request_data.get("folder_name", "Home")
-    description = request_data.get("description", "Trading partner created via MCP")
-    classification = request_data.get("classification", "mytradingpartner").lower()
-
-    # Extract contact info if provided
-    contact_info = request_data.get("contact_info", {})
-    contact_params = {
-        "contact_name": contact_info.get("name", ""),
-        "contact_email": contact_info.get("email", ""),
-        "contact_phone": contact_info.get("phone", ""),
-        "contact_fax": contact_info.get("fax", ""),
-        "contact_address": contact_info.get("address", ""),
-        "contact_address2": contact_info.get("address2", ""),
-        "contact_city": contact_info.get("city", ""),
-        "contact_state": contact_info.get("state", ""),
-        "contact_country": contact_info.get("country", ""),
-        "contact_postalcode": contact_info.get("postal_code", "")
-    }
-
-    # Extract communication protocols if provided
-    communication_protocols = request_data.get("communication_protocols", None)
-
-    # Route to appropriate builder based on standard
-    if standard == "x12":
-        partner_info = request_data.get("partner_info", {})
-        x12_options = request_data.get("x12_options", {})
-
-        return build_trading_partner_xml_x12(
-            name=name,
-            folder_name=folder_name,
-            description=description,
-            classification=classification,
-            # X12Options
-            acknowledgementoption=x12_options.get("acknowledgementoption", "donotackitem"),
-            envelopeoption=x12_options.get("envelopeoption", "groupall"),
-            file_delimiter=x12_options.get("file_delimiter", "stardelimited"),
-            filter_acknowledgements=x12_options.get("filter_acknowledgements", "false"),
-            outbound_interchange_validation=x12_options.get("outbound_interchange_validation", "false"),
-            outbound_validation_option=x12_options.get("outbound_validation_option", "filterError"),
-            reject_duplicate_interchange=x12_options.get("reject_duplicate_interchange", "false"),
-            segment_char=x12_options.get("segment_char", "newline"),
-            # ISAControlInfo
-            isa_ackrequested=partner_info.get("isa_ackrequested", "false"),
-            isa_authorinfoqual=partner_info.get("isa_authorinfoqual", "00"),
-            isa_interchangeid=partner_info.get("isa_id", ""),
-            isa_interchangeidqual=partner_info.get("isa_qualifier", "01"),
-            isa_securityinfoqual=partner_info.get("isa_securityinfoqual", "00"),
-            isa_testindicator=partner_info.get("isa_testindicator", "P"),
-            # GSControlInfo
-            gs_respagencycode=partner_info.get("gs_respagencycode", "T"),
-            # ContactInfo
-            **contact_params,
-            # Communication protocols
-            communication_protocols=communication_protocols
-        )
-
-    elif standard == "edifact":
-        partner_info = request_data.get("partner_info", {})
-        return build_trading_partner_xml_edifact(
-            name=name,
-            folder_name=folder_name,
-            description=description,
-            classification=classification,
-            unb_interchangeid=partner_info.get("unb_id", ""),
-            unb_interchangeidqual=partner_info.get("unb_qualifier", "14"),
-            unb_partnerid=partner_info.get("unb_partner_id", ""),
-            unb_partneridqual=partner_info.get("unb_partner_qualifier", "14"),
-            unb_testindicator=partner_info.get("unb_testindicator", "1"),
-            **contact_params,
-            communication_protocols=communication_protocols
-        )
-
-    elif standard == "hl7":
-        partner_info = request_data.get("partner_info", {})
-        return build_trading_partner_xml_hl7(
-            name=name,
-            folder_name=folder_name,
-            description=description,
-            classification=classification,
-            sending_application=partner_info.get("sending_application", ""),
-            sending_facility=partner_info.get("sending_facility", ""),
-            receiving_application=partner_info.get("receiving_application", ""),
-            receiving_facility=partner_info.get("receiving_facility", ""),
-            **contact_params,
-            communication_protocols=communication_protocols
-        )
-
-    elif standard == "rosettanet":
-        partner_info = request_data.get("partner_info", {})
-        return build_trading_partner_xml_rosettanet(
-            name=name,
-            folder_name=folder_name,
-            description=description,
-            classification=classification,
-            duns_number=partner_info.get("duns", ""),
-            global_location_number=partner_info.get("gln", ""),
-            **contact_params,
-            communication_protocols=communication_protocols
-        )
-
-    elif standard == "custom":
-        return build_trading_partner_xml_custom(
-            name=name,
-            folder_name=folder_name,
-            description=description,
-            classification=classification,
-            **contact_params,
-            communication_protocols=communication_protocols
-        )
-
-    elif standard == "tradacoms":
-        partner_info = request_data.get("partner_info", {})
-        return build_trading_partner_xml_tradacoms(
-            name=name,
-            folder_name=folder_name,
-            description=description,
-            classification=classification,
-            sender_code=partner_info.get("sender_code", ""),
-            recipient_code=partner_info.get("recipient_code", ""),
-            **contact_params,
-            communication_protocols=communication_protocols
-        )
-
-    elif standard == "odette":
-        partner_info = request_data.get("partner_info", {})
-        return build_trading_partner_xml_odette(
-            name=name,
-            folder_name=folder_name,
-            description=description,
-            classification=classification,
-            originator_code=partner_info.get("originator_code", ""),
-            destination_code=partner_info.get("destination_code", ""),
-            **contact_params,
-            communication_protocols=communication_protocols
-        )
-
-    else:
-        raise ValueError(f"Unsupported trading partner standard: {standard}. Supported: x12, edifact, hl7, rosettanet, custom, tradacoms, odette")
-
-
-# ============================================================================
 # Trading Partner CRUD Operations
 # ============================================================================
 
 def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Create a new trading partner component in Boomi using XML-based Component API.
+    Create a new trading partner component in Boomi using JSON-based TradingPartnerComponent API.
 
-    This implementation follows the boomi-python SDK example pattern of using
-    the generic Component API with XML request bodies instead of the specialized
-    trading_partner_component API.
+    This implementation uses the typed JSON models from the boomi-python SDK
+    instead of XML templates, providing better type safety and maintainability.
 
     Args:
         boomi_client: Authenticated Boomi SDK client
@@ -1591,18 +47,28 @@ def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, A
         request_data: Trading partner configuration including:
             - component_name: Name of the trading partner (required)
             - standard: Trading standard - x12, edifact, hl7, rosettanet, custom, tradacoms, or odette (default: x12)
-            - classification: Classification type (default: mytradingpartner)
+            - classification: Classification type (default: tradingpartner)
             - folder_name: Folder name (default: Home)
             - description: Component description (optional)
-            - contact_info: Optional contact information dict with: name, email, phone, address, city, state, country, postal_code
-            - partner_info: Partner-specific information dict (standard-dependent):
-                - X12: isa_id, isa_qualifier, isa_ackrequested, isa_authorinfoqual, isa_securityinfoqual, isa_testindicator, gs_respagencycode
-                - EDIFACT: unb_id, unb_qualifier, unb_partner_id, unb_partner_qualifier, unb_testindicator
-                - HL7: sending_application, sending_facility, receiving_application, receiving_facility
-                - RosettaNet: duns, gln
-            - x12_options: X12-specific options dict (for X12 only):
-                - acknowledgementoption, envelopeoption, file_delimiter, filter_acknowledgements,
-                  outbound_interchange_validation, outbound_validation_option, reject_duplicate_interchange, segment_char
+
+            # Contact Information (10 fields)
+            - contact_name, contact_email, contact_phone, contact_fax
+            - contact_address, contact_address2, contact_city, contact_state, contact_country, contact_postalcode
+
+            # Communication Protocols
+            - communication_protocols: Comma-separated list or list of protocols (ftp, sftp, http, as2, mllp, oftp, disk)
+
+            # Protocol-specific fields (see trading_partner_builders.py for details)
+            - disk_*, ftp_*, sftp_*, http_*, as2_*, oftp_*
+
+            # Standard-specific fields (see trading_partner_builders.py for details)
+            - isa_id, isa_qualifier, gs_id (X12)
+            - unb_* (EDIFACT)
+            - sending_*, receiving_* (HL7)
+            - duns_number, global_location_number (RosettaNet)
+            - sender_code, recipient_code (TRADACOMS)
+            - originator_code, destination_code (ODETTE)
+            - custom_partner_info (dict for custom standard)
 
     Returns:
         Created trading partner details or error
@@ -1611,15 +77,22 @@ def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, A
         request_data = {
             "component_name": "My Trading Partner",
             "standard": "x12",
-            "classification": "mytradingpartner",
+            "classification": "tradingpartner",
             "folder_name": "Home",
-            "partner_info": {
-                "isa_id": "MYPARTNER",
-                "isa_qualifier": "01"
-            }
+            "contact_email": "partner@example.com",
+            "isa_id": "MYPARTNER",
+            "isa_qualifier": "01",
+            "communication_protocols": "http",
+            "http_url": "https://partner.example.com/edi"
         }
     """
     try:
+        # Import the JSON model builder
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+        from src.boomi_mcp.models.trading_partner_builders import build_trading_partner_model
+
         # Validate required fields
         if not request_data.get("component_name"):
             return {
@@ -1628,9 +101,27 @@ def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, A
                 "message": "Trading partner name (component_name) is required"
             }
 
-        # Build XML using the appropriate template builder
+        # Extract main fields and pass remaining fields as kwargs
+        component_name = request_data.get("component_name")
+        standard = request_data.get("standard", "x12")
+        classification = request_data.get("classification", "tradingpartner")
+        folder_name = request_data.get("folder_name", "Home")
+        description = request_data.get("description", "")
+
+        # Remove main fields from request_data to avoid duplicate kwargs
+        other_params = {k: v for k, v in request_data.items()
+                       if k not in ["component_name", "standard", "classification", "folder_name", "description"]}
+
+        # Build TradingPartnerComponent model from flat parameters
         try:
-            xml_body = build_trading_partner_xml(request_data)
+            tp_model = build_trading_partner_model(
+                component_name=component_name,
+                standard=standard,
+                classification=classification,
+                folder_name=folder_name,
+                description=description,
+                **other_params  # Pass all other parameters
+            )
         except ValueError as ve:
             return {
                 "_success": False,
@@ -1638,9 +129,10 @@ def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, A
                 "message": f"Invalid trading partner configuration: {str(ve)}"
             }
 
-        # Create trading partner using Component API (not trading_partner_component API)
-        # This matches the SDK example approach
-        result = boomi_client.component.create_component(request_body=xml_body)
+        # Create trading partner using TradingPartnerComponent API (JSON-based)
+        result = boomi_client.trading_partner_component.create_trading_partner_component(
+            request_body=tp_model
+        )
 
         # Extract component ID using the same pattern as SDK example
         # SDK uses 'id_' attribute, not 'component_id'
@@ -1658,7 +150,7 @@ def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, A
                 "component_id": component_id,
                 "name": getattr(result, 'name', request_data.get("component_name")),
                 "standard": request_data.get("standard", "x12"),
-                "classification": request_data.get("classification", "mytradingpartner"),
+                "classification": request_data.get("classification", "tradingpartner"),
                 "folder_name": request_data.get("folder_name", "Home")
             },
             "message": f"Successfully created trading partner: {request_data.get('component_name')}"
@@ -1964,391 +456,115 @@ def list_trading_partners(boomi_client, profile: str, filters: Optional[Dict[str
 
 def update_trading_partner(boomi_client, profile: str, component_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Update an existing trading partner component using XML-based Component API.
+    Update an existing trading partner component using JSON-based TradingPartnerComponent API.
 
-    This implementation follows the boomi-python SDK example pattern:
-    1. Get component XML using component.get_component()
-    2. Get XML string using component.to_xml()
-    3. Parse and modify XML using ElementTree
-    4. Update using component.update_component() with modified XML
+    This implementation uses the typed JSON models for a much simpler update process:
+    1. Get existing trading partner using trading_partner_component.get_trading_partner_component()
+    2. Update the model fields based on the updates dict
+    3. Call trading_partner_component.update_trading_partner_component() with updated model
 
     Args:
         boomi_client: Authenticated Boomi SDK client
         profile: Profile name for authentication
         component_id: Trading partner component ID to update
-        updates: Fields to update (component_name, contact_info, partner_info, etc.)
+        updates: Fields to update including:
+            - component_name: Trading partner name
+            - description: Component description
+            - classification: Partner type (tradingpartner or mycompany)
+            - folder_name: Folder location
+
+            # Contact Information
+            - contact_name, contact_email, contact_phone, contact_fax
+            - contact_address, contact_address2, contact_city, contact_state, contact_country, contact_postalcode
+
+            # Communication Protocols (not yet fully implemented)
+            - communication_protocols: List of protocols
+            - Protocol-specific fields (disk_*, ftp_*, sftp_*, http_*, as2_*, oftp_*)
+
+            # Standard-specific fields (not yet fully implemented)
+            - isa_id, isa_qualifier, gs_id (X12)
+            - unb_* (EDIFACT)
+            - sending_*, receiving_* (HL7)
+            - etc.
 
     Returns:
         Updated trading partner details or error
+
+    Note:
+        Full implementation of protocol-specific and standard-specific updates
+        will be added in future iterations. Currently supports basic fields.
     """
     try:
-        import xml.etree.ElementTree as ET
+        # Import the JSON model builder
+        import sys
+        import os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
+        from src.boomi_mcp.models.trading_partner_builders import build_contact_info
+        from boomi.models import ContactInfo
 
-        # Step 1: Get the existing component using Component API (not trading_partner_component)
-        component = boomi_client.component.get_component(component_id=component_id)
-
-        if not component:
-            return {
-                "_success": False,
-                "error": "Component not found",
-                "message": f"Trading partner {component_id} not found"
-            }
-
-        # Step 2: Get full XML structure using to_xml() method
+        # Step 1: Get the existing trading partner using JSON-based API
         try:
-            full_xml = component.to_xml()
+            existing_tp = boomi_client.trading_partner_component.get_trading_partner_component(
+                id_=component_id
+            )
         except Exception as e:
             return {
                 "_success": False,
-                "error": f"Failed to get component XML: {str(e)}",
-                "message": "Could not retrieve component XML structure"
+                "error": f"Component not found: {str(e)}",
+                "message": f"Trading partner {component_id} not found or could not be retrieved"
             }
 
-        # Step 3: Parse and modify the XML
-        try:
-            root = ET.fromstring(full_xml)
+        # Step 2: Update model fields based on updates dict
+        # Note: Currently only basic fields are supported.
+        # Protocol-specific and standard-specific updates will be added in future iterations.
 
-            # Update component name if provided
-            if "component_name" in updates:
-                root.set('name', updates["component_name"])
+        # Update basic component fields
+        if "component_name" in updates:
+            existing_tp.component_name = updates["component_name"]
 
-            # Update description if provided
-            if "description" in updates:
-                root.set('description', updates["description"])
+        if "description" in updates:
+            existing_tp.description = updates["description"]
 
-            # For contact info and partner info, we need to navigate to the TradingPartner element
-            # Find the TradingPartner element in the object section
-            ns = {'bns': 'http://api.platform.boomi.com/'}
-            trading_partner = root.find('.//TradingPartner')
-
-            if trading_partner is None:
-                return {
-                    "_success": False,
-                    "error": "Not a trading partner component",
-                    "message": "Component XML does not contain TradingPartner element"
-                }
-
-            # Update contact info if provided
-            if "contact_info" in updates:
-                contact_info = trading_partner.find('ContactInfo')
-                if contact_info is None:
-                    contact_info = ET.SubElement(trading_partner, 'ContactInfo')
-
-                # Clear existing contact info
-                contact_info.clear()
-
-                # Add updated contact fields (all 10 fields)
-                contact = updates["contact_info"]
-                if contact.get("name"):
-                    contact_info.set('name', contact["name"])
-                if contact.get("email"):
-                    contact_info.set('email', contact["email"])
-                if contact.get("phone"):
-                    contact_info.set('phone', contact["phone"])
-                if contact.get("fax"):
-                    contact_info.set('fax', contact["fax"])
-                if contact.get("address"):
-                    contact_info.set('address1', contact["address"])
-                if contact.get("address2"):
-                    contact_info.set('address2', contact["address2"])
-                if contact.get("city"):
-                    contact_info.set('city', contact["city"])
-                if contact.get("state"):
-                    contact_info.set('state', contact["state"])
-                if contact.get("country"):
-                    contact_info.set('country', contact["country"])
-                if contact.get("postal_code"):
-                    contact_info.set('postalcode', contact["postal_code"])
-
-            # Update partner-specific info (X12, EDIFACT, etc.) if provided
-            if "partner_info" in updates:
-                partner_info_elem = trading_partner.find('PartnerInfo')
-                if partner_info_elem is not None:
-                    info = updates["partner_info"]
-
-                    # Update X12 fields
-                    x12_elem = partner_info_elem.find('.//X12ControlInfo')
-                    if x12_elem is not None:
-                        isa_elem = x12_elem.find('ISAControlInfo')
-                        if isa_elem is not None:
-                            if "isa_id" in info:
-                                isa_elem.set('isaid', info["isa_id"])
-                            if "isa_qualifier" in info:
-                                isa_elem.set('isaqualifier', info["isa_qualifier"])
-
-                        gs_elem = x12_elem.find('GSControlInfo')
-                        if gs_elem is not None and "gs_id" in info:
-                            gs_elem.set('gsid', info["gs_id"])
-
-                    # Update EDIFACT fields
-                    edifact_elem = partner_info_elem.find('.//EDIFACTControlInfo')
-                    if edifact_elem is not None:
-                        unb_elem = edifact_elem.find('UNBControlInfo')
-                        if unb_elem is not None:
-                            if "unb_id" in info:
-                                unb_elem.set('unbid', info["unb_id"])
-                            if "unb_qualifier" in info:
-                                unb_elem.set('unbqualifier', info["unb_qualifier"])
-
-            # Update communication protocols if provided
-            if "communication_protocols" in updates:
-                # Find PartnerCommunication element
-                partner_comm = trading_partner.find('PartnerCommunication')
-                if partner_comm is None:
-                    return {
-                        "_success": False,
-                        "error": "PartnerCommunication element not found",
-                        "message": "Cannot update communication protocols - PartnerCommunication element is missing"
-                    }
-
-                # Find the standard-specific element (X12PartnerCommunication, EdifactPartnerCommunication, etc.)
-                standard_elements = [
-                    'X12PartnerCommunication',
-                    'EdifactPartnerCommunication',
-                    'CustomPartnerCommunication',
-                    'HL7PartnerCommunication',
-                    'OdettePartnerCommunication',
-                    'RosettaNetPartnerCommunication',
-                    'TradacomsPartnerCommunication'
-                ]
-
-                standard_comm = None
-                for elem_name in standard_elements:
-                    standard_comm = partner_comm.find(elem_name)
-                    if standard_comm is not None:
-                        break
-
-                if standard_comm is None:
-                    return {
-                        "_success": False,
-                        "error": "Standard-specific communication element not found",
-                        "message": "Cannot update communication protocols - no standard communication element found"
-                    }
-
-                # Get existing CommunicationOptions
-                existing_comm_opts = standard_comm.find('CommunicationOptions')
-                if existing_comm_opts is None:
-                    # No existing protocols - create new ones from scratch
-                    comm_xml = build_communication_xml(updates["communication_protocols"])
-                    comm_elem = ET.fromstring(f'<root>{comm_xml}</root>')
-                    for child in comm_elem:
-                        standard_comm.append(child)
+        if "classification" in updates:
+            from boomi.models import TradingPartnerComponentClassification
+            classification = updates["classification"]
+            if isinstance(classification, str):
+                if classification.lower() == "mycompany":
+                    existing_tp.classification = TradingPartnerComponentClassification.MYCOMPANY
                 else:
-                    # TARGETED APPROACH: Modify existing CommunicationOptions element
-                    # - Remove protocols not in desired list
-                    # - Add new protocols from template
-                    # - Keep existing protocols untouched (preserves all configurations)
+                    existing_tp.classification = TradingPartnerComponentClassification.TRADINGPARTNER
+            else:
+                existing_tp.classification = classification
 
-                    desired_protocols_lower = [p.lower() for p in updates["communication_protocols"]]
+        if "folder_name" in updates:
+            existing_tp.folder_name = updates["folder_name"]
 
-                    # Step 1: Remove protocols that are not in the desired list
-                    for comm_option in list(existing_comm_opts.findall('.//CommunicationOption')):
-                        protocol_method = comm_option.get('method', '').lower()
-                        if protocol_method and protocol_method not in desired_protocols_lower:
-                            # This protocol should be removed
-                            existing_comm_opts.remove(comm_option)
+        # Update contact information
+        # Support both nested dict format and flat parameter format
+        contact_updates = {}
+        if "contact_info" in updates:
+            # Nested format
+            contact_updates = updates["contact_info"]
+        else:
+            # Flat format - extract contact_* parameters
+            for key in updates:
+                if key.startswith('contact_'):
+                    contact_updates[key] = updates[key]
 
-                    # Step 2: Add new protocols that don't exist yet
-                    existing_methods = [opt.get('method', '').lower()
-                                       for opt in existing_comm_opts.findall('.//CommunicationOption')]
+        if contact_updates:
+            # Build ContactInfo model from updates
+            contact_info = build_contact_info(**contact_updates)
+            if contact_info:
+                existing_tp.contact_info = contact_info
 
-                    for protocol in updates["communication_protocols"]:
-                        proto_lower = protocol.lower()
-                        if proto_lower not in existing_methods:
-                            # Protocol doesn't exist - create new one from template
-                            template_xml = build_communication_xml([proto_lower])
-                            template_elem = ET.fromstring(f'<root>{template_xml}</root>')
-                            comm_opts_elem = template_elem.find('.//CommunicationOptions')
-                            if comm_opts_elem is not None:
-                                for comm_option in comm_opts_elem.findall('.//CommunicationOption'):
-                                    existing_comm_opts.append(comm_option)
+        # TODO: Protocol-specific updates (disk_*, ftp_*, sftp_*, http_*, as2_*, oftp_*)
+        # TODO: Standard-specific updates (isa_*, unb_*, sending_*, receiving_*, etc.)
+        # These will require implementing the protocol and standard builders in trading_partner_builders.py
 
-            # Update Disk communication settings if provided
-            if "disk_settings" in updates:
-                disk_settings_updates = updates["disk_settings"]
-
-                # Find DiskSettings element
-                disk_settings_elem = trading_partner.find('.//DiskSettings')
-                if disk_settings_elem is not None and "directory" in disk_settings_updates:
-                    disk_settings_elem.set('directory', disk_settings_updates["directory"])
-
-                # Find DiskGetAction element
-                disk_get_action = trading_partner.find('.//DiskGetAction')
-                if disk_get_action is not None and "get_directory" in disk_settings_updates:
-                    disk_get_action.set('getDirectory', disk_settings_updates["get_directory"])
-
-                # Find DiskSendAction element
-                disk_send_action = trading_partner.find('.//DiskSendAction')
-                if disk_send_action is not None and "send_directory" in disk_settings_updates:
-                    disk_send_action.set('sendDirectory', disk_settings_updates["send_directory"])
-
-            # Update FTP communication settings if provided
-            if "ftp_settings" in updates:
-                ftp_settings_updates = updates["ftp_settings"]
-
-                # Find FTPSettings element
-                ftp_settings_elem = trading_partner.find('.//CommunicationOption[@method="ftp"]//FTPSettings')
-                if ftp_settings_elem is not None:
-                    if "host" in ftp_settings_updates:
-                        ftp_settings_elem.set('host', ftp_settings_updates["host"])
-                    if "port" in ftp_settings_updates:
-                        ftp_settings_elem.set('port', str(ftp_settings_updates["port"]))
-
-                # Find AuthSettings within FTP
-                auth_settings = trading_partner.find('.//CommunicationOption[@method="ftp"]//AuthSettings')
-                if auth_settings is not None and "username" in ftp_settings_updates:
-                    auth_settings.set('user', ftp_settings_updates["username"])
-
-            # Update SFTP communication settings if provided
-            if "sftp_settings" in updates:
-                sftp_settings_updates = updates["sftp_settings"]
-
-                # Find SFTPSettings element
-                sftp_settings_elem = trading_partner.find('.//CommunicationOption[@method="sftp"]//SFTPSettings')
-                if sftp_settings_elem is not None:
-                    if "host" in sftp_settings_updates:
-                        sftp_settings_elem.set('host', sftp_settings_updates["host"])
-                    if "port" in sftp_settings_updates:
-                        sftp_settings_elem.set('port', str(sftp_settings_updates["port"]))
-
-                # Find AuthSettings within SFTP
-                auth_settings = trading_partner.find('.//CommunicationOption[@method="sftp"]//AuthSettings')
-                if auth_settings is not None and "username" in sftp_settings_updates:
-                    auth_settings.set('user', sftp_settings_updates["username"])
-
-            # Update OFTP communication settings if provided
-            if "oftp_settings" in updates:
-                oftp_settings_updates = updates["oftp_settings"]
-
-                # Find defaultOFTPConnectionSettings element
-                oftp_settings_elem = trading_partner.find('.//CommunicationOption[@method="oftp"]//defaultOFTPConnectionSettings')
-                if oftp_settings_elem is not None:
-                    if "host" in oftp_settings_updates:
-                        oftp_settings_elem.set('host', oftp_settings_updates["host"])
-                    if "tls" in oftp_settings_updates:
-                        oftp_settings_elem.set('tls', str(oftp_settings_updates["tls"]).lower())
-
-            # Update HTTP communication settings if provided
-            if "http_settings" in updates:
-                http_settings_updates = updates["http_settings"]
-
-                # Find HttpSettings element
-                http_settings_elem = trading_partner.find('.//CommunicationOption[@method="http"]//HttpSettings')
-                if http_settings_elem is not None:
-                    if "url" in http_settings_updates:
-                        http_settings_elem.set('url', http_settings_updates["url"])
-                    if "authentication_type" in http_settings_updates:
-                        http_settings_elem.set('authenticationType', http_settings_updates["authentication_type"])
-                    if "connect_timeout" in http_settings_updates:
-                        http_settings_elem.set('connectTimeout', str(http_settings_updates["connect_timeout"]))
-                    if "read_timeout" in http_settings_updates:
-                        http_settings_elem.set('readTimeout', str(http_settings_updates["read_timeout"]))
-
-                    # Update AuthSettings within HttpSettings
-                    auth_settings = http_settings_elem.find('.//AuthSettings')
-                    if auth_settings is not None and "username" in http_settings_updates:
-                        auth_settings.set('user', http_settings_updates["username"])
-
-                    # Update SSLOptions within HttpSettings
-                    ssl_options = http_settings_elem.find('.//SSLOptions')
-                    if ssl_options is not None:
-                        if "client_auth" in http_settings_updates:
-                            ssl_options.set('clientauth', str(http_settings_updates["client_auth"]).lower())
-                        if "trust_server_cert" in http_settings_updates:
-                            ssl_options.set('trustServerCert', str(http_settings_updates["trust_server_cert"]).lower())
-
-                # Update HttpGetAction or HttpSendAction
-                http_get = trading_partner.find('.//CommunicationOption[@method="http"]//HttpGetAction')
-                http_send = trading_partner.find('.//CommunicationOption[@method="http"]//HttpSendAction')
-                http_action = http_get if http_get is not None else http_send
-
-                if http_action is not None:
-                    if "method_type" in http_settings_updates:
-                        http_action.set('methodType', http_settings_updates["method_type"])
-                    if "data_content_type" in http_settings_updates:
-                        http_action.set('dataContentType', http_settings_updates["data_content_type"])
-                    if "follow_redirects" in http_settings_updates:
-                        http_action.set('followRedirects', str(http_settings_updates["follow_redirects"]).lower())
-                    if "return_errors" in http_settings_updates:
-                        http_action.set('returnErrors', str(http_settings_updates["return_errors"]).lower())
-
-            # Update AS2 communication settings if provided
-            if "as2_settings" in updates:
-                as2_settings_updates = updates["as2_settings"]
-
-                # Find defaultPartnerSettings element
-                partner_settings = trading_partner.find('.//CommunicationOption[@method="as2"]//defaultPartnerSettings')
-                if partner_settings is not None:
-                    if "url" in as2_settings_updates:
-                        partner_settings.set('url', as2_settings_updates["url"])
-                    if "authentication_type" in as2_settings_updates:
-                        partner_settings.set('authenticationType', as2_settings_updates["authentication_type"])
-                    if "verify_hostname" in as2_settings_updates:
-                        partner_settings.set('verifyHostname', str(as2_settings_updates["verify_hostname"]).lower())
-                    if "client_ssl_alias" in as2_settings_updates:
-                        partner_settings.set('clientsslAlias', as2_settings_updates["client_ssl_alias"])
-
-                    # Update AuthSettings within defaultPartnerSettings
-                    auth_settings = partner_settings.find('.//AuthSettings')
-                    if auth_settings is not None and "username" in as2_settings_updates:
-                        auth_settings.set('user', as2_settings_updates["username"])
-
-                # Find partnerInfo element
-                partner_info = trading_partner.find('.//CommunicationOption[@method="as2"]//partnerInfo')
-                if partner_info is not None:
-                    if "as2_identifier" in as2_settings_updates:
-                        partner_info.set('as2Id', as2_settings_updates["as2_identifier"])
-                    if "encrypt_alias" in as2_settings_updates:
-                        partner_info.set('encryptAlias', as2_settings_updates["encrypt_alias"])
-                    if "sign_alias" in as2_settings_updates:
-                        partner_info.set('signAlias', as2_settings_updates["sign_alias"])
-                    if "mdn_alias" in as2_settings_updates:
-                        partner_info.set('mdnAlias', as2_settings_updates["mdn_alias"])
-
-                # Find AS2MessageOptions element
-                msg_options = trading_partner.find('.//CommunicationOption[@method="as2"]//AS2MessageOptions')
-                if msg_options is not None:
-                    if "signed" in as2_settings_updates:
-                        msg_options.set('signed', str(as2_settings_updates["signed"]).lower())
-                    if "encrypted" in as2_settings_updates:
-                        msg_options.set('encrypted', str(as2_settings_updates["encrypted"]).lower())
-                    if "compressed" in as2_settings_updates:
-                        msg_options.set('compressed', str(as2_settings_updates["compressed"]).lower())
-                    if "encryption_algorithm" in as2_settings_updates:
-                        msg_options.set('encryptionAlgorithm', as2_settings_updates["encryption_algorithm"])
-                    if "signing_digest_alg" in as2_settings_updates:
-                        msg_options.set('signingDigestAlg', as2_settings_updates["signing_digest_alg"])
-                    if "data_content_type" in as2_settings_updates:
-                        msg_options.set('dataContentType', as2_settings_updates["data_content_type"])
-
-                # Find AS2MDNOptions element
-                mdn_options = trading_partner.find('.//CommunicationOption[@method="as2"]//AS2MDNOptions')
-                if mdn_options is not None:
-                    if "request_mdn" in as2_settings_updates:
-                        mdn_options.set('requestMDN', str(as2_settings_updates["request_mdn"]).lower())
-                    if "mdn_signed" in as2_settings_updates:
-                        mdn_options.set('signed', str(as2_settings_updates["mdn_signed"]).lower())
-                    if "mdn_digest_alg" in as2_settings_updates:
-                        mdn_options.set('mdnDigestAlg', as2_settings_updates["mdn_digest_alg"])
-                    if "synchronous_mdn" in as2_settings_updates:
-                        mdn_options.set('synchronous', str(as2_settings_updates["synchronous_mdn"]).lower())
-                    if "fail_on_negative_mdn" in as2_settings_updates:
-                        mdn_options.set('failOnNegativeMDN', str(as2_settings_updates["fail_on_negative_mdn"]).lower())
-
-            # Convert back to XML string
-            modified_xml = ET.tostring(root, encoding='unicode')
-
-        except ET.ParseError as e:
-            return {
-                "_success": False,
-                "error": f"XML parse error: {str(e)}",
-                "message": "Failed to parse component XML"
-            }
-
-        # Step 4: Update the component with modified XML
-        result = boomi_client.component.update_component(
-            component_id=component_id,
-            request_body=modified_xml
+        # Step 3: Update the trading partner using JSON-based API
+        result = boomi_client.trading_partner_component.update_trading_partner_component(
+            id_=component_id,
+            request_body=existing_tp
         )
 
         return {
