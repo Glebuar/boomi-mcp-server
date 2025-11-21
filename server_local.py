@@ -563,28 +563,27 @@ if manage_trading_partner_action:
                 if gs_id:
                     request_data["gs_id"] = gs_id
 
-                if contact_name or contact_email or contact_phone or contact_fax or contact_address or contact_address2 or contact_city or contact_state or contact_country or contact_postalcode:
-                    request_data["contact_info"] = {}
-                    if contact_name:
-                        request_data["contact_info"]["name"] = contact_name
-                    if contact_email:
-                        request_data["contact_info"]["email"] = contact_email
-                    if contact_phone:
-                        request_data["contact_info"]["phone"] = contact_phone
-                    if contact_fax:
-                        request_data["contact_info"]["fax"] = contact_fax
-                    if contact_address:
-                        request_data["contact_info"]["address"] = contact_address
-                    if contact_address2:
-                        request_data["contact_info"]["address2"] = contact_address2
-                    if contact_city:
-                        request_data["contact_info"]["city"] = contact_city
-                    if contact_state:
-                        request_data["contact_info"]["state"] = contact_state
-                    if contact_country:
-                        request_data["contact_info"]["country"] = contact_country
-                    if contact_postalcode:
-                        request_data["contact_info"]["postal_code"] = contact_postalcode
+                # Pass contact fields flat (builder expects flat kwargs)
+                if contact_name:
+                    request_data["contact_name"] = contact_name
+                if contact_email:
+                    request_data["contact_email"] = contact_email
+                if contact_phone:
+                    request_data["contact_phone"] = contact_phone
+                if contact_fax:
+                    request_data["contact_fax"] = contact_fax
+                if contact_address:
+                    request_data["contact_address"] = contact_address
+                if contact_address2:
+                    request_data["contact_address2"] = contact_address2
+                if contact_city:
+                    request_data["contact_city"] = contact_city
+                if contact_state:
+                    request_data["contact_state"] = contact_state
+                if contact_country:
+                    request_data["contact_country"] = contact_country
+                if contact_postalcode:
+                    request_data["contact_postalcode"] = contact_postalcode
 
                 # Add communication protocols if provided
                 if communication_protocols:
@@ -599,37 +598,35 @@ if manage_trading_partner_action:
                 if component_name:
                     updates["component_name"] = component_name
 
-                if contact_name or contact_email or contact_phone or contact_fax or contact_address or contact_address2 or contact_city or contact_state or contact_country or contact_postalcode:
-                    updates["contact_info"] = {}
-                    if contact_name:
-                        updates["contact_info"]["name"] = contact_name
-                    if contact_email:
-                        updates["contact_info"]["email"] = contact_email
-                    if contact_phone:
-                        updates["contact_info"]["phone"] = contact_phone
-                    if contact_fax:
-                        updates["contact_info"]["fax"] = contact_fax
-                    if contact_address:
-                        updates["contact_info"]["address"] = contact_address
-                    if contact_address2:
-                        updates["contact_info"]["address2"] = contact_address2
-                    if contact_city:
-                        updates["contact_info"]["city"] = contact_city
-                    if contact_state:
-                        updates["contact_info"]["state"] = contact_state
-                    if contact_country:
-                        updates["contact_info"]["country"] = contact_country
-                    if contact_postalcode:
-                        updates["contact_info"]["postal_code"] = contact_postalcode
+                # Pass contact fields flat (builder expects flat kwargs)
+                if contact_name:
+                    updates["contact_name"] = contact_name
+                if contact_email:
+                    updates["contact_email"] = contact_email
+                if contact_phone:
+                    updates["contact_phone"] = contact_phone
+                if contact_fax:
+                    updates["contact_fax"] = contact_fax
+                if contact_address:
+                    updates["contact_address"] = contact_address
+                if contact_address2:
+                    updates["contact_address2"] = contact_address2
+                if contact_city:
+                    updates["contact_city"] = contact_city
+                if contact_state:
+                    updates["contact_state"] = contact_state
+                if contact_country:
+                    updates["contact_country"] = contact_country
+                if contact_postalcode:
+                    updates["contact_postalcode"] = contact_postalcode
 
-                if isa_id or isa_qualifier or gs_id:
-                    updates["partner_info"] = {}
-                    if isa_id:
-                        updates["partner_info"]["isa_id"] = isa_id
-                    if isa_qualifier:
-                        updates["partner_info"]["isa_qualifier"] = isa_qualifier
-                    if gs_id:
-                        updates["partner_info"]["gs_id"] = gs_id
+                # Pass X12 fields flat
+                if isa_id:
+                    updates["isa_id"] = isa_id
+                if isa_qualifier:
+                    updates["isa_qualifier"] = isa_qualifier
+                if gs_id:
+                    updates["gs_id"] = gs_id
 
                 # Add communication protocols if provided
                 if communication_protocols:

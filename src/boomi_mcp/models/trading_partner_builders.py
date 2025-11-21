@@ -583,8 +583,9 @@ def build_trading_partner_model(
         classification=classification,
         folder_name=folder_name,
         description=description,
-        partner_info=partner_info
-        # TODO: contact_info, partner_communication - need further testing
+        partner_info=partner_info,
+        contact_info=contact_info
+        # TODO: partner_communication - need further testing
     )
 
     return tp_model
