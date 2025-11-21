@@ -230,18 +230,22 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
                 # If XML parsing fails, just continue without these fields
                 pass
 
-        # Extract partner details
+        # Extract partner details (use snake_case for JSON API attributes)
         partner_info = {}
-        if hasattr(result, 'PartnerInfo'):
-            info = result.PartnerInfo
-            partner_info = {
-                "isa_id": getattr(info, 'ISAId', None),
-                "isa_qualifier": getattr(info, 'ISAQualifier', None),
-                "gs_id": getattr(info, 'GSId', None),
-                "unb_id": getattr(info, 'UNBId', None),
-                "unb_qualifier": getattr(info, 'UNBQualifier', None),
-                "duns": getattr(info, 'DUNS', None)
-            }
+        info = getattr(result, 'partner_info', None)
+        if info:
+            # X12 partner info
+            x12_info = getattr(info, 'x12_partner_info', None)
+            if x12_info:
+                x12_ctrl = getattr(x12_info, 'x12_control_info', None)
+                if x12_ctrl:
+                    isa_ctrl = getattr(x12_ctrl, 'isa_control_info', None)
+                    gs_ctrl = getattr(x12_ctrl, 'gs_control_info', None)
+                    if isa_ctrl:
+                        partner_info["isa_id"] = getattr(isa_ctrl, 'interchange_id', None)
+                        partner_info["isa_qualifier"] = getattr(isa_ctrl, 'interchange_id_qualifier', None)
+                    if gs_ctrl:
+                        partner_info["gs_id"] = getattr(gs_ctrl, 'applicationcode', None)
 
         contact_info = {}
         communication_protocols = []
@@ -270,30 +274,31 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
                     # Remove None values
                     contact_info = {k: v for k, v in contact_info.items() if v is not None}
 
-                # Extract communication protocols with detailed settings
-                communication_protocols = extract_communication_protocol_details(xml_str)
+                # Communication protocols parsed from JSON API, not needed here
+                communication_protocols = {}
 
             except Exception as xml_error:
                 # If XML parsing fails, just continue without contact info
                 pass
         else:
             # Use object attributes if available (trading_partner_component API)
-            if hasattr(result, 'ContactInfo') or hasattr(result, 'contact_info'):
-                contact = getattr(result, 'ContactInfo', None) or getattr(result, 'contact_info', None)
-                if contact:
-                    # Use safe attribute access with defaults for all fields
-                    contact_info = {
-                        "name": getattr(contact, 'contact_name', getattr(contact, 'name', None)),
-                        "email": getattr(contact, 'email', None),
-                        "phone": getattr(contact, 'phone', None),
-                        "address1": getattr(contact, 'address1', None),
-                        "address2": getattr(contact, 'address2', None),
-                        "city": getattr(contact, 'city', None),
-                        "state": getattr(contact, 'state', None),
-                        "country": getattr(contact, 'country', None),
-                        "postalcode": getattr(contact, 'postalcode', None),
-                        "fax": getattr(contact, 'fax', None)
-                    }
+            contact = getattr(result, 'contact_info', None)
+            if contact:
+                # Use safe attribute access with defaults for all fields
+                raw_contact = {
+                    "name": getattr(contact, 'contact_name', None),
+                    "email": getattr(contact, 'email', None),
+                    "phone": getattr(contact, 'phone', None),
+                    "address1": getattr(contact, 'address1', None),
+                    "address2": getattr(contact, 'address2', None),
+                    "city": getattr(contact, 'city', None),
+                    "state": getattr(contact, 'state', None),
+                    "country": getattr(contact, 'country', None),
+                    "postalcode": getattr(contact, 'postalcode', None),
+                    "fax": getattr(contact, 'fax', None)
+                }
+                # Filter out None and empty strings
+                contact_info = {k: v for k, v in raw_contact.items() if v}
 
         return {
             "_success": True,

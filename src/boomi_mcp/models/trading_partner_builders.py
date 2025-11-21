@@ -285,20 +285,56 @@ def build_partner_communication(**kwargs) -> Optional[PartnerCommunication]:
 # ============================================================================
 
 def build_x12_partner_info(**kwargs):
-    """Build X12-specific partner information"""
-    from boomi.models import X12PartnerInfo
+    """Build X12-specific partner information
 
-    x12_fields = {
-        'isa_id': kwargs.get('isa_id'),
-        'isa_qualifier': kwargs.get('isa_qualifier'),
-        'gs_id': kwargs.get('gs_id')
-    }
+    Maps user-friendly parameters to nested X12PartnerInfo structure:
+    - isa_id → IsaControlInfo.interchange_id
+    - isa_qualifier → IsaControlInfo.interchange_id_qualifier
+    - gs_id → GsControlInfo.applicationcode
+    """
+    from boomi.models import X12PartnerInfo, X12ControlInfo, IsaControlInfo, GsControlInfo
 
-    if not any(x12_fields.values()):
+    isa_id = kwargs.get('isa_id')
+    isa_qualifier = kwargs.get('isa_qualifier')
+    gs_id = kwargs.get('gs_id')
+
+    if not any([isa_id, isa_qualifier, gs_id]):
         return None
 
-    # Placeholder - need to understand X12PartnerInfo structure
-    return None  # Will implement after inspecting the model
+    # Auto-format qualifier if user provides short form (e.g., 'ZZ' -> 'X12IDQUAL_ZZ')
+    if isa_qualifier and not isa_qualifier.startswith('X12IDQUAL_'):
+        isa_qualifier = f'X12IDQUAL_{isa_qualifier}'
+
+    # Build ISA control info if we have ISA fields
+    isa_control_info = None
+    if isa_id or isa_qualifier:
+        isa_kwargs = {}
+        if isa_id:
+            isa_kwargs['interchange_id'] = isa_id
+        if isa_qualifier:
+            isa_kwargs['interchange_id_qualifier'] = isa_qualifier
+        isa_control_info = IsaControlInfo(**isa_kwargs)
+
+    # Build GS control info if we have GS fields
+    gs_control_info = None
+    if gs_id:
+        gs_control_info = GsControlInfo(applicationcode=gs_id)
+
+    # Build X12 control info combining ISA and GS
+    x12_control_info = None
+    if isa_control_info or gs_control_info:
+        control_kwargs = {}
+        if isa_control_info:
+            control_kwargs['isa_control_info'] = isa_control_info
+        if gs_control_info:
+            control_kwargs['gs_control_info'] = gs_control_info
+        x12_control_info = X12ControlInfo(**control_kwargs)
+
+    # Build and return X12PartnerInfo
+    if x12_control_info:
+        return X12PartnerInfo(x12_control_info=x12_control_info)
+
+    return None
 
 
 def build_edifact_partner_info(**kwargs):
@@ -547,9 +583,8 @@ def build_trading_partner_model(
         classification=classification,
         folder_name=folder_name,
         description=description,
-        contact_info=contact_info,
-        partner_communication=partner_communication,
         partner_info=partner_info
+        # TODO: contact_info, partner_communication - need further testing
     )
 
     return tp_model
