@@ -300,6 +300,33 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
                 # Filter out None and empty strings
                 contact_info = {k: v for k, v in raw_contact.items() if v}
 
+            # Parse partner_communication for communication protocols
+            comm = getattr(result, 'partner_communication', None)
+            if comm:
+                if getattr(comm, 'disk_communication_options', None):
+                    disk_opts = comm.disk_communication_options
+                    disk_info = {"protocol": "disk"}
+                    get_opts = getattr(disk_opts, 'disk_get_options', None)
+                    send_opts = getattr(disk_opts, 'disk_send_options', None)
+                    if get_opts:
+                        disk_info["get_directory"] = getattr(get_opts, 'get_directory', None)
+                        disk_info["file_filter"] = getattr(get_opts, 'file_filter', None)
+                    if send_opts:
+                        disk_info["send_directory"] = getattr(send_opts, 'send_directory', None)
+                    communication_protocols.append(disk_info)
+                if getattr(comm, 'ftp_communication_options', None):
+                    communication_protocols.append({"protocol": "ftp"})
+                if getattr(comm, 'sftp_communication_options', None):
+                    communication_protocols.append({"protocol": "sftp"})
+                if getattr(comm, 'http_communication_options', None):
+                    communication_protocols.append({"protocol": "http"})
+                if getattr(comm, 'as2_communication_options', None):
+                    communication_protocols.append({"protocol": "as2"})
+                if getattr(comm, 'mllp_communication_options', None):
+                    communication_protocols.append({"protocol": "mllp"})
+                if getattr(comm, 'oftp_communication_options', None):
+                    communication_protocols.append({"protocol": "oftp"})
+
         return {
             "_success": True,
             "trading_partner": {
