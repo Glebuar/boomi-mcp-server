@@ -82,22 +82,40 @@ def build_contact_info(**kwargs) -> Optional[ContactInfo]:
 # ============================================================================
 
 def build_disk_communication_options(**kwargs):
-    """Build Disk protocol communication options (import if needed)"""
-    from boomi.models import DiskCommunicationOptions
+    """Build Disk protocol communication options.
 
-    # TODO: Need to inspect DiskCommunicationOptions model structure
-    # For now, return None if no disk fields provided
-    disk_fields = {
-        'disk_directory': kwargs.get('disk_directory'),
-        'disk_get_directory': kwargs.get('disk_get_directory'),
-        'disk_send_directory': kwargs.get('disk_send_directory')
-    }
+    Args:
+        disk_get_directory: Directory to read files from
+        disk_send_directory: Directory to write files to
+        disk_file_filter: File filter pattern (default: *)
+    """
+    from boomi.models import DiskCommunicationOptions, DiskGetOptions, DiskSendOptions
 
-    if not any(disk_fields.values()):
+    get_dir = kwargs.get('disk_get_directory')
+    send_dir = kwargs.get('disk_send_directory')
+    file_filter = kwargs.get('disk_file_filter', '*')
+
+    if not get_dir and not send_dir:
         return None
 
-    # Placeholder - need to understand DiskCommunicationOptions structure
-    return None  # Will implement after inspecting the model
+    disk_get_options = None
+    disk_send_options = None
+
+    if get_dir:
+        disk_get_options = DiskGetOptions(
+            file_filter=file_filter,
+            get_directory=get_dir
+        )
+
+    if send_dir:
+        disk_send_options = DiskSendOptions(
+            send_directory=send_dir
+        )
+
+    return DiskCommunicationOptions(
+        disk_get_options=disk_get_options,
+        disk_send_options=disk_send_options
+    )
 
 
 def build_ftp_communication_options(**kwargs):
@@ -584,8 +602,8 @@ def build_trading_partner_model(
         folder_name=folder_name,
         description=description,
         partner_info=partner_info,
-        contact_info=contact_info
-        # TODO: partner_communication - need further testing
+        contact_info=contact_info,
+        partner_communication=partner_communication
     )
 
     return tp_model

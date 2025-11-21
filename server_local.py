@@ -590,6 +590,12 @@ if manage_trading_partner_action:
                     protocols_list = [p.strip() for p in communication_protocols.split(',')]
                     request_data["communication_protocols"] = protocols_list
 
+                # Pass disk fields flat
+                if disk_get_directory:
+                    request_data["disk_get_directory"] = disk_get_directory
+                if disk_send_directory:
+                    request_data["disk_send_directory"] = disk_send_directory
+
                 params["request_data"] = request_data
 
             elif action == "update":
