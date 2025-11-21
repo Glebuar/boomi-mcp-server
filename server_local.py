@@ -555,14 +555,13 @@ if manage_trading_partner_action:
                 if folder_name:
                     request_data["folder_name"] = folder_name
 
-                if standard and standard.lower() == "x12" and (isa_id or isa_qualifier or gs_id):
-                    request_data["partner_info"] = {}
-                    if isa_id:
-                        request_data["partner_info"]["isa_id"] = isa_id
-                    if isa_qualifier:
-                        request_data["partner_info"]["isa_qualifier"] = isa_qualifier
-                    if gs_id:
-                        request_data["partner_info"]["gs_id"] = gs_id
+                # Pass X12 fields flat (builder expects flat kwargs, not nested)
+                if isa_id:
+                    request_data["isa_id"] = isa_id
+                if isa_qualifier:
+                    request_data["isa_qualifier"] = isa_qualifier
+                if gs_id:
+                    request_data["gs_id"] = gs_id
 
                 if contact_name or contact_email or contact_phone or contact_fax or contact_address or contact_address2 or contact_city or contact_state or contact_country or contact_postalcode:
                     request_data["contact_info"] = {}
