@@ -13,7 +13,11 @@ from ..templates import PROCESS_COMPONENT_WRAPPER
 from ..templates.shapes import (
     START_SHAPE_TEMPLATE,
     RETURN_DOCUMENTS_SHAPE_TEMPLATE,
+    STOP_SHAPE_TEMPLATE,
     MAP_SHAPE_TEMPLATE,
+    MESSAGE_SHAPE_TEMPLATE,
+    CONNECTOR_SHAPE_TEMPLATE,
+    DECISION_SHAPE_TEMPLATE,
     DOCUMENT_PROPERTIES_SHAPE_TEMPLATE,
     BRANCH_SHAPE_TEMPLATE,
     NOTE_SHAPE_TEMPLATE,
@@ -89,8 +93,8 @@ class ProcessBuilder:
         if shapes_config[0]['type'] != 'start':
             raise ValueError("First shape must be 'start' type")
 
-        if shapes_config[-1]['type'] != 'return':
-            raise ValueError("Last shape must be 'return' type")
+        if shapes_config[-1]['type'] not in ('stop', 'return'):
+            raise ValueError("Last shape must be 'stop' or 'return' type")
 
         # Calculate positions automatically
         num_shapes = len(shapes_config)
@@ -171,16 +175,27 @@ class ProcessBuilder:
         if shape_type == 'start':
             return START_SHAPE_TEMPLATE.format(
                 name=name,
-                userlabel=userlabel,
+                userlabel=userlabel or 'Start',
                 x=x,
                 y=y,
                 dragpoints=dragpoints_xml
             )
 
+        elif shape_type == 'stop':
+            # Use dict to avoid 'continue' keyword conflict
+            stop_params = {
+                'name': name,
+                'userlabel': userlabel or 'Stop',
+                'x': x,
+                'y': y,
+                'continue': config.get('continue', 'true')
+            }
+            return STOP_SHAPE_TEMPLATE.format(**stop_params)
+
         elif shape_type == 'return':
             return RETURN_DOCUMENTS_SHAPE_TEMPLATE.format(
                 name=name,
-                userlabel=userlabel,
+                userlabel=userlabel or 'Return Documents',
                 x=x,
                 y=y,
                 label=config.get('label', '')
@@ -192,10 +207,53 @@ class ProcessBuilder:
 
             return MAP_SHAPE_TEMPLATE.format(
                 name=name,
-                userlabel=userlabel,
+                userlabel=userlabel or 'Map',
                 x=x,
                 y=y,
                 map_id=config['map_id'],
+                dragpoints=dragpoints_xml
+            )
+
+        elif shape_type == 'message':
+            if 'message_text' not in config:
+                raise ValueError("'message_text' required for message shape")
+
+            return MESSAGE_SHAPE_TEMPLATE.format(
+                name=name,
+                userlabel=userlabel or 'Message',
+                x=x,
+                y=y,
+                message_text=config['message_text'],
+                dragpoints=dragpoints_xml
+            )
+
+        elif shape_type == 'connector':
+            required_fields = ['connector_id', 'operation']
+            for field in required_fields:
+                if field not in config:
+                    raise ValueError(f"'{field}' required for connector shape")
+
+            return CONNECTOR_SHAPE_TEMPLATE.format(
+                name=name,
+                userlabel=userlabel or 'Connector',
+                x=x,
+                y=y,
+                connector_id=config['connector_id'],
+                operation=config['operation'],
+                object_type=config.get('object_type', ''),
+                dragpoints=dragpoints_xml
+            )
+
+        elif shape_type == 'decision':
+            if 'expression' not in config:
+                raise ValueError("'expression' required for decision shape")
+
+            return DECISION_SHAPE_TEMPLATE.format(
+                name=name,
+                userlabel=userlabel or 'Decision',
+                x=x,
+                y=y,
+                expression=config['expression'],
                 dragpoints=dragpoints_xml
             )
 

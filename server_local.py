@@ -58,6 +58,14 @@ except ImportError as e:
     print(f"[WARNING] Failed to import trading_partner_tools: {e}")
     manage_trading_partner_action = None
 
+# --- Process Tools ---
+try:
+    from boomi_mcp.categories.components.processes import manage_process_action
+    print(f"[INFO] Process tools loaded successfully")
+except ImportError as e:
+    print(f"[WARNING] Failed to import process_tools: {e}")
+    manage_process_action = None
+
 
 def put_secret(subject: str, profile: str, payload: Dict[str, str]):
     """Store credentials for a user profile."""
@@ -753,6 +761,159 @@ if manage_trading_partner_action:
 
     print("[INFO] Trading partner tool registered successfully (1 consolidated tool, local)")
 
+
+# --- Process MCP Tools (Local) ---
+if manage_process_action:
+    @mcp.tool()
+    def manage_process(
+        profile: str,
+        action: str,
+        process_id: str = None,
+        config_yaml: str = None,
+        filters: str = None
+    ):
+        """
+        Manage Boomi process components with AI-friendly YAML configuration.
+
+        This tool enables creation of simple processes or complex multi-component
+        workflows with automatic dependency management and ID resolution.
+
+        Args:
+            profile: Boomi profile name (required)
+            action: Action to perform - must be one of: list, get, create, update, delete
+            process_id: Process component ID (required for get, update, delete)
+            config_yaml: YAML configuration string (required for create, update)
+            filters: JSON string with filters for list action (optional)
+
+        Actions:
+            - list: List all process components
+                Example: action="list"
+                Example with filter: action="list", filters='{"folder_name": "Integrations"}'
+
+            - get: Get specific process by ID
+                Example: action="get", process_id="abc-123-def"
+
+            - create: Create new process(es) from YAML
+                Single process example:
+                    config_yaml = '''
+                    name: "Hello World"
+                    folder_name: "Test"
+                    shapes:
+                      - type: start
+                        name: start
+                      - type: message
+                        name: msg
+                        config:
+                          message_text: "Hello from Boomi!"
+                      - type: stop
+                        name: end
+                    '''
+
+                Multi-component with dependencies:
+                    config_yaml = '''
+                    components:
+                      - name: "Transform Map"
+                        type: map
+                        dependencies: []
+                      - name: "Main Process"
+                        type: process
+                        dependencies: ["Transform Map"]
+                        config:
+                          name: "Main Process"
+                          shapes:
+                            - type: start
+                              name: start
+                            - type: map
+                              name: transform
+                              config:
+                                map_ref: "Transform Map"
+                            - type: stop
+                              name: end
+                    '''
+
+            - update: Update existing process
+                Example: action="update", process_id="abc-123", config_yaml="..."
+
+            - delete: Delete process
+                Example: action="delete", process_id="abc-123-def"
+
+        YAML Shape Types:
+            - start: Process start (required first shape)
+            - stop: Process termination (can be last shape)
+            - return: Return documents (alternative last shape)
+            - message: Debug/logging messages
+            - map: Data transformation (requires map_id or map_ref)
+            - connector: External system integration (requires connector_id, operation)
+            - decision: Conditional branching (requires expression)
+            - branch: Parallel branches (requires num_branches)
+            - note: Documentation annotation
+
+        Returns:
+            Dict with success status and result data
+
+        Examples:
+            # List all processes
+            result = manage_process(profile="prod", action="list")
+
+            # Create simple process
+            result = manage_process(
+                profile="prod",
+                action="create",
+                config_yaml="name: Test\\nshapes: [...]"
+            )
+
+            # Get process details
+            result = manage_process(
+                profile="prod",
+                action="get",
+                process_id="abc-123-def"
+            )
+        """
+        try:
+            subject = TEST_USER
+            print(f"[INFO] manage_process called for local user: {subject}, profile: {profile}, action: {action}")
+
+            # Get credentials
+            creds = get_secret(subject, profile)
+
+            # Initialize Boomi SDK
+            sdk = Boomi(
+                account_id=creds["account_id"],
+                username=creds["username"],
+                password=creds["password"]
+            )
+
+            # Build parameters based on action
+            params = {}
+
+            if action == "list":
+                if filters:
+                    import json
+                    params["filters"] = json.loads(filters)
+
+            elif action == "get":
+                params["process_id"] = process_id
+
+            elif action == "create":
+                params["config_yaml"] = config_yaml
+
+            elif action == "update":
+                params["process_id"] = process_id
+                params["config_yaml"] = config_yaml
+
+            elif action == "delete":
+                params["process_id"] = process_id
+
+            # Call the action function
+            return manage_process_action(sdk, profile, action, **params)
+
+        except Exception as e:
+            print(f"[ERROR] Failed to {action} process: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"_success": False, "error": str(e), "exception_type": type(e).__name__}
+
+    print("[INFO] Process tool registered successfully (1 consolidated tool, local)")
 
 
 if __name__ == "__main__":
