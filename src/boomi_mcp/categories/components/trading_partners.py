@@ -303,6 +303,7 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
             # Parse partner_communication for communication protocols
             comm = getattr(result, 'partner_communication', None)
             if comm:
+                # Disk protocol
                 if getattr(comm, 'disk_communication_options', None):
                     disk_opts = comm.disk_communication_options
                     disk_info = {"protocol": "disk"}
@@ -314,16 +315,60 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
                     if send_opts:
                         disk_info["send_directory"] = getattr(send_opts, 'send_directory', None)
                     communication_protocols.append(disk_info)
+
+                # FTP protocol
                 if getattr(comm, 'ftp_communication_options', None):
-                    communication_protocols.append({"protocol": "ftp"})
+                    ftp_opts = comm.ftp_communication_options
+                    ftp_info = {"protocol": "ftp"}
+                    settings = getattr(ftp_opts, 'ftp_settings', None)
+                    if settings:
+                        ftp_info["host"] = getattr(settings, 'host', None)
+                        ftp_info["port"] = getattr(settings, 'port', None)
+                        ftp_info["user"] = getattr(settings, 'user', None)
+                    get_opts = getattr(ftp_opts, 'ftp_get_options', None)
+                    if get_opts:
+                        ftp_info["remote_directory"] = getattr(get_opts, 'remote_directory', None)
+                    communication_protocols.append(ftp_info)
+
+                # SFTP protocol
                 if getattr(comm, 'sftp_communication_options', None):
-                    communication_protocols.append({"protocol": "sftp"})
+                    sftp_opts = comm.sftp_communication_options
+                    sftp_info = {"protocol": "sftp"}
+                    settings = getattr(sftp_opts, 'sftp_settings', None)
+                    if settings:
+                        sftp_info["host"] = getattr(settings, 'host', None)
+                        sftp_info["port"] = getattr(settings, 'port', None)
+                        sftp_info["user"] = getattr(settings, 'user', None)
+                    get_opts = getattr(sftp_opts, 'sftp_get_options', None)
+                    if get_opts:
+                        sftp_info["remote_directory"] = getattr(get_opts, 'remote_directory', None)
+                    communication_protocols.append(sftp_info)
+
+                # HTTP protocol
                 if getattr(comm, 'http_communication_options', None):
-                    communication_protocols.append({"protocol": "http"})
+                    http_opts = comm.http_communication_options
+                    http_info = {"protocol": "http"}
+                    settings = getattr(http_opts, 'http_settings', None)
+                    if settings:
+                        http_info["url"] = getattr(settings, 'url', None)
+                        http_info["connect_timeout"] = getattr(settings, 'connect_timeout', None)
+                        http_info["read_timeout"] = getattr(settings, 'read_timeout', None)
+                    communication_protocols.append(http_info)
+
+                # AS2 protocol
                 if getattr(comm, 'as2_communication_options', None):
-                    communication_protocols.append({"protocol": "as2"})
+                    as2_opts = comm.as2_communication_options
+                    as2_info = {"protocol": "as2"}
+                    settings = getattr(as2_opts, 'as2_send_settings', None)
+                    if settings:
+                        as2_info["url"] = getattr(settings, 'url', None)
+                    communication_protocols.append(as2_info)
+
+                # MLLP protocol
                 if getattr(comm, 'mllp_communication_options', None):
                     communication_protocols.append({"protocol": "mllp"})
+
+                # OFTP protocol
                 if getattr(comm, 'oftp_communication_options', None):
                     communication_protocols.append({"protocol": "oftp"})
 

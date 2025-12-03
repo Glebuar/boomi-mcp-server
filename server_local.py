@@ -382,13 +382,19 @@ if manage_trading_partner_action:
         ftp_host: str = None,
         ftp_port: str = None,
         ftp_username: str = None,
+        ftp_password: str = None,
+        ftp_remote_directory: str = None,
         sftp_host: str = None,
         sftp_port: str = None,
         sftp_username: str = None,
+        sftp_password: str = None,
+        sftp_remote_directory: str = None,
         http_url: str = None,
+        http_password: str = None,
         as2_url: str = None,
         as2_identifier: str = None,
         as2_partner_identifier: str = None,
+        as2_password: str = None,
         oftp_host: str = None,
         oftp_tls: str = None,
         http_authentication_type: str = None,
@@ -595,6 +601,54 @@ if manage_trading_partner_action:
                     request_data["disk_get_directory"] = disk_get_directory
                 if disk_send_directory:
                     request_data["disk_send_directory"] = disk_send_directory
+
+                # Pass FTP fields flat
+                if ftp_host:
+                    request_data["ftp_host"] = ftp_host
+                if ftp_port:
+                    request_data["ftp_port"] = ftp_port
+                if ftp_username:
+                    request_data["ftp_username"] = ftp_username
+                if ftp_password:
+                    request_data["ftp_password"] = ftp_password
+                if ftp_remote_directory:
+                    request_data["ftp_remote_directory"] = ftp_remote_directory
+
+                # Pass SFTP fields flat
+                if sftp_host:
+                    request_data["sftp_host"] = sftp_host
+                if sftp_port:
+                    request_data["sftp_port"] = sftp_port
+                if sftp_username:
+                    request_data["sftp_username"] = sftp_username
+                if sftp_password:
+                    request_data["sftp_password"] = sftp_password
+                if sftp_remote_directory:
+                    request_data["sftp_remote_directory"] = sftp_remote_directory
+
+                # Pass HTTP fields flat
+                if http_url:
+                    request_data["http_url"] = http_url
+                if http_username:
+                    request_data["http_username"] = http_username
+                if http_password:
+                    request_data["http_password"] = http_password
+                if http_connect_timeout:
+                    request_data["http_connect_timeout"] = http_connect_timeout
+                if http_read_timeout:
+                    request_data["http_read_timeout"] = http_read_timeout
+
+                # Pass AS2 fields flat
+                if as2_url:
+                    request_data["as2_url"] = as2_url
+                if as2_username:
+                    request_data["as2_username"] = as2_username
+                if as2_password:
+                    request_data["as2_password"] = as2_password
+                if as2_identifier:
+                    request_data["as2_identifier"] = as2_identifier
+                if as2_partner_identifier:
+                    request_data["as2_partner_identifier"] = as2_partner_identifier
 
                 params["request_data"] = request_data
 

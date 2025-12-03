@@ -119,97 +119,235 @@ def build_disk_communication_options(**kwargs):
 
 
 def build_ftp_communication_options(**kwargs):
-    """Build FTP protocol communication options"""
-    from boomi.models import FtpCommunicationOptions
+    """Build FTP protocol communication options.
 
-    ftp_fields = {
-        'ftp_host': kwargs.get('ftp_host'),
-        'ftp_port': kwargs.get('ftp_port'),
-        'ftp_username': kwargs.get('ftp_username')
-    }
+    Args:
+        ftp_host: FTP server hostname
+        ftp_port: FTP server port (default: 21)
+        ftp_username: FTP username
+        ftp_password: FTP password
+        ftp_remote_directory: Remote directory path
+    """
+    from boomi.models import (
+        FtpCommunicationOptions, FtpSettings, FtpGetOptions, FtpSendOptions,
+        FtpsslOptions, PrivateCertificate
+    )
 
-    if not any(ftp_fields.values()):
+    host = kwargs.get('ftp_host')
+    if not host:
         return None
 
-    # Placeholder - need to understand FtpCommunicationOptions structure
-    return None  # Will implement after inspecting the model
+    port = int(kwargs.get('ftp_port', 21))
+    username = kwargs.get('ftp_username', '')
+    password = kwargs.get('ftp_password', '')
+    remote_dir = kwargs.get('ftp_remote_directory', '/')
+
+    # Build required nested objects
+    ssl_options = FtpsslOptions(
+        client_ssl_certificate=PrivateCertificate()
+    )
+
+    ftp_settings = FtpSettings(
+        ftpssl_options=ssl_options,
+        host=host,
+        port=port,
+        user=username,
+        password=password
+    )
+
+    ftp_get_options = FtpGetOptions(
+        file_to_move='*',
+        max_file_count=0,
+        remote_directory=remote_dir
+    )
+
+    ftp_send_options = FtpSendOptions(
+        move_to_directory='',
+        remote_directory=remote_dir
+    )
+
+    return FtpCommunicationOptions(
+        ftp_settings=ftp_settings,
+        ftp_get_options=ftp_get_options,
+        ftp_send_options=ftp_send_options
+    )
 
 
 def build_sftp_communication_options(**kwargs):
-    """Build SFTP protocol communication options"""
-    from boomi.models import SftpCommunicationOptions
+    """Build SFTP protocol communication options.
 
-    sftp_fields = {
-        'sftp_host': kwargs.get('sftp_host'),
-        'sftp_port': kwargs.get('sftp_port'),
-        'sftp_username': kwargs.get('sftp_username')
-    }
+    Args:
+        sftp_host: SFTP server hostname
+        sftp_port: SFTP server port (default: 22)
+        sftp_username: SFTP username
+        sftp_password: SFTP password
+        sftp_remote_directory: Remote directory path
+    """
+    from boomi.models import (
+        SftpCommunicationOptions, SftpSettings, SftpGetOptions, SftpSendOptions,
+        SftpsshOptions, SftpProxySettings
+    )
 
-    if not any(sftp_fields.values()):
+    host = kwargs.get('sftp_host')
+    if not host:
         return None
 
-    # Placeholder - need to understand SftpCommunicationOptions structure
-    return None  # Will implement after inspecting the model
+    port = int(kwargs.get('sftp_port', 22))
+    username = kwargs.get('sftp_username', '')
+    password = kwargs.get('sftp_password', '')
+    remote_dir = kwargs.get('sftp_remote_directory', '/')
+
+    # Build required nested objects
+    ssh_options = SftpsshOptions(
+        known_host_entry='',
+        sshkeypassword='',
+        sshkeypath=''
+    )
+
+    proxy_settings = SftpProxySettings(
+        host='',
+        password='',
+        port=0,
+        user=''
+    )
+
+    sftp_settings = SftpSettings(
+        sftpssh_options=ssh_options,
+        sftp_proxy_settings=proxy_settings,
+        host=host,
+        port=port,
+        user=username,
+        password=password
+    )
+
+    sftp_get_options = SftpGetOptions(
+        file_to_move='*',
+        max_file_count=0,
+        move_to_directory='',
+        remote_directory=remote_dir
+    )
+
+    sftp_send_options = SftpSendOptions(
+        move_to_directory='',
+        remote_directory=remote_dir
+    )
+
+    return SftpCommunicationOptions(
+        sftp_settings=sftp_settings,
+        sftp_get_options=sftp_get_options,
+        sftp_send_options=sftp_send_options
+    )
 
 
 def build_http_communication_options(**kwargs):
-    """Build HTTP protocol communication options"""
-    from boomi.models import HttpCommunicationOptions
+    """Build HTTP protocol communication options.
 
-    http_fields = {
-        'http_url': kwargs.get('http_url'),
-        'http_authentication_type': kwargs.get('http_authentication_type'),
-        'http_connect_timeout': kwargs.get('http_connect_timeout'),
-        'http_read_timeout': kwargs.get('http_read_timeout'),
-        'http_username': kwargs.get('http_username'),
-        'http_client_auth': kwargs.get('http_client_auth'),
-        'http_trust_server_cert': kwargs.get('http_trust_server_cert'),
-        'http_method_type': kwargs.get('http_method_type'),
-        'http_data_content_type': kwargs.get('http_data_content_type'),
-        'http_follow_redirects': kwargs.get('http_follow_redirects'),
-        'http_return_errors': kwargs.get('http_return_errors')
-    }
+    Args:
+        http_url: HTTP endpoint URL
+        http_username: HTTP username (for basic auth)
+        http_password: HTTP password (for basic auth)
+        http_connect_timeout: Connection timeout in ms
+        http_read_timeout: Read timeout in ms
+    """
+    from boomi.models import (
+        HttpCommunicationOptions, HttpSettings, HttpSendOptions,
+        HttpAuthSettings, HttpsslOptions, HttpPathElements,
+        HttpRequestHeaders, HttpResponseHeaderMapping
+    )
 
-    if not any(http_fields.values()):
+    url = kwargs.get('http_url')
+    if not url:
         return None
 
-    # Placeholder - need to understand HttpCommunicationOptions structure
-    return None  # Will implement after inspecting the model
+    username = kwargs.get('http_username', '')
+    password = kwargs.get('http_password', '')
+    connect_timeout = int(kwargs.get('http_connect_timeout', 60000))
+    read_timeout = int(kwargs.get('http_read_timeout', 60000))
+
+    # Build required nested objects
+    auth_settings = HttpAuthSettings(
+        user=username,
+        password=password
+    )
+
+    ssl_options = HttpsslOptions()
+
+    http_settings = HttpSettings(
+        http_auth_settings=auth_settings,
+        httpssl_options=ssl_options,
+        url=url,
+        connect_timeout=connect_timeout,
+        read_timeout=read_timeout
+    )
+
+    http_send_options = HttpSendOptions(
+        path_elements=HttpPathElements(),
+        request_headers=HttpRequestHeaders(),
+        response_header_mapping=HttpResponseHeaderMapping()
+    )
+
+    return HttpCommunicationOptions(
+        http_settings=http_settings,
+        http_send_options=http_send_options
+    )
 
 
 def build_as2_communication_options(**kwargs):
-    """Build AS2 protocol communication options"""
-    from boomi.models import As2CommunicationOptions
+    """Build AS2 protocol communication options.
 
-    as2_fields = {
-        'as2_url': kwargs.get('as2_url'),
-        'as2_identifier': kwargs.get('as2_identifier'),
-        'as2_partner_identifier': kwargs.get('as2_partner_identifier'),
-        'as2_authentication_type': kwargs.get('as2_authentication_type'),
-        'as2_verify_hostname': kwargs.get('as2_verify_hostname'),
-        'as2_client_ssl_alias': kwargs.get('as2_client_ssl_alias'),
-        'as2_username': kwargs.get('as2_username'),
-        'as2_encrypt_alias': kwargs.get('as2_encrypt_alias'),
-        'as2_sign_alias': kwargs.get('as2_sign_alias'),
-        'as2_mdn_alias': kwargs.get('as2_mdn_alias'),
-        'as2_signed': kwargs.get('as2_signed'),
-        'as2_encrypted': kwargs.get('as2_encrypted'),
-        'as2_compressed': kwargs.get('as2_compressed'),
-        'as2_encryption_algorithm': kwargs.get('as2_encryption_algorithm'),
-        'as2_signing_digest_alg': kwargs.get('as2_signing_digest_alg'),
-        'as2_data_content_type': kwargs.get('as2_data_content_type'),
-        'as2_request_mdn': kwargs.get('as2_request_mdn'),
-        'as2_mdn_signed': kwargs.get('as2_mdn_signed'),
-        'as2_mdn_digest_alg': kwargs.get('as2_mdn_digest_alg'),
-        'as2_synchronous_mdn': kwargs.get('as2_synchronous_mdn'),
-        'as2_fail_on_negative_mdn': kwargs.get('as2_fail_on_negative_mdn')
-    }
+    Args:
+        as2_url: AS2 endpoint URL
+        as2_identifier: Your AS2 identifier
+        as2_partner_identifier: Partner's AS2 identifier
+        as2_username: Username for basic auth
+        as2_password: Password for basic auth
+    """
+    from boomi.models import (
+        As2CommunicationOptions, As2SendSettings, As2SendOptions,
+        As2BasicAuthInfo, As2MdnOptions, As2MessageOptions, As2PartnerInfo,
+        PrivateCertificate, PublicCertificate
+    )
 
-    if not any(as2_fields.values()):
+    url = kwargs.get('as2_url')
+    if not url:
         return None
 
-    # Placeholder - need to understand As2CommunicationOptions structure
-    return None  # Will implement after inspecting the model
+    username = kwargs.get('as2_username', '')
+    password = kwargs.get('as2_password', '')
+    partner_id = kwargs.get('as2_partner_identifier', '')
+
+    # Build required nested objects
+    auth_settings = As2BasicAuthInfo(
+        user=username,
+        password=password
+    )
+
+    as2_send_settings = As2SendSettings(
+        client_ssl_certificate=PrivateCertificate(),
+        ssl_certificate=PublicCertificate(),
+        url=url,
+        auth_settings=auth_settings
+    )
+
+    mdn_options = As2MdnOptions(
+        external_url='',
+        mdn_client_ssl_cert=PrivateCertificate(),
+        mdn_ssl_cert=PublicCertificate()
+    )
+
+    message_options = As2MessageOptions(
+        subject='AS2 Message'
+    )
+
+    as2_send_options = As2SendOptions(
+        as2_mdn_options=mdn_options,
+        as2_message_options=message_options
+    )
+
+    return As2CommunicationOptions(
+        as2_send_settings=as2_send_settings,
+        as2_send_options=as2_send_options
+    )
 
 
 def build_mllp_communication_options(**kwargs):
