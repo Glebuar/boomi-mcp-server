@@ -147,13 +147,12 @@ def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, A
             if partner_comm:
                 payload['PartnerCommunication'] = partner_comm._map()
 
-            # Use raw HTTP request
+            # Use raw HTTP request (reuse boomi_client's credentials)
             import requests
-            from boomi_mcp.local_secrets import LocalSecretsBackend
-            secrets = LocalSecretsBackend()
-            creds = secrets.get_credentials_for_user("local-dev-user", profile)
-            url = f"https://api.boomi.com/api/rest/v1/{creds['account_id']}/TradingPartnerComponent"
-            r = requests.post(url, auth=(creds['username'], creds['password']), json=payload,
+            account_id = boomi_client.trading_partner_component.base_url.split('/')[-1]
+            auth = boomi_client.trading_partner_component.get_basic_auth()
+            url = f"https://api.boomi.com/api/rest/v1/{account_id}/TradingPartnerComponent"
+            r = requests.post(url, auth=auth, json=payload,
                             headers={'Content-Type': 'application/json', 'Accept': 'application/json'})
 
             if r.status_code != 200:
