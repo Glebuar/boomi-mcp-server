@@ -150,7 +150,8 @@ def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, A
             # Use raw HTTP request (reuse boomi_client's credentials)
             import requests
             account_id = boomi_client.trading_partner_component.base_url.split('/')[-1]
-            auth = boomi_client.trading_partner_component.get_basic_auth()
+            basic_auth = boomi_client.trading_partner_component.get_basic_auth()
+            auth = (basic_auth._username, basic_auth._password)
             url = f"https://api.boomi.com/api/rest/v1/{account_id}/TradingPartnerComponent"
             r = requests.post(url, auth=auth, json=payload,
                             headers={'Content-Type': 'application/json', 'Accept': 'application/json'})
