@@ -254,21 +254,173 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
         import xml.etree.ElementTree as ET
 
         # Use id_ parameter as shown in SDK example
-        # If ContactInfo parsing fails, fall back to Component API
-        used_component_api = False
+        # If SDK parsing fails (due to FTP/SFTP/HTTP/AS2 model issues), fall back to raw HTTP
+        used_raw_http = False
+        result = None
         try:
             result = boomi_client.trading_partner_component.get_trading_partner_component(
                 id_=component_id
             )
         except Exception as sdk_error:
-            # If SDK ContactInfo parsing fails, use Component API instead
-            if "ContactInfo" in str(sdk_error):
-                result = boomi_client.component.get_component(component_id=component_id)
-                used_component_api = True
+            # SDK has issues with FTP/SFTP/HTTP/AS2 deserialization - use raw HTTP
+            error_str = str(sdk_error)
+            if any(x in error_str for x in ["FtpGetOptions", "SftpGetOptions", "HttpSettings", "HttpGetOptions", "As2", "ContactInfo"]):
+                import requests
+                account_id = boomi_client.trading_partner_component.base_url.split('/')[-1]
+                basic_auth = boomi_client.trading_partner_component.get_basic_auth()
+                auth = (basic_auth._username, basic_auth._password)
+                url = f"https://api.boomi.com/api/rest/v1/{account_id}/TradingPartnerComponent/{component_id}"
+                r = requests.get(url, auth=auth, headers={'Accept': 'application/json'})
+                if r.status_code == 200:
+                    used_raw_http = True
+                    result = r.json()
+                else:
+                    raise
             else:
                 raise
 
-        # Extract component ID using SDK pattern (id_ attribute)
+        # Handle result based on whether we used raw HTTP or SDK
+        if used_raw_http:
+            # Result is a dict from raw HTTP response
+            retrieved_id = result.get('componentId', component_id)
+            standard = result.get('standard')
+            classification = result.get('classification')
+            component_name = result.get('componentName')
+            folder_id = result.get('folderId')
+            folder_name = result.get('folderName')
+            deleted = result.get('deleted', False)
+
+            # Parse partner info from dict
+            partner_info = {}
+            info = result.get('PartnerInfo', {})
+            if info:
+                x12_info = info.get('X12PartnerInfo', {})
+                if x12_info:
+                    x12_ctrl = x12_info.get('X12ControlInfo', {})
+                    if x12_ctrl:
+                        isa_ctrl = x12_ctrl.get('ISAControlInfo', {})
+                        gs_ctrl = x12_ctrl.get('GSControlInfo', {})
+                        if isa_ctrl:
+                            partner_info["isa_id"] = isa_ctrl.get('interchangeId')
+                            partner_info["isa_qualifier"] = isa_ctrl.get('interchangeIdQualifier')
+                        if gs_ctrl:
+                            partner_info["gs_id"] = gs_ctrl.get('applicationcode')
+
+            # Parse contact info from dict
+            contact_info = {}
+            contact = result.get('ContactInfo', {})
+            if contact:
+                raw_contact = {
+                    "name": contact.get('contactName'),
+                    "email": contact.get('email'),
+                    "phone": contact.get('phone'),
+                    "address1": contact.get('address1'),
+                    "address2": contact.get('address2'),
+                    "city": contact.get('city'),
+                    "state": contact.get('state'),
+                    "country": contact.get('country'),
+                    "postalcode": contact.get('postalcode'),
+                    "fax": contact.get('fax')
+                }
+                contact_info = {k: v for k, v in raw_contact.items() if v}
+
+            # Parse communication protocols from dict
+            communication_protocols = []
+            comm = result.get('PartnerCommunication', {})
+            if comm:
+                # Disk protocol
+                disk_opts = comm.get('DiskCommunicationOptions', {})
+                if disk_opts:
+                    disk_info = {"protocol": "disk"}
+                    get_opts = disk_opts.get('DiskGetOptions', {})
+                    send_opts = disk_opts.get('DiskSendOptions', {})
+                    if get_opts:
+                        disk_info["get_directory"] = get_opts.get('getDirectory')
+                    if send_opts:
+                        disk_info["send_directory"] = send_opts.get('sendDirectory')
+                    communication_protocols.append(disk_info)
+
+                # FTP protocol
+                ftp_opts = comm.get('FTPCommunicationOptions', {})
+                if ftp_opts:
+                    ftp_info = {"protocol": "ftp"}
+                    settings = ftp_opts.get('FTPSettings', {})
+                    if settings:
+                        ftp_info["host"] = settings.get('host')
+                        # Port may come as ["BigInteger", 21] or just 21
+                        port = settings.get('port')
+                        if isinstance(port, list) and len(port) == 2:
+                            port = port[1]
+                        ftp_info["port"] = port
+                        ftp_info["user"] = settings.get('user')
+                    get_opts = ftp_opts.get('FTPGetOptions', {})
+                    if get_opts:
+                        ftp_info["remote_directory"] = get_opts.get('remoteDirectory')
+                    communication_protocols.append(ftp_info)
+
+                # SFTP protocol
+                sftp_opts = comm.get('SFTPCommunicationOptions', {})
+                if sftp_opts:
+                    sftp_info = {"protocol": "sftp"}
+                    settings = sftp_opts.get('SFTPSettings', {})
+                    if settings:
+                        sftp_info["host"] = settings.get('host')
+                        # Port may come as ["BigInteger", 22] or just 22
+                        port = settings.get('port')
+                        if isinstance(port, list) and len(port) == 2:
+                            port = port[1]
+                        sftp_info["port"] = port
+                        sftp_info["user"] = settings.get('user')
+                    get_opts = sftp_opts.get('SFTPGetOptions', {})
+                    if get_opts:
+                        sftp_info["remote_directory"] = get_opts.get('remoteDirectory')
+                    communication_protocols.append(sftp_info)
+
+                # HTTP protocol
+                http_opts = comm.get('HTTPCommunicationOptions', {})
+                if http_opts:
+                    http_info = {"protocol": "http"}
+                    settings = http_opts.get('HTTPSettings', {})
+                    if settings:
+                        http_info["url"] = settings.get('url')
+                        http_info["connect_timeout"] = settings.get('connectTimeout')
+                        http_info["read_timeout"] = settings.get('readTimeout')
+                    communication_protocols.append(http_info)
+
+                # AS2 protocol
+                as2_opts = comm.get('AS2CommunicationOptions', {})
+                if as2_opts:
+                    as2_info = {"protocol": "as2"}
+                    settings = as2_opts.get('AS2SendSettings', {})
+                    if settings:
+                        as2_info["url"] = settings.get('url')
+                    communication_protocols.append(as2_info)
+
+                # MLLP protocol
+                if comm.get('MLLPCommunicationOptions'):
+                    communication_protocols.append({"protocol": "mllp"})
+
+                # OFTP protocol
+                if comm.get('OFTPCommunicationOptions'):
+                    communication_protocols.append({"protocol": "oftp"})
+
+            return {
+                "_success": True,
+                "trading_partner": {
+                    "component_id": retrieved_id,
+                    "name": component_name,
+                    "standard": standard,
+                    "classification": classification,
+                    "folder_id": folder_id,
+                    "folder_name": folder_name,
+                    "deleted": deleted,
+                    "partner_info": partner_info if partner_info else None,
+                    "contact_info": contact_info if contact_info else None,
+                    "communication_protocols": communication_protocols if communication_protocols else []
+                }
+            }
+
+        # SDK model path - extract using getattr
         retrieved_id = None
         if hasattr(result, 'id_'):
             retrieved_id = result.id_
@@ -278,23 +430,6 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
             retrieved_id = result.component_id
         else:
             retrieved_id = component_id
-
-        # If we used Component API, parse XML to extract additional fields
-        standard = None
-        classification = None
-        if used_component_api:
-            try:
-                xml_str = result.to_xml()
-                root = ET.fromstring(xml_str)
-
-                # Extract standard and classification from TradingPartner element
-                trading_partner = root.find('.//TradingPartner')
-                if trading_partner is not None:
-                    standard = trading_partner.get('standard')
-                    classification = trading_partner.get('classification')
-            except Exception as xml_error:
-                # If XML parsing fails, just continue without these fields
-                pass
 
         # Extract partner details (use snake_case for JSON API attributes)
         partner_info = {}
@@ -316,135 +451,102 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
         contact_info = {}
         communication_protocols = []
 
-        # If we used Component API, parse ContactInfo and CommunicationProtocols from XML
-        if used_component_api:
-            try:
-                xml_str = result.to_xml()
-                root = ET.fromstring(xml_str)
+        # Use object attributes for SDK model
+        contact = getattr(result, 'contact_info', None)
+        if contact:
+            raw_contact = {
+                "name": getattr(contact, 'contact_name', None),
+                "email": getattr(contact, 'email', None),
+                "phone": getattr(contact, 'phone', None),
+                "address1": getattr(contact, 'address1', None),
+                "address2": getattr(contact, 'address2', None),
+                "city": getattr(contact, 'city', None),
+                "state": getattr(contact, 'state', None),
+                "country": getattr(contact, 'country', None),
+                "postalcode": getattr(contact, 'postalcode', None),
+                "fax": getattr(contact, 'fax', None)
+            }
+            contact_info = {k: v for k, v in raw_contact.items() if v}
 
-                # Find ContactInfo element
-                contact_elem = root.find('.//ContactInfo')
-                if contact_elem is not None:
-                    contact_info = {
-                        "name": contact_elem.get('name'),
-                        "email": contact_elem.get('email'),
-                        "phone": contact_elem.get('phone'),
-                        "address1": contact_elem.get('address1'),
-                        "address2": contact_elem.get('address2'),
-                        "city": contact_elem.get('city'),
-                        "state": contact_elem.get('state'),
-                        "country": contact_elem.get('country'),
-                        "postalcode": contact_elem.get('postalcode'),
-                        "fax": contact_elem.get('fax')
-                    }
-                    # Remove None values
-                    contact_info = {k: v for k, v in contact_info.items() if v is not None}
+        # Parse partner_communication for communication protocols
+        comm = getattr(result, 'partner_communication', None)
+        if comm:
+            # Disk protocol
+            if getattr(comm, 'disk_communication_options', None):
+                disk_opts = comm.disk_communication_options
+                disk_info = {"protocol": "disk"}
+                get_opts = getattr(disk_opts, 'disk_get_options', None)
+                send_opts = getattr(disk_opts, 'disk_send_options', None)
+                if get_opts:
+                    disk_info["get_directory"] = getattr(get_opts, 'get_directory', None)
+                    disk_info["file_filter"] = getattr(get_opts, 'file_filter', None)
+                if send_opts:
+                    disk_info["send_directory"] = getattr(send_opts, 'send_directory', None)
+                communication_protocols.append(disk_info)
 
-                # Communication protocols parsed from JSON API, not needed here
-                communication_protocols = {}
+            # FTP protocol
+            if getattr(comm, 'ftp_communication_options', None):
+                ftp_opts = comm.ftp_communication_options
+                ftp_info = {"protocol": "ftp"}
+                settings = getattr(ftp_opts, 'ftp_settings', None)
+                if settings:
+                    ftp_info["host"] = getattr(settings, 'host', None)
+                    ftp_info["port"] = getattr(settings, 'port', None)
+                    ftp_info["user"] = getattr(settings, 'user', None)
+                get_opts = getattr(ftp_opts, 'ftp_get_options', None)
+                if get_opts:
+                    ftp_info["remote_directory"] = getattr(get_opts, 'remote_directory', None)
+                communication_protocols.append(ftp_info)
 
-            except Exception as xml_error:
-                # If XML parsing fails, just continue without contact info
-                pass
-        else:
-            # Use object attributes if available (trading_partner_component API)
-            contact = getattr(result, 'contact_info', None)
-            if contact:
-                # Use safe attribute access with defaults for all fields
-                raw_contact = {
-                    "name": getattr(contact, 'contact_name', None),
-                    "email": getattr(contact, 'email', None),
-                    "phone": getattr(contact, 'phone', None),
-                    "address1": getattr(contact, 'address1', None),
-                    "address2": getattr(contact, 'address2', None),
-                    "city": getattr(contact, 'city', None),
-                    "state": getattr(contact, 'state', None),
-                    "country": getattr(contact, 'country', None),
-                    "postalcode": getattr(contact, 'postalcode', None),
-                    "fax": getattr(contact, 'fax', None)
-                }
-                # Filter out None and empty strings
-                contact_info = {k: v for k, v in raw_contact.items() if v}
+            # SFTP protocol
+            if getattr(comm, 'sftp_communication_options', None):
+                sftp_opts = comm.sftp_communication_options
+                sftp_info = {"protocol": "sftp"}
+                settings = getattr(sftp_opts, 'sftp_settings', None)
+                if settings:
+                    sftp_info["host"] = getattr(settings, 'host', None)
+                    sftp_info["port"] = getattr(settings, 'port', None)
+                    sftp_info["user"] = getattr(settings, 'user', None)
+                get_opts = getattr(sftp_opts, 'sftp_get_options', None)
+                if get_opts:
+                    sftp_info["remote_directory"] = getattr(get_opts, 'remote_directory', None)
+                communication_protocols.append(sftp_info)
 
-            # Parse partner_communication for communication protocols
-            comm = getattr(result, 'partner_communication', None)
-            if comm:
-                # Disk protocol
-                if getattr(comm, 'disk_communication_options', None):
-                    disk_opts = comm.disk_communication_options
-                    disk_info = {"protocol": "disk"}
-                    get_opts = getattr(disk_opts, 'disk_get_options', None)
-                    send_opts = getattr(disk_opts, 'disk_send_options', None)
-                    if get_opts:
-                        disk_info["get_directory"] = getattr(get_opts, 'get_directory', None)
-                        disk_info["file_filter"] = getattr(get_opts, 'file_filter', None)
-                    if send_opts:
-                        disk_info["send_directory"] = getattr(send_opts, 'send_directory', None)
-                    communication_protocols.append(disk_info)
+            # HTTP protocol
+            if getattr(comm, 'http_communication_options', None):
+                http_opts = comm.http_communication_options
+                http_info = {"protocol": "http"}
+                settings = getattr(http_opts, 'http_settings', None)
+                if settings:
+                    http_info["url"] = getattr(settings, 'url', None)
+                    http_info["connect_timeout"] = getattr(settings, 'connect_timeout', None)
+                    http_info["read_timeout"] = getattr(settings, 'read_timeout', None)
+                communication_protocols.append(http_info)
 
-                # FTP protocol
-                if getattr(comm, 'ftp_communication_options', None):
-                    ftp_opts = comm.ftp_communication_options
-                    ftp_info = {"protocol": "ftp"}
-                    settings = getattr(ftp_opts, 'ftp_settings', None)
-                    if settings:
-                        ftp_info["host"] = getattr(settings, 'host', None)
-                        ftp_info["port"] = getattr(settings, 'port', None)
-                        ftp_info["user"] = getattr(settings, 'user', None)
-                    get_opts = getattr(ftp_opts, 'ftp_get_options', None)
-                    if get_opts:
-                        ftp_info["remote_directory"] = getattr(get_opts, 'remote_directory', None)
-                    communication_protocols.append(ftp_info)
+            # AS2 protocol
+            if getattr(comm, 'as2_communication_options', None):
+                as2_opts = comm.as2_communication_options
+                as2_info = {"protocol": "as2"}
+                settings = getattr(as2_opts, 'as2_send_settings', None)
+                if settings:
+                    as2_info["url"] = getattr(settings, 'url', None)
+                communication_protocols.append(as2_info)
 
-                # SFTP protocol
-                if getattr(comm, 'sftp_communication_options', None):
-                    sftp_opts = comm.sftp_communication_options
-                    sftp_info = {"protocol": "sftp"}
-                    settings = getattr(sftp_opts, 'sftp_settings', None)
-                    if settings:
-                        sftp_info["host"] = getattr(settings, 'host', None)
-                        sftp_info["port"] = getattr(settings, 'port', None)
-                        sftp_info["user"] = getattr(settings, 'user', None)
-                    get_opts = getattr(sftp_opts, 'sftp_get_options', None)
-                    if get_opts:
-                        sftp_info["remote_directory"] = getattr(get_opts, 'remote_directory', None)
-                    communication_protocols.append(sftp_info)
+            # MLLP protocol
+            if getattr(comm, 'mllp_communication_options', None):
+                communication_protocols.append({"protocol": "mllp"})
 
-                # HTTP protocol
-                if getattr(comm, 'http_communication_options', None):
-                    http_opts = comm.http_communication_options
-                    http_info = {"protocol": "http"}
-                    settings = getattr(http_opts, 'http_settings', None)
-                    if settings:
-                        http_info["url"] = getattr(settings, 'url', None)
-                        http_info["connect_timeout"] = getattr(settings, 'connect_timeout', None)
-                        http_info["read_timeout"] = getattr(settings, 'read_timeout', None)
-                    communication_protocols.append(http_info)
-
-                # AS2 protocol
-                if getattr(comm, 'as2_communication_options', None):
-                    as2_opts = comm.as2_communication_options
-                    as2_info = {"protocol": "as2"}
-                    settings = getattr(as2_opts, 'as2_send_settings', None)
-                    if settings:
-                        as2_info["url"] = getattr(settings, 'url', None)
-                    communication_protocols.append(as2_info)
-
-                # MLLP protocol
-                if getattr(comm, 'mllp_communication_options', None):
-                    communication_protocols.append({"protocol": "mllp"})
-
-                # OFTP protocol
-                if getattr(comm, 'oftp_communication_options', None):
-                    communication_protocols.append({"protocol": "oftp"})
+            # OFTP protocol
+            if getattr(comm, 'oftp_communication_options', None):
+                communication_protocols.append({"protocol": "oftp"})
 
         return {
             "_success": True,
             "trading_partner": {
                 "component_id": retrieved_id,
                 "name": getattr(result, 'name', getattr(result, 'component_name', None)),
-                "standard": standard if used_component_api else getattr(result, 'standard', None),
-                "classification": classification if used_component_api else getattr(result, 'classification', None),
+                "standard": getattr(result, 'standard', None),
+                "classification": getattr(result, 'classification', None),
                 "folder_id": getattr(result, 'folder_id', None),
                 "folder_name": getattr(result, 'folder_name', None),
                 "organization_id": getattr(result, 'organization_id', None),
