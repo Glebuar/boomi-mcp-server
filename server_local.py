@@ -22,7 +22,7 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 # --- Add boomi-python to path ---
-boomi_python_path = Path(__file__).parent.parent / "boomi-python"
+boomi_python_path = Path(__file__).parent.parent / "boomi-python" / "src"
 if boomi_python_path.exists():
     sys.path.insert(0, str(boomi_python_path))
 
