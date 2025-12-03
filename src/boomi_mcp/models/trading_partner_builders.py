@@ -126,13 +126,9 @@ def build_ftp_communication_options(**kwargs):
         ftp_port: FTP server port (default: 21)
         ftp_username: FTP username
         ftp_password: FTP password
-        ftp_remote_directory: Remote directory path
-    """
-    from boomi.models import (
-        FtpCommunicationOptions, FtpSettings, FtpGetOptions, FtpSendOptions,
-        FtpsslOptions, PrivateCertificate
-    )
 
+    Returns dict (not SDK model) - API accepts minimal structure
+    """
     host = kwargs.get('ftp_host')
     if not host:
         return None
@@ -140,37 +136,16 @@ def build_ftp_communication_options(**kwargs):
     port = int(kwargs.get('ftp_port', 21))
     username = kwargs.get('ftp_username', '')
     password = kwargs.get('ftp_password', '')
-    remote_dir = kwargs.get('ftp_remote_directory', '/')
 
-    # Build required nested objects
-    ssl_options = FtpsslOptions(
-        client_ssl_certificate=PrivateCertificate()
-    )
-
-    ftp_settings = FtpSettings(
-        ftpssl_options=ssl_options,
-        host=host,
-        port=port,
-        user=username,
-        password=password
-    )
-
-    ftp_get_options = FtpGetOptions(
-        file_to_move='*',
-        max_file_count=0,
-        remote_directory=remote_dir
-    )
-
-    ftp_send_options = FtpSendOptions(
-        move_to_directory='',
-        remote_directory=remote_dir
-    )
-
-    return FtpCommunicationOptions(
-        ftp_settings=ftp_settings,
-        ftp_get_options=ftp_get_options,
-        ftp_send_options=ftp_send_options
-    )
+    # Return dict - SDK models require too many nested objects
+    return {
+        'FTPSettings': {
+            'host': host,
+            'port': port,
+            'user': username,
+            'password': password
+        }
+    }
 
 
 def build_sftp_communication_options(**kwargs):
@@ -181,13 +156,9 @@ def build_sftp_communication_options(**kwargs):
         sftp_port: SFTP server port (default: 22)
         sftp_username: SFTP username
         sftp_password: SFTP password
-        sftp_remote_directory: Remote directory path
-    """
-    from boomi.models import (
-        SftpCommunicationOptions, SftpSettings, SftpGetOptions, SftpSendOptions,
-        SftpsshOptions, SftpProxySettings
-    )
 
+    Returns dict (not SDK model) - API accepts minimal structure
+    """
     host = kwargs.get('sftp_host')
     if not host:
         return None
@@ -195,48 +166,15 @@ def build_sftp_communication_options(**kwargs):
     port = int(kwargs.get('sftp_port', 22))
     username = kwargs.get('sftp_username', '')
     password = kwargs.get('sftp_password', '')
-    remote_dir = kwargs.get('sftp_remote_directory', '/')
 
-    # Build required nested objects
-    ssh_options = SftpsshOptions(
-        known_host_entry='',
-        sshkeypassword='',
-        sshkeypath=''
-    )
-
-    proxy_settings = SftpProxySettings(
-        host='',
-        password='',
-        port=0,
-        user=''
-    )
-
-    sftp_settings = SftpSettings(
-        sftpssh_options=ssh_options,
-        sftp_proxy_settings=proxy_settings,
-        host=host,
-        port=port,
-        user=username,
-        password=password
-    )
-
-    sftp_get_options = SftpGetOptions(
-        file_to_move='*',
-        max_file_count=0,
-        move_to_directory='',
-        remote_directory=remote_dir
-    )
-
-    sftp_send_options = SftpSendOptions(
-        move_to_directory='',
-        remote_directory=remote_dir
-    )
-
-    return SftpCommunicationOptions(
-        sftp_settings=sftp_settings,
-        sftp_get_options=sftp_get_options,
-        sftp_send_options=sftp_send_options
-    )
+    return {
+        'SFTPSettings': {
+            'host': host,
+            'port': port,
+            'user': username,
+            'password': password
+        }
+    }
 
 
 def build_http_communication_options(**kwargs):
@@ -244,52 +182,18 @@ def build_http_communication_options(**kwargs):
 
     Args:
         http_url: HTTP endpoint URL
-        http_username: HTTP username (for basic auth)
-        http_password: HTTP password (for basic auth)
-        http_connect_timeout: Connection timeout in ms
-        http_read_timeout: Read timeout in ms
-    """
-    from boomi.models import (
-        HttpCommunicationOptions, HttpSettings, HttpSendOptions,
-        HttpAuthSettings, HttpsslOptions, HttpPathElements,
-        HttpRequestHeaders, HttpResponseHeaderMapping
-    )
 
+    Returns dict (not SDK model) - API accepts minimal structure
+    """
     url = kwargs.get('http_url')
     if not url:
         return None
 
-    username = kwargs.get('http_username', '')
-    password = kwargs.get('http_password', '')
-    connect_timeout = int(kwargs.get('http_connect_timeout', 60000))
-    read_timeout = int(kwargs.get('http_read_timeout', 60000))
-
-    # Build required nested objects
-    auth_settings = HttpAuthSettings(
-        user=username,
-        password=password
-    )
-
-    ssl_options = HttpsslOptions()
-
-    http_settings = HttpSettings(
-        http_auth_settings=auth_settings,
-        httpssl_options=ssl_options,
-        url=url,
-        connect_timeout=connect_timeout,
-        read_timeout=read_timeout
-    )
-
-    http_send_options = HttpSendOptions(
-        path_elements=HttpPathElements(),
-        request_headers=HttpRequestHeaders(),
-        response_header_mapping=HttpResponseHeaderMapping()
-    )
-
-    return HttpCommunicationOptions(
-        http_settings=http_settings,
-        http_send_options=http_send_options
-    )
+    return {
+        'HTTPSettings': {
+            'url': url
+        }
+    }
 
 
 def build_as2_communication_options(**kwargs):
@@ -297,57 +201,18 @@ def build_as2_communication_options(**kwargs):
 
     Args:
         as2_url: AS2 endpoint URL
-        as2_identifier: Your AS2 identifier
-        as2_partner_identifier: Partner's AS2 identifier
-        as2_username: Username for basic auth
-        as2_password: Password for basic auth
-    """
-    from boomi.models import (
-        As2CommunicationOptions, As2SendSettings, As2SendOptions,
-        As2BasicAuthInfo, As2MdnOptions, As2MessageOptions, As2PartnerInfo,
-        PrivateCertificate, PublicCertificate
-    )
 
+    Returns dict (not SDK model) - API accepts minimal structure
+    """
     url = kwargs.get('as2_url')
     if not url:
         return None
 
-    username = kwargs.get('as2_username', '')
-    password = kwargs.get('as2_password', '')
-    partner_id = kwargs.get('as2_partner_identifier', '')
-
-    # Build required nested objects
-    auth_settings = As2BasicAuthInfo(
-        user=username,
-        password=password
-    )
-
-    as2_send_settings = As2SendSettings(
-        client_ssl_certificate=PrivateCertificate(),
-        ssl_certificate=PublicCertificate(),
-        url=url,
-        auth_settings=auth_settings
-    )
-
-    mdn_options = As2MdnOptions(
-        external_url='',
-        mdn_client_ssl_cert=PrivateCertificate(),
-        mdn_ssl_cert=PublicCertificate()
-    )
-
-    message_options = As2MessageOptions(
-        subject='AS2 Message'
-    )
-
-    as2_send_options = As2SendOptions(
-        as2_mdn_options=mdn_options,
-        as2_message_options=message_options
-    )
-
-    return As2CommunicationOptions(
-        as2_send_settings=as2_send_settings,
-        as2_send_options=as2_send_options
-    )
+    return {
+        'AS2SendSettings': {
+            'url': url
+        }
+    }
 
 
 def build_mllp_communication_options(**kwargs):
@@ -374,9 +239,18 @@ def build_oftp_communication_options(**kwargs):
     return None  # Will implement after inspecting the model
 
 
-def build_partner_communication(**kwargs) -> Optional[PartnerCommunication]:
+class PartnerCommunicationDict:
+    """Wrapper to allow dict-based partner communication that serializes correctly."""
+    def __init__(self, data: dict):
+        self._data = data
+
+    def _map(self):
+        return self._data
+
+
+def build_partner_communication(**kwargs):
     """
-    Build PartnerCommunication model from flat protocol parameters.
+    Build PartnerCommunication from flat protocol parameters.
 
     Args:
         communication_protocols: Comma-separated list or list of protocols
@@ -384,56 +258,57 @@ def build_partner_communication(**kwargs) -> Optional[PartnerCommunication]:
         [protocol]_*: Protocol-specific parameters (see individual builders)
 
     Returns:
-        PartnerCommunication object if any protocols configured, None otherwise
+        PartnerCommunication object (for Disk) or PartnerCommunicationDict (for others)
     """
     # Parse communication protocols
     protocols = kwargs.get('communication_protocols', [])
     if isinstance(protocols, str):
-        protocols = [p.strip() for p in protocols.split(',') if p.strip()]
+        protocols = [p.strip().lower() for p in protocols.split(',') if p.strip()]
 
-    # Build protocol-specific options
-    communication_options = {}
+    if not protocols:
+        return None
+
+    # Check if only using Disk (can use SDK model)
+    only_disk = protocols == ['disk']
+
+    if only_disk:
+        disk_opts = build_disk_communication_options(**kwargs)
+        if disk_opts:
+            return PartnerCommunication(disk_communication_options=disk_opts)
+        return None
+
+    # For other protocols, build as dict (API accepts simpler structure than SDK requires)
+    comm_dict = {}
 
     if 'disk' in protocols:
         disk_opts = build_disk_communication_options(**kwargs)
         if disk_opts:
-            communication_options['disk_communication_options'] = disk_opts
+            comm_dict['DiskCommunicationOptions'] = disk_opts._map()
 
     if 'ftp' in protocols:
         ftp_opts = build_ftp_communication_options(**kwargs)
         if ftp_opts:
-            communication_options['ftp_communication_options'] = ftp_opts
+            comm_dict['FTPCommunicationOptions'] = ftp_opts
 
     if 'sftp' in protocols:
         sftp_opts = build_sftp_communication_options(**kwargs)
         if sftp_opts:
-            communication_options['sftp_communication_options'] = sftp_opts
+            comm_dict['SFTPCommunicationOptions'] = sftp_opts
 
     if 'http' in protocols:
         http_opts = build_http_communication_options(**kwargs)
         if http_opts:
-            communication_options['http_communication_options'] = http_opts
+            comm_dict['HTTPCommunicationOptions'] = http_opts
 
     if 'as2' in protocols:
         as2_opts = build_as2_communication_options(**kwargs)
         if as2_opts:
-            communication_options['as2_communication_options'] = as2_opts
+            comm_dict['AS2CommunicationOptions'] = as2_opts
 
-    if 'mllp' in protocols:
-        mllp_opts = build_mllp_communication_options(**kwargs)
-        if mllp_opts:
-            communication_options['mllp_communication_options'] = mllp_opts
-
-    if 'oftp' in protocols:
-        oftp_opts = build_oftp_communication_options(**kwargs)
-        if oftp_opts:
-            communication_options['oftp_communication_options'] = oftp_opts
-
-    # Return None if no protocols configured
-    if not communication_options:
+    if not comm_dict:
         return None
 
-    return PartnerCommunication(**communication_options)
+    return PartnerCommunicationDict(comm_dict)
 
 
 # ============================================================================

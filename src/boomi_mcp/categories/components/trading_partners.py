@@ -112,7 +112,73 @@ def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, A
         other_params = {k: v for k, v in request_data.items()
                        if k not in ["component_name", "standard", "classification", "folder_name", "description"]}
 
-        # Build TradingPartnerComponent model from flat parameters
+        # Check if we have complex protocols (FTP, SFTP, HTTP, AS2) that need raw dict
+        protocols = request_data.get("communication_protocols", [])
+        if isinstance(protocols, str):
+            protocols = [p.strip().lower() for p in protocols.split(',') if p.strip()]
+        complex_protocols = set(protocols) - {'disk'}
+
+        if complex_protocols:
+            # Use raw dict approach for FTP/SFTP/HTTP/AS2 (SDK models require too many nested objects)
+            from boomi_mcp.models.trading_partner_builders import (
+                build_partner_info, build_contact_info, build_partner_communication
+            )
+
+            payload = {
+                'componentName': component_name,
+                'standard': standard,
+                'classification': classification,
+                'folderName': folder_name
+            }
+
+            # Add partner info
+            partner_info = build_partner_info(standard=standard, **other_params)
+            if partner_info:
+                payload['PartnerInfo'] = partner_info._map()
+
+            # Add contact info
+            contact_info = build_contact_info(**other_params)
+            if contact_info:
+                payload['ContactInfo'] = contact_info._map()
+
+            # Add communication (returns dict wrapper for complex protocols)
+            comm_params = {**other_params, 'communication_protocols': protocols}
+            partner_comm = build_partner_communication(**comm_params)
+            if partner_comm:
+                payload['PartnerCommunication'] = partner_comm._map()
+
+            # Use raw HTTP request
+            import requests
+            from boomi_mcp.local_secrets import LocalSecretsBackend
+            secrets = LocalSecretsBackend()
+            creds = secrets.get_credentials_for_user("local-dev-user", profile)
+            url = f"https://api.boomi.com/api/rest/v1/{creds['account_id']}/TradingPartnerComponent"
+            r = requests.post(url, auth=(creds['username'], creds['password']), json=payload,
+                            headers={'Content-Type': 'application/json', 'Accept': 'application/json'})
+
+            if r.status_code != 200:
+                return {
+                    "_success": False,
+                    "error": f"API error: {r.status_code}",
+                    "message": f"Failed to create trading partner: {r.text[:500]}"
+                }
+
+            result_json = r.json()
+            component_id = result_json.get('componentId')
+
+            return {
+                "_success": True,
+                "trading_partner": {
+                    "component_id": component_id,
+                    "name": result_json.get('componentName', component_name),
+                    "standard": standard,
+                    "classification": classification,
+                    "folder_name": result_json.get('folderName', folder_name)
+                },
+                "message": f"Successfully created trading partner: {component_name}"
+            }
+
+        # Standard path using SDK models (for Disk or no protocols)
         try:
             tp_model = build_trading_partner_model(
                 component_name=component_name,
