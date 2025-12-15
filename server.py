@@ -56,11 +56,27 @@ except ImportError as e:
 
 # --- Trading Partner Tools ---
 try:
-    from boomi_mcp.categories.deployment.trading_partners import manage_trading_partner_action
+    from boomi_mcp.categories.components.trading_partners import manage_trading_partner_action
     print(f"[INFO] Trading partner tools loaded successfully")
 except ImportError as e:
     print(f"[WARNING] Failed to import trading partner tools: {e}")
     manage_trading_partner_action = None
+
+# --- Process Tools ---
+try:
+    from boomi_mcp.categories.components.processes import manage_process_action
+    print(f"[INFO] Process tools loaded successfully")
+except ImportError as e:
+    print(f"[WARNING] Failed to import process tools: {e}")
+    manage_process_action = None
+
+# --- Organization Tools ---
+try:
+    from boomi_mcp.categories.components.organizations import manage_organization_action
+    print(f"[INFO] Organization tools loaded successfully")
+except ImportError as e:
+    print(f"[WARNING] Failed to import organization tools: {e}")
+    manage_organization_action = None
 
 
 def put_secret(sub: str, profile: str, payload: Dict[str, str]):
@@ -394,32 +410,128 @@ if manage_trading_partner_action:
         standard: str = None,
         classification: str = None,
         folder_name: str = None,
+        # X12 standard fields
         isa_id: str = None,
         isa_qualifier: str = None,
         gs_id: str = None,
+        # Contact Information (10 fields)
         contact_name: str = None,
         contact_email: str = None,
-        contact_phone: str = None
+        contact_phone: str = None,
+        contact_fax: str = None,
+        contact_address: str = None,
+        contact_address2: str = None,
+        contact_city: str = None,
+        contact_state: str = None,
+        contact_country: str = None,
+        contact_postalcode: str = None,
+        # Communication Protocols
+        communication_protocols: str = None,
+        # Disk protocol fields
+        disk_directory: str = None,
+        disk_get_directory: str = None,
+        disk_send_directory: str = None,
+        # FTP protocol fields
+        ftp_host: str = None,
+        ftp_port: str = None,
+        ftp_username: str = None,
+        ftp_password: str = None,
+        ftp_remote_directory: str = None,
+        ftp_ssl_mode: str = None,
+        ftp_connection_mode: str = None,
+        # SFTP protocol fields
+        sftp_host: str = None,
+        sftp_port: str = None,
+        sftp_username: str = None,
+        sftp_password: str = None,
+        sftp_remote_directory: str = None,
+        sftp_ssh_key_auth: str = None,
+        sftp_known_host_entry: str = None,
+        # HTTP protocol fields
+        http_url: str = None,
+        http_username: str = None,
+        http_password: str = None,
+        http_authentication_type: str = None,
+        http_connect_timeout: str = None,
+        http_read_timeout: str = None,
+        http_client_auth: str = None,
+        http_trust_server_cert: str = None,
+        http_method_type: str = None,
+        http_data_content_type: str = None,
+        http_follow_redirects: str = None,
+        http_return_errors: str = None,
+        # AS2 protocol fields
+        as2_url: str = None,
+        as2_identifier: str = None,
+        as2_partner_identifier: str = None,
+        as2_username: str = None,
+        as2_password: str = None,
+        as2_authentication_type: str = None,
+        as2_verify_hostname: str = None,
+        as2_client_ssl_alias: str = None,
+        as2_encrypt_alias: str = None,
+        as2_sign_alias: str = None,
+        as2_mdn_alias: str = None,
+        as2_signed: str = None,
+        as2_encrypted: str = None,
+        as2_compressed: str = None,
+        as2_encryption_algorithm: str = None,
+        as2_signing_digest_alg: str = None,
+        as2_data_content_type: str = None,
+        as2_request_mdn: str = None,
+        as2_mdn_signed: str = None,
+        as2_mdn_digest_alg: str = None,
+        as2_synchronous_mdn: str = None,
+        as2_fail_on_negative_mdn: str = None,
+        # MLLP protocol fields (for HL7)
+        mllp_host: str = None,
+        mllp_port: str = None,
+        mllp_use_ssl: str = None,
+        mllp_persistent: str = None,
+        mllp_receive_timeout: str = None,
+        mllp_send_timeout: str = None,
+        mllp_max_connections: str = None,
+        # OFTP protocol fields
+        oftp_host: str = None,
+        oftp_port: str = None,
+        oftp_tls: str = None,
+        oftp_ssid_code: str = None,
+        oftp_ssid_password: str = None,
+        oftp_compress: str = None,
+        # EDIFACT standard fields
+        edifact_interchange_id: str = None,
+        edifact_interchange_id_qual: str = None,
+        edifact_syntax_id: str = None,
+        edifact_syntax_version: str = None,
+        edifact_test_indicator: str = None,
+        # HL7 standard fields
+        hl7_sending_application: str = None,
+        hl7_sending_facility: str = None,
+        hl7_receiving_application: str = None,
+        hl7_receiving_facility: str = None,
+        # RosettaNet standard fields
+        rosettanet_partner_id: str = None,
+        rosettanet_partner_location: str = None,
+        rosettanet_global_usage_code: str = None,
+        rosettanet_supply_chain_code: str = None,
+        rosettanet_classification_code: str = None,
+        # TRADACOMS standard fields
+        tradacoms_interchange_id: str = None,
+        tradacoms_interchange_id_qualifier: str = None,
+        # ODETTE standard fields
+        odette_interchange_id: str = None,
+        odette_interchange_id_qual: str = None,
+        odette_syntax_id: str = None,
+        odette_syntax_version: str = None,
+        odette_test_indicator: str = None,
+        # Organization linking
+        organization_id: str = None
     ):
         """
         Manage B2B/EDI trading partners (all 7 standards).
 
         Consolidated tool for all trading partner operations.
-
-        IMPORTANT: Before calling this tool, ask the user to choose:
-
-        1. TRADING STANDARD - Which EDI/B2B standard to use:
-           • x12 - North American EDI standard
-           • edifact - International EDI standard
-           • hl7 - Healthcare messaging standard
-           • rosettanet - Supply chain messaging
-           • custom - Flexible custom format
-           • tradacoms - UK retail EDI standard
-           • odette - Automotive industry standard
-
-        2. CLASSIFICATION - What type of partner (for create action):
-           • "tradingpartner" = "This is a partner that I trade with"
-           • "mytradingpartner" = "This is my company"
+        Now uses JSON-based TradingPartnerComponent API for cleaner, type-safe operations.
 
         Args:
             profile: Boomi profile name (required)
@@ -427,25 +539,87 @@ if manage_trading_partner_action:
             partner_id: Trading partner component ID (required for get, update, delete, analyze_usage)
             component_name: Trading partner name (required for create, optional for update)
             standard: Trading standard (required for create, optional filter for list)
+                      Options: x12, edifact, hl7, rosettanet, custom, tradacoms, odette
             classification: Partner classification (optional for create/list)
+                           Options: tradingpartner, mycompany
             folder_name: Folder to place partner in (optional for create/list)
+
+            # Standard-specific fields (X12, EDIFACT, HL7, RosettaNet, TRADACOMS, ODETTE)
             isa_id: ISA ID for X12 partners (X12 only)
             isa_qualifier: ISA Qualifier for X12 partners (X12 only)
             gs_id: GS ID for X12 partners (X12 only)
+
+            # Contact Information (10 fields)
             contact_name: Contact person name (optional)
             contact_email: Contact email address (optional)
             contact_phone: Contact phone number (optional)
+            contact_fax: Contact fax number (optional)
+            contact_address: Contact street address line 1 (optional)
+            contact_address2: Contact street address line 2 (optional)
+            contact_city: Contact city (optional)
+            contact_state: Contact state/province (optional)
+            contact_country: Contact country (optional)
+            contact_postalcode: Contact postal/zip code (optional)
 
-        Actions:
-            - list: List all trading partners with optional filtering
-            - get: Get specific trading partner details by ID
-            - create: Create new trading partner
-            - update: Update existing trading partner
-            - delete: Delete trading partner
-            - analyze_usage: Analyze where trading partner is used
+            # Communication Protocols
+            communication_protocols: Comma-separated list of communication protocols to enable (optional for create)
+                                    Available: ftp, sftp, http, as2, mllp, oftp, disk
+                                    Example: "ftp,http" or "as2,sftp"
+                                    If not provided, creates partner with no communication configured
+
+            # Protocol-specific fields (Note: Full protocol support coming in future update)
+            disk_directory: Main directory for Disk protocol
+            disk_get_directory: Get/Receive directory for Disk protocol
+            disk_send_directory: Send directory for Disk protocol
+            ftp_host: FTP server hostname/IP
+            ftp_port: FTP server port
+            ftp_username: FTP username
+            sftp_host: SFTP server hostname/IP
+            sftp_port: SFTP server port
+            sftp_username: SFTP username
+            http_url: HTTP/HTTPS URL
+            as2_url: AS2 endpoint URL
+            as2_identifier: Local AS2 identifier
+            as2_partner_identifier: Partner AS2 identifier
+            oftp_host: OFTP server hostname/IP
+            oftp_tls: Enable TLS for OFTP - "true" or "false"
+            http_authentication_type: HTTP authentication type - NONE, BASIC, OAUTH2
+            http_connect_timeout: HTTP connection timeout in ms
+            http_read_timeout: HTTP read timeout in ms
+            http_username: HTTP username
+            http_client_auth: Enable client SSL authentication - "true" or "false"
+            http_trust_server_cert: Trust server certificate - "true" or "false"
+            http_method_type: HTTP method - GET, POST, PUT, DELETE, PATCH
+            http_data_content_type: HTTP content type
+            http_follow_redirects: Follow redirects - "true" or "false"
+            http_return_errors: Return errors in response - "true" or "false"
+            as2_authentication_type: AS2 authentication type - NONE, BASIC
+            as2_verify_hostname: Verify SSL hostname - "true" or "false"
+            as2_client_ssl_alias: Client SSL certificate alias
+            as2_username: AS2 username
+            as2_encrypt_alias: AS2 encryption certificate alias
+            as2_sign_alias: AS2 signing certificate alias
+            as2_mdn_alias: AS2 MDN certificate alias
+            as2_signed: Sign AS2 messages - "true" or "false"
+            as2_encrypted: Encrypt AS2 messages - "true" or "false"
+            as2_compressed: Compress AS2 messages - "true" or "false"
+            as2_encryption_algorithm: Encryption algorithm - tripledes, rc2, aes128, aes192, aes256
+            as2_signing_digest_alg: Signing digest algorithm - SHA1, SHA256, SHA384, SHA512
+            as2_data_content_type: AS2 content type
+            as2_request_mdn: Request MDN - "true" or "false"
+            as2_mdn_signed: Signed MDN - "true" or "false"
+            as2_mdn_digest_alg: MDN digest algorithm - SHA1, SHA256, SHA384, SHA512
+            as2_synchronous_mdn: Synchronous MDN - "true" or "false"
+            as2_fail_on_negative_mdn: Fail on negative MDN - "true" or "false"
 
         Returns:
             Action result with success status and data/error
+
+        Implementation Note:
+            This tool now uses JSON-based TradingPartnerComponent models internally,
+            providing better type safety and maintainability compared to the previous
+            XML-based approach. Protocol-specific and standard-specific field support
+            is currently limited to basic fields and will be expanded in future updates.
         """
         try:
             subject = get_user_subject()
@@ -479,7 +653,7 @@ if manage_trading_partner_action:
                 params["partner_id"] = partner_id
 
             elif action == "create":
-                # Build request data
+                # Build request data - pass all fields flat (builder expects flat kwargs)
                 request_data = {}
                 if component_name:
                     request_data["component_name"] = component_name
@@ -490,55 +664,134 @@ if manage_trading_partner_action:
                 if folder_name:
                     request_data["folder_name"] = folder_name
 
-                # Add partner info for X12
-                if standard and standard.lower() == "x12" and (isa_id or isa_qualifier or gs_id):
-                    request_data["partner_info"] = {}
-                    if isa_id:
-                        request_data["partner_info"]["isa_id"] = isa_id
-                    if isa_qualifier:
-                        request_data["partner_info"]["isa_qualifier"] = isa_qualifier
-                    if gs_id:
-                        request_data["partner_info"]["gs_id"] = gs_id
+                # Pass X12 fields flat
+                if isa_id:
+                    request_data["isa_id"] = isa_id
+                if isa_qualifier:
+                    request_data["isa_qualifier"] = isa_qualifier
+                if gs_id:
+                    request_data["gs_id"] = gs_id
 
-                # Add contact info
-                if contact_name or contact_email or contact_phone:
-                    request_data["contact_info"] = {}
-                    if contact_name:
-                        request_data["contact_info"]["name"] = contact_name
-                    if contact_email:
-                        request_data["contact_info"]["email"] = contact_email
-                    if contact_phone:
-                        request_data["contact_info"]["phone"] = contact_phone
+                # Pass contact fields flat
+                if contact_name:
+                    request_data["contact_name"] = contact_name
+                if contact_email:
+                    request_data["contact_email"] = contact_email
+                if contact_phone:
+                    request_data["contact_phone"] = contact_phone
+                if contact_fax:
+                    request_data["contact_fax"] = contact_fax
+                if contact_address:
+                    request_data["contact_address"] = contact_address
+                if contact_address2:
+                    request_data["contact_address2"] = contact_address2
+                if contact_city:
+                    request_data["contact_city"] = contact_city
+                if contact_state:
+                    request_data["contact_state"] = contact_state
+                if contact_country:
+                    request_data["contact_country"] = contact_country
+                if contact_postalcode:
+                    request_data["contact_postalcode"] = contact_postalcode
+
+                # Communication protocols
+                if communication_protocols:
+                    protocols_list = [p.strip() for p in communication_protocols.split(',')]
+                    request_data["communication_protocols"] = protocols_list
+
+                # Pass disk fields flat
+                if disk_get_directory:
+                    request_data["disk_get_directory"] = disk_get_directory
+                if disk_send_directory:
+                    request_data["disk_send_directory"] = disk_send_directory
+
+                # Pass FTP fields flat
+                if ftp_host:
+                    request_data["ftp_host"] = ftp_host
+                if ftp_port:
+                    request_data["ftp_port"] = ftp_port
+                if ftp_username:
+                    request_data["ftp_username"] = ftp_username
+                if ftp_password:
+                    request_data["ftp_password"] = ftp_password
+
+                # Pass SFTP fields flat
+                if sftp_host:
+                    request_data["sftp_host"] = sftp_host
+                if sftp_port:
+                    request_data["sftp_port"] = sftp_port
+                if sftp_username:
+                    request_data["sftp_username"] = sftp_username
+                if sftp_password:
+                    request_data["sftp_password"] = sftp_password
+
+                # Pass HTTP fields flat
+                if http_url:
+                    request_data["http_url"] = http_url
+                if http_username:
+                    request_data["http_username"] = http_username
+                if http_password:
+                    request_data["http_password"] = http_password
+
+                # Pass AS2 fields flat
+                if as2_url:
+                    request_data["as2_url"] = as2_url
+                if as2_identifier:
+                    request_data["as2_identifier"] = as2_identifier
+                if as2_partner_identifier:
+                    request_data["as2_partner_identifier"] = as2_partner_identifier
+                if as2_username:
+                    request_data["as2_username"] = as2_username
+                if as2_password:
+                    request_data["as2_password"] = as2_password
+
+                # Organization linking
+                if organization_id:
+                    request_data["organization_id"] = organization_id
 
                 params["request_data"] = request_data
 
             elif action == "update":
                 params["partner_id"] = partner_id
 
-                # Build updates
+                # Build updates - pass all fields flat
                 updates = {}
                 if component_name:
                     updates["component_name"] = component_name
 
-                # Contact info updates
-                if contact_name or contact_email or contact_phone:
-                    updates["contact_info"] = {}
-                    if contact_name:
-                        updates["contact_info"]["name"] = contact_name
-                    if contact_email:
-                        updates["contact_info"]["email"] = contact_email
-                    if contact_phone:
-                        updates["contact_info"]["phone"] = contact_phone
+                # Contact fields
+                if contact_name:
+                    updates["contact_name"] = contact_name
+                if contact_email:
+                    updates["contact_email"] = contact_email
+                if contact_phone:
+                    updates["contact_phone"] = contact_phone
+                if contact_fax:
+                    updates["contact_fax"] = contact_fax
+                if contact_address:
+                    updates["contact_address"] = contact_address
+                if contact_address2:
+                    updates["contact_address2"] = contact_address2
+                if contact_city:
+                    updates["contact_city"] = contact_city
+                if contact_state:
+                    updates["contact_state"] = contact_state
+                if contact_country:
+                    updates["contact_country"] = contact_country
+                if contact_postalcode:
+                    updates["contact_postalcode"] = contact_postalcode
 
-                # Partner info updates
-                if isa_id or isa_qualifier or gs_id:
-                    updates["partner_info"] = {}
-                    if isa_id:
-                        updates["partner_info"]["isa_id"] = isa_id
-                    if isa_qualifier:
-                        updates["partner_info"]["isa_qualifier"] = isa_qualifier
-                    if gs_id:
-                        updates["partner_info"]["gs_id"] = gs_id
+                # X12 fields
+                if isa_id:
+                    updates["isa_id"] = isa_id
+                if isa_qualifier:
+                    updates["isa_qualifier"] = isa_qualifier
+                if gs_id:
+                    updates["gs_id"] = gs_id
+
+                # Organization linking
+                if organization_id:
+                    updates["organization_id"] = organization_id
 
                 params["updates"] = updates
 
@@ -556,6 +809,340 @@ if manage_trading_partner_action:
             return {"_success": False, "error": str(e)}
 
     print("[INFO] Trading partner tool registered successfully (1 consolidated tool)")
+
+
+# --- Process MCP Tools ---
+if manage_process_action:
+    @mcp.tool()
+    def manage_process(
+        profile: str,
+        action: str,
+        process_id: str = None,
+        config_yaml: str = None,
+        filters: str = None
+    ):
+        """
+        Manage Boomi process components with AI-friendly YAML configuration.
+
+        This tool enables creation of simple processes or complex multi-component
+        workflows with automatic dependency management and ID resolution.
+
+        Args:
+            profile: Boomi profile name (required)
+            action: Action to perform - must be one of: list, get, create, update, delete
+            process_id: Process component ID (required for get, update, delete)
+            config_yaml: YAML configuration string (required for create, update)
+            filters: JSON string with filters for list action (optional)
+
+        Actions:
+            - list: List all process components
+                Example: action="list"
+                Example with filter: action="list", filters='{"folder_name": "Integrations"}'
+
+            - get: Get specific process by ID
+                Example: action="get", process_id="abc-123-def"
+
+            - create: Create new process(es) from YAML
+                Single process example:
+                    config_yaml = '''
+                    name: "Hello World"
+                    folder_name: "Test"
+                    shapes:
+                      - type: start
+                        name: start
+                      - type: message
+                        name: msg
+                        config:
+                          message_text: "Hello from Boomi!"
+                      - type: stop
+                        name: end
+                    '''
+
+                Multi-component with dependencies:
+                    config_yaml = '''
+                    components:
+                      - name: "Transform Map"
+                        type: map
+                        dependencies: []
+                      - name: "Main Process"
+                        type: process
+                        dependencies: ["Transform Map"]
+                        config:
+                          name: "Main Process"
+                          shapes:
+                            - type: start
+                              name: start
+                            - type: map
+                              name: transform
+                              config:
+                                map_ref: "Transform Map"
+                            - type: stop
+                              name: end
+                    '''
+
+            - update: Update existing process
+                Example: action="update", process_id="abc-123", config_yaml="..."
+
+            - delete: Delete process
+                Example: action="delete", process_id="abc-123-def"
+
+        YAML Shape Types:
+            - start: Process start (required first shape)
+            - stop: Process termination (can be last shape)
+            - return: Return documents (alternative last shape)
+            - message: Debug/logging messages
+            - map: Data transformation (requires map_id or map_ref)
+            - connector: External system integration (requires connector_id, operation)
+            - decision: Conditional branching (requires expression)
+            - branch: Parallel branches (requires num_branches)
+            - note: Documentation annotation
+
+        Returns:
+            Dict with success status and result data
+
+        Examples:
+            # List all processes
+            result = manage_process(profile="prod", action="list")
+
+            # Create simple process
+            result = manage_process(
+                profile="prod",
+                action="create",
+                config_yaml="name: Test\\nshapes: [...]"
+            )
+
+            # Get process details
+            result = manage_process(
+                profile="prod",
+                action="get",
+                process_id="abc-123-def"
+            )
+        """
+        try:
+            subject = get_user_subject()
+            print(f"[INFO] manage_process called by user: {subject}, profile: {profile}, action: {action}")
+
+            # Get credentials
+            creds = get_secret(subject, profile)
+
+            # Initialize Boomi SDK
+            sdk = Boomi(
+                account_id=creds["account_id"],
+                username=creds["username"],
+                password=creds["password"]
+            )
+
+            # Build parameters based on action
+            params = {}
+
+            if action == "list":
+                if filters:
+                    import json
+                    params["filters"] = json.loads(filters)
+
+            elif action == "get":
+                params["process_id"] = process_id
+
+            elif action == "create":
+                params["config_yaml"] = config_yaml
+
+            elif action == "update":
+                params["process_id"] = process_id
+                params["config_yaml"] = config_yaml
+
+            elif action == "delete":
+                params["process_id"] = process_id
+
+            # Call the action function
+            return manage_process_action(sdk, profile, action, **params)
+
+        except Exception as e:
+            print(f"[ERROR] Failed to {action} process: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"_success": False, "error": str(e), "exception_type": type(e).__name__}
+
+    print("[INFO] Process tool registered successfully (1 consolidated tool)")
+
+
+# --- Organization MCP Tools ---
+if manage_organization_action:
+    @mcp.tool()
+    def manage_organization(
+        profile: str,
+        action: str,
+        organization_id: str = None,
+        component_name: str = None,
+        folder_name: str = None,
+        contact_name: str = None,
+        contact_email: str = None,
+        contact_phone: str = None,
+        contact_fax: str = None,
+        contact_url: str = None,
+        contact_address: str = None,
+        contact_address2: str = None,
+        contact_city: str = None,
+        contact_state: str = None,
+        contact_country: str = None,
+        contact_postalcode: str = None
+    ):
+        """
+        Manage Boomi organizations (shared contact info for trading partners).
+
+        Organizations provide centralized contact information that can be linked
+        to multiple trading partners via the organization_id field.
+
+        Args:
+            profile: Boomi profile name (required)
+            action: Action to perform - must be one of: list, get, create, update, delete
+            organization_id: Organization component ID (required for get, update, delete)
+            component_name: Organization name (required for create)
+            folder_name: Folder to place organization in (default: Home)
+
+            # Contact Information (all fields used for create/update)
+            contact_name: Contact person name
+            contact_email: Contact email address
+            contact_phone: Contact phone number
+            contact_fax: Contact fax number
+            contact_url: Contact URL/website
+            contact_address: Street address line 1
+            contact_address2: Street address line 2
+            contact_city: City
+            contact_state: State/Province
+            contact_country: Country
+            contact_postalcode: Postal/ZIP code
+
+        Returns:
+            Action result with success status and data/error
+
+        Examples:
+            # List all organizations
+            manage_organization(profile="sandbox", action="list")
+
+            # Create organization with contact info
+            manage_organization(
+                profile="sandbox",
+                action="create",
+                component_name="Acme Corp",
+                folder_name="Home/Organizations",
+                contact_name="John Doe",
+                contact_email="john@acme.com",
+                contact_phone="555-1234",
+                contact_address="123 Main St",
+                contact_city="New York",
+                contact_state="NY",
+                contact_country="USA",
+                contact_postalcode="10001"
+            )
+
+            # Link trading partner to organization
+            # Use manage_trading_partner with organization_id parameter
+        """
+        try:
+            subject = get_user_subject()
+            print(f"[INFO] manage_organization called by user: {subject}, profile: {profile}, action: {action}")
+
+            # Get credentials
+            creds = get_secret(subject, profile)
+
+            # Initialize Boomi SDK
+            sdk = Boomi(
+                account_id=creds["account_id"],
+                username=creds["username"],
+                password=creds["password"]
+            )
+
+            # Build parameters based on action
+            params = {}
+
+            if action == "list":
+                filters = {}
+                if folder_name:
+                    filters["folder_name"] = folder_name
+                params["filters"] = filters if filters else None
+
+            elif action == "get":
+                params["organization_id"] = organization_id
+
+            elif action == "create":
+                request_data = {}
+                if component_name:
+                    request_data["component_name"] = component_name
+                if folder_name:
+                    request_data["folder_name"] = folder_name
+
+                # Contact fields
+                if contact_name:
+                    request_data["contact_name"] = contact_name
+                if contact_email:
+                    request_data["contact_email"] = contact_email
+                if contact_phone:
+                    request_data["contact_phone"] = contact_phone
+                if contact_fax:
+                    request_data["contact_fax"] = contact_fax
+                if contact_url:
+                    request_data["contact_url"] = contact_url
+                if contact_address:
+                    request_data["contact_address"] = contact_address
+                if contact_address2:
+                    request_data["contact_address2"] = contact_address2
+                if contact_city:
+                    request_data["contact_city"] = contact_city
+                if contact_state:
+                    request_data["contact_state"] = contact_state
+                if contact_country:
+                    request_data["contact_country"] = contact_country
+                if contact_postalcode:
+                    request_data["contact_postalcode"] = contact_postalcode
+
+                params["request_data"] = request_data
+
+            elif action == "update":
+                params["organization_id"] = organization_id
+                updates = {}
+                if component_name:
+                    updates["component_name"] = component_name
+                if folder_name:
+                    updates["folder_name"] = folder_name
+
+                # Contact fields
+                if contact_name:
+                    updates["contact_name"] = contact_name
+                if contact_email:
+                    updates["contact_email"] = contact_email
+                if contact_phone:
+                    updates["contact_phone"] = contact_phone
+                if contact_fax:
+                    updates["contact_fax"] = contact_fax
+                if contact_url:
+                    updates["contact_url"] = contact_url
+                if contact_address:
+                    updates["contact_address"] = contact_address
+                if contact_address2:
+                    updates["contact_address2"] = contact_address2
+                if contact_city:
+                    updates["contact_city"] = contact_city
+                if contact_state:
+                    updates["contact_state"] = contact_state
+                if contact_country:
+                    updates["contact_country"] = contact_country
+                if contact_postalcode:
+                    updates["contact_postalcode"] = contact_postalcode
+
+                params["updates"] = updates
+
+            elif action == "delete":
+                params["organization_id"] = organization_id
+
+            return manage_organization_action(sdk, profile, action, **params)
+
+        except Exception as e:
+            print(f"[ERROR] Failed to {action} organization: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"_success": False, "error": str(e)}
+
+    print("[INFO] Organization tool registered successfully (1 consolidated tool)")
 
 
 # --- Web UI Routes ---
