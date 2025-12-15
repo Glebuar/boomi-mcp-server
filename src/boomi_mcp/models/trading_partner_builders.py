@@ -88,9 +88,9 @@ def build_disk_communication_options(**kwargs):
         disk_get_directory: Directory to read files from
         disk_send_directory: Directory to write files to
         disk_file_filter: File filter pattern (default: *)
-    """
-    from boomi.models import DiskCommunicationOptions, DiskGetOptions, DiskSendOptions
 
+    Returns dict (not SDK model) - for consistency with other builders
+    """
     get_dir = kwargs.get('disk_get_directory')
     send_dir = kwargs.get('disk_send_directory')
     file_filter = kwargs.get('disk_file_filter', '*')
@@ -98,24 +98,20 @@ def build_disk_communication_options(**kwargs):
     if not get_dir and not send_dir:
         return None
 
-    disk_get_options = None
-    disk_send_options = None
+    result = {}
 
     if get_dir:
-        disk_get_options = DiskGetOptions(
-            file_filter=file_filter,
-            get_directory=get_dir
-        )
+        result['DiskGetOptions'] = {
+            'fileFilter': file_filter,
+            'getDirectory': get_dir
+        }
 
     if send_dir:
-        disk_send_options = DiskSendOptions(
-            send_directory=send_dir
-        )
+        result['DiskSendOptions'] = {
+            'sendDirectory': send_dir
+        }
 
-    return DiskCommunicationOptions(
-        disk_get_options=disk_get_options,
-        disk_send_options=disk_send_options
-    )
+    return result
 
 
 def build_ftp_communication_options(**kwargs):
