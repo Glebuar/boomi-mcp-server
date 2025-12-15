@@ -6,4 +6,4 @@ httpx>=0.25.0
 python-dotenv>=1.0.0
 requests>=2.31.0
 itsdangerous>=2.1.0
-py-key-value-aio[redis]>=0.1.0
+py-key-value-aio[mongodb]>=0.1.0

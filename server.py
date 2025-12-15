@@ -103,7 +103,7 @@ def delete_profile(sub: str, profile: str):
 
 # --- Auth: OAuth 2.0 with Google (Required) ---
 from fastmcp.server.auth.providers.google import GoogleProvider
-from key_value.aio.stores.redis import RedisStore
+from key_value.aio.stores.mongodb import MongoDBStore
 from key_value.aio.wrappers.encryption import FernetEncryptionWrapper
 from cryptography.fernet import Fernet
 
@@ -116,38 +116,33 @@ try:
     if not client_id or not client_secret:
         raise ValueError("OIDC_CLIENT_ID and OIDC_CLIENT_SECRET must be set")
 
-    # Get Redis connection details and encryption key
-    redis_host = os.getenv("REDIS_HOST")
-    redis_port = int(os.getenv("REDIS_PORT", "6379"))
-    redis_password = os.getenv("REDIS_PASSWORD")
+    # Get MongoDB connection and encryption keys
+    mongodb_uri = os.getenv("MONGODB_URI")
     jwt_signing_key = os.getenv("JWT_SIGNING_KEY")
     storage_encryption_key = os.getenv("STORAGE_ENCRYPTION_KEY")
 
-    if not redis_host:
-        raise ValueError("REDIS_HOST must be set for production deployment")
-    if not redis_password:
-        raise ValueError("REDIS_PASSWORD must be set for production deployment")
+    if not mongodb_uri:
+        raise ValueError("MONGODB_URI must be set for production deployment")
     if not jwt_signing_key:
         raise ValueError("JWT_SIGNING_KEY must be set for production deployment")
     if not storage_encryption_key:
         raise ValueError("STORAGE_ENCRYPTION_KEY must be set for production deployment")
 
-    # Create Redis storage with Fernet encryption (production-ready)
-    # Note: Redis AUTH enabled for defense-in-depth security
-    redis_storage = RedisStore(
-        host=redis_host,
-        port=redis_port,
-        password=redis_password
+    # Create MongoDB storage with Fernet encryption (production-ready)
+    # Using MongoDB Atlas free tier (512MB, persistent)
+    mongodb_storage = MongoDBStore(
+        uri=mongodb_uri,
+        database="boomi_mcp",
+        collection="oauth_tokens"
     )
 
     encrypted_storage = FernetEncryptionWrapper(
-        key_value=redis_storage,
+        key_value=mongodb_storage,
         fernet=Fernet(storage_encryption_key.encode())
     )
 
-    print(f"[INFO] OAuth tokens will be stored in Redis at {redis_host}:{redis_port}")
-    print(f"[INFO] Redis AUTH enabled for defense-in-depth security")
-    print(f"[INFO] Token storage encrypted with Fernet (triple layer: AUTH + Fernet + GCP)")
+    print(f"[INFO] OAuth tokens will be stored in MongoDB Atlas")
+    print(f"[INFO] Token storage encrypted with Fernet")
 
     auth = GoogleProvider(
         client_id=client_id,
