@@ -549,7 +549,8 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
             "as2_settings", "http_settings", "sftp_settings", "ftp_settings", "disk_settings"
         ])
         if not has_protocol_updates:
-            existing_tp.partner_communication = None
+            if hasattr(existing_tp, 'partner_communication'):
+                existing_tp.partner_communication = None
 
         # Update basic component fields
         if "component_name" in updates:
