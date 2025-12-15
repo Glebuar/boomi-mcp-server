@@ -530,27 +530,14 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
             }
 
         # Step 2: Update model fields based on updates dict
-        # Note: Currently only basic fields are supported.
-        # Protocol-specific and standard-specific updates will be added in future iterations.
+        # The SDK's PartnerCommunication._map() now produces minimal structure that the API accepts,
+        # so communications are automatically preserved during updates.
 
-        # IMPORTANT: Boomi API limitation - UPDATE replaces ALL communications
-        # The SDK's PartnerCommunication from GET contains extra fields that the API rejects.
-        # We cannot simply re-send the GET data. Options:
-        # 1. Don't include communications (but this REMOVES them - API treats missing as delete)
-        # 2. Re-build communications using the builder format
-        #
-        # Current behavior: If no protocol updates specified, communications are NOT included
-        # which means they will be removed. Users should specify all protocols they want to keep.
+        # Check if protocol updates were specified (these will REPLACE existing communications)
         from boomi_mcp.models.trading_partner_builders import PartnerCommunicationDict
-
-        # For non-communication updates, set to None (will remove communications)
-        # TODO: Future enhancement - preserve communications by re-building from GET data
         has_protocol_updates = any(key in updates for key in [
             "as2_settings", "http_settings", "sftp_settings", "ftp_settings", "disk_settings"
         ])
-        if not has_protocol_updates:
-            if hasattr(existing_tp, 'partner_communication'):
-                existing_tp.partner_communication = None
 
         # Update basic component fields
         if "component_name" in updates:
