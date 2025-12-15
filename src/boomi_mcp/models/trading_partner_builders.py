@@ -1089,6 +1089,9 @@ def build_trading_partner_model(
         }
         standard = standard_map.get(standard.lower(), standard)
 
+    # Get organization_id if provided
+    organization_id = kwargs.get('organization_id')
+
     # Build top-level model
     tp_model = TradingPartnerComponent(
         component_name=component_name,
@@ -1098,7 +1101,8 @@ def build_trading_partner_model(
         description=description,
         partner_info=partner_info,
         contact_info=contact_info,
-        partner_communication=partner_communication
+        partner_communication=partner_communication,
+        organization_id=organization_id
     )
 
     return tp_model

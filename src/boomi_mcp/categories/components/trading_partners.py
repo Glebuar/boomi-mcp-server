@@ -131,6 +131,10 @@ def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, A
                 'folderName': folder_name
             }
 
+            # Add organization_id if provided
+            if other_params.get('organization_id'):
+                payload['organizationId'] = other_params['organization_id']
+
             # Add partner info
             partner_info = build_partner_info(standard=standard, **other_params)
             if partner_info:
@@ -641,6 +645,10 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
         # TODO: Protocol-specific updates (disk_*, ftp_*, sftp_*, http_*, as2_*, oftp_*)
         # TODO: Standard-specific updates (isa_*, unb_*, sending_*, receiving_*, etc.)
         # These will require implementing the protocol and standard builders in trading_partner_builders.py
+
+        # Organization linking
+        if "organization_id" in updates:
+            existing_tp.organization_id = updates["organization_id"]
 
         # Step 3: Update the trading partner using JSON-based API
         result = boomi_client.trading_partner_component.update_trading_partner_component(

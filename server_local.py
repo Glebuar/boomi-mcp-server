@@ -66,6 +66,14 @@ except ImportError as e:
     print(f"[WARNING] Failed to import process_tools: {e}")
     manage_process_action = None
 
+# --- Organization Tools ---
+try:
+    from boomi_mcp.categories.components.organizations import manage_organization_action
+    print(f"[INFO] Organization tools loaded successfully")
+except ImportError as e:
+    print(f"[WARNING] Failed to import organization_tools: {e}")
+    manage_organization_action = None
+
 
 def put_secret(subject: str, profile: str, payload: Dict[str, str]):
     """Store credentials for a user profile."""
@@ -462,7 +470,9 @@ if manage_trading_partner_action:
         oftp_port: str = None,
         oftp_ssid_code: str = None,
         oftp_ssid_password: str = None,
-        oftp_compress: str = None
+        oftp_compress: str = None,
+        # Organization linking
+        organization_id: str = None
     ):
         """
         Manage B2B/EDI trading partners (all 7 standards).
@@ -814,6 +824,10 @@ if manage_trading_partner_action:
                 if oftp_compress:
                     request_data["oftp_compress"] = oftp_compress
 
+                # Organization linking
+                if organization_id:
+                    request_data["organization_id"] = organization_id
+
                 params["request_data"] = request_data
 
             elif action == "update":
@@ -981,6 +995,10 @@ if manage_trading_partner_action:
                         updates["oftp_settings"]["host"] = oftp_host
                     if oftp_tls is not None:
                         updates["oftp_settings"]["tls"] = oftp_tls
+
+                # Organization linking
+                if organization_id:
+                    updates["organization_id"] = organization_id
 
                 params["updates"] = updates
 
@@ -1151,6 +1169,186 @@ if manage_process_action:
             return {"_success": False, "error": str(e), "exception_type": type(e).__name__}
 
     print("[INFO] Process tool registered successfully (1 consolidated tool, local)")
+
+
+# --- Organization MCP Tools (Local) ---
+if manage_organization_action:
+    @mcp.tool()
+    def manage_organization(
+        profile: str,
+        action: str,
+        organization_id: str = None,
+        component_name: str = None,
+        folder_name: str = None,
+        contact_name: str = None,
+        contact_email: str = None,
+        contact_phone: str = None,
+        contact_fax: str = None,
+        contact_url: str = None,
+        contact_address: str = None,
+        contact_address2: str = None,
+        contact_city: str = None,
+        contact_state: str = None,
+        contact_country: str = None,
+        contact_postalcode: str = None
+    ):
+        """
+        Manage Boomi organizations (shared contact info for trading partners).
+
+        Organizations provide centralized contact information that can be linked
+        to multiple trading partners via the organization_id field.
+
+        Args:
+            profile: Boomi profile name (required)
+            action: Action to perform - must be one of: list, get, create, update, delete
+            organization_id: Organization component ID (required for get, update, delete)
+            component_name: Organization name (required for create)
+            folder_name: Folder to place organization in (default: Home)
+
+            # Contact Information (all fields used for create/update)
+            contact_name: Contact person name
+            contact_email: Contact email address
+            contact_phone: Contact phone number
+            contact_fax: Contact fax number
+            contact_url: Contact URL/website
+            contact_address: Street address line 1
+            contact_address2: Street address line 2
+            contact_city: City
+            contact_state: State/Province
+            contact_country: Country
+            contact_postalcode: Postal/ZIP code
+
+        Returns:
+            Action result with success status and data/error
+
+        Examples:
+            # List all organizations
+            manage_organization(profile="sandbox", action="list")
+
+            # Create organization with contact info
+            manage_organization(
+                profile="sandbox",
+                action="create",
+                component_name="Acme Corp",
+                folder_name="Home/Organizations",
+                contact_name="John Doe",
+                contact_email="john@acme.com",
+                contact_phone="555-1234",
+                contact_address="123 Main St",
+                contact_city="New York",
+                contact_state="NY",
+                contact_country="USA",
+                contact_postalcode="10001"
+            )
+
+            # Link trading partner to organization
+            # Use manage_trading_partner with organization_id parameter
+        """
+        try:
+            subject = TEST_USER
+            print(f"[INFO] manage_organization called for local user: {subject}, profile: {profile}, action: {action}")
+
+            # Get credentials
+            creds = get_secret(subject, profile)
+
+            # Initialize Boomi SDK
+            sdk = Boomi(
+                account_id=creds["account_id"],
+                username=creds["username"],
+                password=creds["password"]
+            )
+
+            # Build parameters based on action
+            params = {}
+
+            if action == "list":
+                filters = {}
+                if folder_name:
+                    filters["folder_name"] = folder_name
+                params["filters"] = filters if filters else None
+
+            elif action == "get":
+                params["organization_id"] = organization_id
+
+            elif action == "create":
+                request_data = {}
+                if component_name:
+                    request_data["component_name"] = component_name
+                if folder_name:
+                    request_data["folder_name"] = folder_name
+
+                # Contact fields
+                if contact_name:
+                    request_data["contact_name"] = contact_name
+                if contact_email:
+                    request_data["contact_email"] = contact_email
+                if contact_phone:
+                    request_data["contact_phone"] = contact_phone
+                if contact_fax:
+                    request_data["contact_fax"] = contact_fax
+                if contact_url:
+                    request_data["contact_url"] = contact_url
+                if contact_address:
+                    request_data["contact_address"] = contact_address
+                if contact_address2:
+                    request_data["contact_address2"] = contact_address2
+                if contact_city:
+                    request_data["contact_city"] = contact_city
+                if contact_state:
+                    request_data["contact_state"] = contact_state
+                if contact_country:
+                    request_data["contact_country"] = contact_country
+                if contact_postalcode:
+                    request_data["contact_postalcode"] = contact_postalcode
+
+                params["request_data"] = request_data
+
+            elif action == "update":
+                params["organization_id"] = organization_id
+                updates = {}
+                if component_name:
+                    updates["component_name"] = component_name
+                if folder_name:
+                    updates["folder_name"] = folder_name
+
+                # Contact fields
+                if contact_name:
+                    updates["contact_name"] = contact_name
+                if contact_email:
+                    updates["contact_email"] = contact_email
+                if contact_phone:
+                    updates["contact_phone"] = contact_phone
+                if contact_fax:
+                    updates["contact_fax"] = contact_fax
+                if contact_url:
+                    updates["contact_url"] = contact_url
+                if contact_address:
+                    updates["contact_address"] = contact_address
+                if contact_address2:
+                    updates["contact_address2"] = contact_address2
+                if contact_city:
+                    updates["contact_city"] = contact_city
+                if contact_state:
+                    updates["contact_state"] = contact_state
+                if contact_country:
+                    updates["contact_country"] = contact_country
+                if contact_postalcode:
+                    updates["contact_postalcode"] = contact_postalcode
+
+                params["updates"] = updates
+
+            elif action == "delete":
+                params["organization_id"] = organization_id
+
+            return manage_organization_action(sdk, profile, action, **params)
+
+        except Exception as e:
+            print(f"[ERROR] Failed to {action} organization: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"_success": False, "error": str(e)}
+
+    print("[INFO] Organization tool registered successfully (1 consolidated tool, local)")
 
 
 if __name__ == "__main__":
