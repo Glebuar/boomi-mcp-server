@@ -131,9 +131,9 @@ try:
     # Create MongoDB storage with Fernet encryption (production-ready)
     # Using MongoDB Atlas free tier (512MB, persistent)
     mongodb_storage = MongoDBStore(
-        uri=mongodb_uri,
-        database="boomi_mcp",
-        collection="oauth_tokens"
+        url=mongodb_uri,
+        db_name="boomi_mcp",
+        coll_name="oauth_tokens"
     )
 
     encrypted_storage = FernetEncryptionWrapper(
