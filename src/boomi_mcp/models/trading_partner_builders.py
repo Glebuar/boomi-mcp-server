@@ -567,13 +567,14 @@ def build_partner_communication(**kwargs):
     if not protocols:
         return None
 
-    # Check if only using Disk (can use SDK model)
+    # Check if only using Disk
     only_disk = protocols == ['disk']
 
     if only_disk:
         disk_opts = build_disk_communication_options(**kwargs)
         if disk_opts:
-            return PartnerCommunication(disk_communication_options=disk_opts)
+            # Return as PartnerCommunicationDict for consistency
+            return PartnerCommunicationDict({'DiskCommunicationOptions': disk_opts})
         return None
 
     # For other protocols, build as dict (API accepts simpler structure than SDK requires)
@@ -582,7 +583,7 @@ def build_partner_communication(**kwargs):
     if 'disk' in protocols:
         disk_opts = build_disk_communication_options(**kwargs)
         if disk_opts:
-            comm_dict['DiskCommunicationOptions'] = disk_opts._map()
+            comm_dict['DiskCommunicationOptions'] = disk_opts  # Already a dict
 
     if 'ftp' in protocols:
         ftp_opts = build_ftp_communication_options(**kwargs)
