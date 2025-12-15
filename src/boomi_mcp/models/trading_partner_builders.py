@@ -141,7 +141,7 @@ def build_ftp_communication_options(**kwargs):
     password = kwargs.get('ftp_password', '')
     remote_directory = kwargs.get('ftp_remote_directory')
     ssl_mode = kwargs.get('ftp_ssl_mode', 'NONE')
-    connection_mode = kwargs.get('ftp_connection_mode', 'PASSIVE')
+    connection_mode = kwargs.get('ftp_connection_mode', 'passive')
 
     # Build FTP settings
     ftp_settings = {
@@ -149,7 +149,7 @@ def build_ftp_communication_options(**kwargs):
         'port': port,
         'user': username,
         'password': password,
-        'connectionMode': connection_mode.upper()
+        'connectionMode': connection_mode.lower()  # SDK expects lowercase: 'active' or 'passive'
     }
 
     # Add SSL options if not NONE
