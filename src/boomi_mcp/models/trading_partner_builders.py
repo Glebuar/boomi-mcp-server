@@ -423,16 +423,15 @@ def build_as2_communication_options(**kwargs):
     if partner_identifier:
         partner_info['as2Id'] = partner_identifier
 
-    # Add AS2 send options if any message/MDN/partner options specified
-    if message_options or mdn_options or partner_info:
-        send_options = {}
-        if message_options:
-            send_options['AS2MessageOptions'] = message_options
-        if mdn_options:
-            send_options['AS2MDNOptions'] = mdn_options
-        if partner_info:
-            send_options['AS2PartnerInfo'] = partner_info
-        result['AS2SendOptions'] = send_options
+    # AS2SendOptions requires AS2MDNOptions and AS2MessageOptions (not optional in SDK)
+    # Always include them with defaults
+    send_options = {
+        'AS2MDNOptions': mdn_options if mdn_options else {},
+        'AS2MessageOptions': message_options if message_options else {}
+    }
+    if partner_info:
+        send_options['AS2PartnerInfo'] = partner_info
+    result['AS2SendOptions'] = send_options
 
     return result
 

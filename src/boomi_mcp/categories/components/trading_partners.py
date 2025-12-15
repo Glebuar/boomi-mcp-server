@@ -622,6 +622,36 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                 if "send_directory" in disk:
                     comm_params["disk_send_directory"] = disk["send_directory"]
 
+            # AS2 settings
+            if "as2_settings" in updates:
+                as2 = updates["as2_settings"]
+                if "url" in as2:
+                    comm_params["as2_url"] = as2["url"]
+                if "as2_identifier" in as2:
+                    comm_params["as2_identifier"] = as2["as2_identifier"]
+                if "partner_as2_identifier" in as2:
+                    comm_params["as2_partner_identifier"] = as2["partner_as2_identifier"]
+                if "authentication_type" in as2:
+                    comm_params["as2_authentication_type"] = as2["authentication_type"]
+                if "username" in as2:
+                    comm_params["as2_username"] = as2["username"]
+                if "signed" in as2:
+                    comm_params["as2_signed"] = as2["signed"]
+                if "encrypted" in as2:
+                    comm_params["as2_encrypted"] = as2["encrypted"]
+                if "compressed" in as2:
+                    comm_params["as2_compressed"] = as2["compressed"]
+                if "encryption_algorithm" in as2:
+                    comm_params["as2_encryption_algorithm"] = as2["encryption_algorithm"]
+                if "signing_digest_alg" in as2:
+                    comm_params["as2_signing_digest_alg"] = as2["signing_digest_alg"]
+                if "request_mdn" in as2:
+                    comm_params["as2_request_mdn"] = as2["request_mdn"]
+                if "mdn_signed" in as2:
+                    comm_params["as2_mdn_signed"] = as2["mdn_signed"]
+                if "synchronous_mdn" in as2:
+                    comm_params["as2_synchronous_mdn"] = as2["synchronous_mdn"]
+
             partner_comm = build_partner_communication(**comm_params)
             if partner_comm:
                 existing_tp.partner_communication = partner_comm
