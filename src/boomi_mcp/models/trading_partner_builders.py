@@ -122,10 +122,13 @@ def build_ftp_communication_options(**kwargs):
     """Build FTP protocol communication options.
 
     Args:
-        ftp_host: FTP server hostname
+        ftp_host: FTP server hostname (required)
         ftp_port: FTP server port (default: 21)
         ftp_username: FTP username
         ftp_password: FTP password
+        ftp_remote_directory: Remote directory path
+        ftp_ssl_mode: SSL mode - NONE, EXPLICIT, IMPLICIT (default: NONE)
+        ftp_connection_mode: Connection mode - ACTIVE, PASSIVE (default: PASSIVE)
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -136,26 +139,52 @@ def build_ftp_communication_options(**kwargs):
     port = int(kwargs.get('ftp_port', 21))
     username = kwargs.get('ftp_username', '')
     password = kwargs.get('ftp_password', '')
+    remote_directory = kwargs.get('ftp_remote_directory')
+    ssl_mode = kwargs.get('ftp_ssl_mode', 'NONE')
+    connection_mode = kwargs.get('ftp_connection_mode', 'PASSIVE')
 
-    # Return dict - SDK models require too many nested objects
-    return {
-        'FTPSettings': {
-            'host': host,
-            'port': port,
-            'user': username,
-            'password': password
-        }
+    # Build FTP settings
+    ftp_settings = {
+        'host': host,
+        'port': port,
+        'user': username,
+        'password': password,
+        'connectionMode': connection_mode.upper()
     }
+
+    # Add SSL options if not NONE
+    if ssl_mode and ssl_mode.upper() != 'NONE':
+        ftp_settings['FTPSSLOptions'] = {
+            'sslmode': ssl_mode.upper()
+        }
+
+    result = {'FTPSettings': ftp_settings}
+
+    # Add get options with remote directory if specified
+    if remote_directory:
+        result['FTPGetOptions'] = {
+            'remoteDirectory': remote_directory,
+            'useDefaultGetOptions': False
+        }
+        result['FTPSendOptions'] = {
+            'remoteDirectory': remote_directory,
+            'useDefaultSendOptions': False
+        }
+
+    return result
 
 
 def build_sftp_communication_options(**kwargs):
     """Build SFTP protocol communication options.
 
     Args:
-        sftp_host: SFTP server hostname
+        sftp_host: SFTP server hostname (required)
         sftp_port: SFTP server port (default: 22)
         sftp_username: SFTP username
         sftp_password: SFTP password
+        sftp_remote_directory: Remote directory path
+        sftp_ssh_key_auth: Enable SSH key authentication (true/false)
+        sftp_known_host_entry: Known hosts entry for server verification
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -166,22 +195,60 @@ def build_sftp_communication_options(**kwargs):
     port = int(kwargs.get('sftp_port', 22))
     username = kwargs.get('sftp_username', '')
     password = kwargs.get('sftp_password', '')
+    remote_directory = kwargs.get('sftp_remote_directory')
+    ssh_key_auth = kwargs.get('sftp_ssh_key_auth')
+    known_host_entry = kwargs.get('sftp_known_host_entry')
 
-    return {
-        'SFTPSettings': {
-            'host': host,
-            'port': port,
-            'user': username,
-            'password': password
-        }
+    # Build SFTP settings
+    sftp_settings = {
+        'host': host,
+        'port': port,
+        'user': username,
+        'password': password
     }
+
+    # Add SSH options if specified
+    ssh_options = {}
+    if ssh_key_auth is not None:
+        ssh_options['sshkeyauth'] = str(ssh_key_auth).lower() == 'true'
+    if known_host_entry:
+        ssh_options['knownHostEntry'] = known_host_entry
+
+    if ssh_options:
+        sftp_settings['SFTPSSHOptions'] = ssh_options
+
+    result = {'SFTPSettings': sftp_settings}
+
+    # Add get/send options with remote directory if specified
+    if remote_directory:
+        result['SFTPGetOptions'] = {
+            'remoteDirectory': remote_directory,
+            'useDefaultGetOptions': False
+        }
+        result['SFTPSendOptions'] = {
+            'remoteDirectory': remote_directory,
+            'useDefaultSendOptions': False
+        }
+
+    return result
 
 
 def build_http_communication_options(**kwargs):
     """Build HTTP protocol communication options.
 
     Args:
-        http_url: HTTP endpoint URL
+        http_url: HTTP endpoint URL (required)
+        http_authentication_type: Authentication type - NONE, BASIC, OAUTH2 (default: NONE)
+        http_username: Username for BASIC authentication
+        http_password: Password for BASIC authentication
+        http_connect_timeout: Connection timeout in milliseconds
+        http_read_timeout: Read timeout in milliseconds
+        http_client_auth: Enable client SSL authentication (true/false)
+        http_trust_server_cert: Trust server certificate (true/false)
+        http_method_type: HTTP method - GET, POST, PUT, DELETE, PATCH (default: POST)
+        http_data_content_type: Content type for request data
+        http_follow_redirects: Follow redirects (true/false)
+        http_return_errors: Return errors in response (true/false)
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -189,18 +256,90 @@ def build_http_communication_options(**kwargs):
     if not url:
         return None
 
-    return {
-        'HTTPSettings': {
-            'url': url
-        }
+    auth_type = kwargs.get('http_authentication_type', 'NONE')
+    username = kwargs.get('http_username')
+    password = kwargs.get('http_password')
+    connect_timeout = kwargs.get('http_connect_timeout')
+    read_timeout = kwargs.get('http_read_timeout')
+    client_auth = kwargs.get('http_client_auth')
+    trust_server_cert = kwargs.get('http_trust_server_cert')
+    method_type = kwargs.get('http_method_type')
+    content_type = kwargs.get('http_data_content_type')
+    follow_redirects = kwargs.get('http_follow_redirects')
+    return_errors = kwargs.get('http_return_errors')
+
+    # Build HTTP settings
+    http_settings = {
+        'url': url,
+        'authenticationType': auth_type.upper() if auth_type else 'NONE'
     }
+
+    # Add timeouts if specified
+    if connect_timeout:
+        http_settings['connectTimeout'] = int(connect_timeout)
+    if read_timeout:
+        http_settings['readTimeout'] = int(read_timeout)
+
+    # Add BASIC auth credentials if auth type is BASIC
+    if auth_type and auth_type.upper() == 'BASIC' and (username or password):
+        http_settings['HTTPAuthSettings'] = {
+            'user': username or '',
+            'password': password or ''
+        }
+
+    # Add SSL options if specified
+    ssl_options = {}
+    if client_auth is not None:
+        ssl_options['clientauth'] = str(client_auth).lower() == 'true'
+    if trust_server_cert is not None:
+        ssl_options['trustServerCert'] = str(trust_server_cert).lower() == 'true'
+
+    if ssl_options:
+        http_settings['HTTPSSLOptions'] = ssl_options
+
+    result = {'HTTPSettings': http_settings}
+
+    # Add send options if method or content type specified
+    send_options = {}
+    if method_type:
+        send_options['methodType'] = method_type.upper()
+    if content_type:
+        send_options['dataContentType'] = content_type
+    if follow_redirects is not None:
+        send_options['followRedirects'] = str(follow_redirects).lower() == 'true'
+    if return_errors is not None:
+        send_options['returnErrors'] = str(return_errors).lower() == 'true'
+
+    if send_options:
+        send_options['useDefaultOptions'] = False
+        result['HTTPSendOptions'] = send_options
+        result['HTTPGetOptions'] = send_options.copy()
+
+    return result
 
 
 def build_as2_communication_options(**kwargs):
     """Build AS2 protocol communication options.
 
     Args:
-        as2_url: AS2 endpoint URL
+        as2_url: AS2 endpoint URL (required)
+        as2_identifier: Local AS2 identifier
+        as2_partner_identifier: Partner AS2 identifier
+        as2_authentication_type: Authentication type - NONE, BASIC (default: NONE)
+        as2_verify_hostname: Verify SSL hostname (true/false)
+        as2_username: Username for BASIC authentication
+        as2_password: Password for BASIC authentication
+        as2_signed: Sign AS2 messages (true/false)
+        as2_encrypted: Encrypt AS2 messages (true/false)
+        as2_compressed: Compress AS2 messages (true/false)
+        as2_encryption_algorithm: Encryption algorithm - tripledes, rc2, aes128, aes192, aes256
+        as2_signing_digest_alg: Signing digest algorithm - SHA1, SHA256, SHA384, SHA512
+        as2_data_content_type: Content type for AS2 message
+        as2_request_mdn: Request MDN (true/false)
+        as2_mdn_signed: Signed MDN (true/false)
+        as2_mdn_digest_alg: MDN digest algorithm - SHA1, SHA256, SHA384, SHA512
+        as2_synchronous_mdn: Synchronous MDN (true/false, default: true)
+        as2_fail_on_negative_mdn: Fail on negative MDN (true/false)
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -208,35 +347,195 @@ def build_as2_communication_options(**kwargs):
     if not url:
         return None
 
-    return {
-        'AS2SendSettings': {
-            'url': url
-        }
+    # Basic settings
+    auth_type = kwargs.get('as2_authentication_type', 'NONE')
+    verify_hostname = kwargs.get('as2_verify_hostname')
+    username = kwargs.get('as2_username')
+    password = kwargs.get('as2_password')
+
+    # Message options
+    signed = kwargs.get('as2_signed')
+    encrypted = kwargs.get('as2_encrypted')
+    compressed = kwargs.get('as2_compressed')
+    encryption_alg = kwargs.get('as2_encryption_algorithm')
+    signing_alg = kwargs.get('as2_signing_digest_alg')
+    content_type = kwargs.get('as2_data_content_type')
+
+    # MDN options
+    request_mdn = kwargs.get('as2_request_mdn')
+    mdn_signed = kwargs.get('as2_mdn_signed')
+    mdn_digest_alg = kwargs.get('as2_mdn_digest_alg')
+    sync_mdn = kwargs.get('as2_synchronous_mdn')
+    fail_on_negative = kwargs.get('as2_fail_on_negative_mdn')
+
+    # Partner info
+    as2_identifier = kwargs.get('as2_identifier')
+    partner_identifier = kwargs.get('as2_partner_identifier')
+
+    # Build AS2 send settings
+    send_settings = {
+        'url': url,
+        'authenticationType': auth_type.upper() if auth_type else 'NONE'
     }
+
+    if verify_hostname is not None:
+        send_settings['verifyHostname'] = str(verify_hostname).lower() == 'true'
+
+    # Add BASIC auth if specified
+    if auth_type and auth_type.upper() == 'BASIC' and (username or password):
+        send_settings['AS2BasicAuthInfo'] = {
+            'username': username or '',
+            'password': password or ''
+        }
+
+    result = {'AS2SendSettings': send_settings}
+
+    # Build AS2 message options
+    message_options = {}
+    if signed is not None:
+        message_options['signed'] = str(signed).lower() == 'true'
+    if encrypted is not None:
+        message_options['encrypted'] = str(encrypted).lower() == 'true'
+    if compressed is not None:
+        message_options['compressed'] = str(compressed).lower() == 'true'
+    if encryption_alg:
+        message_options['encryptionAlgorithm'] = encryption_alg.lower()
+    if signing_alg:
+        message_options['signingDigestAlg'] = signing_alg.upper()
+    if content_type:
+        message_options['dataContentType'] = content_type
+
+    # Build AS2 MDN options
+    mdn_options = {}
+    if request_mdn is not None:
+        mdn_options['requestMdn'] = str(request_mdn).lower() == 'true'
+    if mdn_signed is not None:
+        mdn_options['signed'] = str(mdn_signed).lower() == 'true'
+    if mdn_digest_alg:
+        mdn_options['mdnDigestAlg'] = mdn_digest_alg.upper()
+    if sync_mdn is not None:
+        mdn_options['synchronous'] = 'SYNC' if str(sync_mdn).lower() == 'true' else 'ASYNC'
+    if fail_on_negative is not None:
+        mdn_options['failOnNegativeMdn'] = str(fail_on_negative).lower() == 'true'
+
+    # Build AS2 partner info
+    partner_info = {}
+    if partner_identifier:
+        partner_info['as2Id'] = partner_identifier
+
+    # Add AS2 send options if any message/MDN/partner options specified
+    if message_options or mdn_options or partner_info:
+        send_options = {}
+        if message_options:
+            send_options['AS2MessageOptions'] = message_options
+        if mdn_options:
+            send_options['AS2MDNOptions'] = mdn_options
+        if partner_info:
+            send_options['AS2PartnerInfo'] = partner_info
+        result['AS2SendOptions'] = send_options
+
+    return result
 
 
 def build_mllp_communication_options(**kwargs):
-    """Build MLLP protocol communication options"""
-    from boomi.models import MllpCommunicationOptions
+    """Build MLLP protocol communication options (for HL7 messaging).
 
-    # Placeholder - MLLP not yet implemented in XML version
-    return None
+    Args:
+        mllp_host: MLLP server hostname (required)
+        mllp_port: MLLP server port (required)
+        mllp_use_ssl: Enable SSL/TLS (true/false)
+        mllp_persistent: Use persistent connections (true/false)
+        mllp_receive_timeout: Receive timeout in milliseconds
+        mllp_send_timeout: Send timeout in milliseconds
+        mllp_max_connections: Maximum number of connections
+
+    Returns dict (not SDK model) - API accepts minimal structure
+    """
+    host = kwargs.get('mllp_host')
+    port = kwargs.get('mllp_port')
+
+    if not host or not port:
+        return None
+
+    # Build MLLP send settings
+    mllp_settings = {
+        'host': host,
+        'port': int(port)
+    }
+
+    # Add optional settings
+    use_ssl = kwargs.get('mllp_use_ssl')
+    persistent = kwargs.get('mllp_persistent')
+    receive_timeout = kwargs.get('mllp_receive_timeout')
+    send_timeout = kwargs.get('mllp_send_timeout')
+    max_connections = kwargs.get('mllp_max_connections')
+
+    if use_ssl is not None:
+        mllp_settings['MLLPSSLOptions'] = {
+            'useSSL': str(use_ssl).lower() == 'true'
+        }
+    if persistent is not None:
+        mllp_settings['persistent'] = str(persistent).lower() == 'true'
+    if receive_timeout:
+        mllp_settings['receiveTimeout'] = int(receive_timeout)
+    if send_timeout:
+        mllp_settings['sendTimeout'] = int(send_timeout)
+    if max_connections:
+        mllp_settings['maxConnections'] = int(max_connections)
+
+    # Standard MLLP delimiters (hex 0B for start, hex 1C hex 0D for end)
+    mllp_settings['startBlock'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0B'}
+    mllp_settings['endBlock'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '1C'}
+    mllp_settings['endData'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0D'}
+
+    return {'MLLPSendSettings': mllp_settings}
 
 
 def build_oftp_communication_options(**kwargs):
-    """Build OFTP protocol communication options"""
-    from boomi.models import OftpCommunicationOptions
+    """Build OFTP protocol communication options (for ODETTE file transfer).
 
-    oftp_fields = {
-        'oftp_host': kwargs.get('oftp_host'),
-        'oftp_tls': kwargs.get('oftp_tls')
-    }
+    Args:
+        oftp_host: OFTP server hostname (required)
+        oftp_port: OFTP server port (default: 3305)
+        oftp_tls: Enable TLS (true/false)
+        oftp_ssid_code: ODETTE Session ID code
+        oftp_ssid_password: ODETTE Session ID password
+        oftp_compress: Enable compression (true/false)
 
-    if not any(oftp_fields.values()):
+    Returns dict (not SDK model) - API accepts minimal structure
+    """
+    host = kwargs.get('oftp_host')
+    if not host:
         return None
 
-    # Placeholder - need to understand OftpCommunicationOptions structure
-    return None  # Will implement after inspecting the model
+    port = int(kwargs.get('oftp_port', 3305))
+    tls = kwargs.get('oftp_tls')
+    ssid_code = kwargs.get('oftp_ssid_code')
+    ssid_password = kwargs.get('oftp_ssid_password')
+    compress = kwargs.get('oftp_compress')
+
+    # Build OFTP connection settings
+    connection_settings = {
+        'host': host,
+        'port': port
+    }
+
+    if tls is not None:
+        connection_settings['tls'] = str(tls).lower() == 'true'
+
+    # Build my partner info (ODETTE partner settings)
+    my_partner_info = {}
+    if ssid_code:
+        my_partner_info['ssidcode'] = ssid_code
+    if ssid_password:
+        my_partner_info['ssidpswd'] = ssid_password
+    if compress is not None:
+        my_partner_info['ssidcmpr'] = str(compress).lower() == 'true'
+
+    if my_partner_info:
+        connection_settings['myPartnerInfo'] = my_partner_info
+
+    return {'OFTPConnectionSettings': connection_settings}
 
 
 class PartnerCommunicationDict:
@@ -305,6 +604,16 @@ def build_partner_communication(**kwargs):
         if as2_opts:
             comm_dict['AS2CommunicationOptions'] = as2_opts
 
+    if 'mllp' in protocols:
+        mllp_opts = build_mllp_communication_options(**kwargs)
+        if mllp_opts:
+            comm_dict['MLLPCommunicationOptions'] = mllp_opts
+
+    if 'oftp' in protocols:
+        oftp_opts = build_oftp_communication_options(**kwargs)
+        if oftp_opts:
+            comm_dict['OFTPCommunicationOptions'] = oftp_opts
+
     if not comm_dict:
         return None
 
@@ -369,88 +678,261 @@ def build_x12_partner_info(**kwargs):
 
 
 def build_edifact_partner_info(**kwargs):
-    """Build EDIFACT-specific partner information"""
-    from boomi.models import EdifactPartnerInfo
+    """Build EDIFACT-specific partner information.
 
-    edifact_fields = {
-        'unb_interchangeid': kwargs.get('unb_interchangeid'),
-        'unb_interchangeidqual': kwargs.get('unb_interchangeidqual'),
-        'unb_partnerid': kwargs.get('unb_partnerid'),
-        'unb_partneridqual': kwargs.get('unb_partneridqual'),
-        'unb_testindicator': kwargs.get('unb_testindicator')
-    }
+    Args:
+        edifact_interchange_id: Interchange ID (UNB segment)
+        edifact_interchange_id_qual: Interchange ID qualifier (e.g., 14 for EAN, ZZ for mutually defined)
+        edifact_syntax_id: Syntax identifier (UNOA, UNOB, UNOC, UNOD, UNOE, UNOF)
+        edifact_syntax_version: Syntax version (1, 2, 3)
+        edifact_test_indicator: Test indicator (1 for test, NA for production)
 
-    if not any(edifact_fields.values()):
+    Structure: EdifactPartnerInfo → (EdifactControlInfo, EdifactOptions)
+    Note: EdifactOptions with delimiters is REQUIRED
+    """
+    from boomi.models import (
+        EdifactPartnerInfo, EdifactControlInfo, EdifactOptions,
+        UnbControlInfo, EdiDelimiter, EdiSegmentTerminator
+    )
+    from boomi.models.unb_control_info import (
+        UnbControlInfoInterchangeIdQual, UnbControlInfoSyntaxId,
+        UnbControlInfoSyntaxVersion, UnbControlInfoTestIndicator
+    )
+    from boomi.models.edi_delimiter import DelimiterValue
+    from boomi.models.edi_segment_terminator import SegmentTerminatorValue
+
+    interchange_id = kwargs.get('edifact_interchange_id')
+    interchange_id_qual = kwargs.get('edifact_interchange_id_qual')
+    syntax_id = kwargs.get('edifact_syntax_id')
+    syntax_version = kwargs.get('edifact_syntax_version')
+    test_indicator = kwargs.get('edifact_test_indicator')
+
+    # Only build if at least one field is provided
+    if not any([interchange_id, interchange_id_qual, syntax_id, syntax_version, test_indicator]):
         return None
 
-    # Placeholder - need to understand EdifactPartnerInfo structure
-    return None  # Will implement after inspecting the model
+    # Build UNB control info if any fields provided
+    unb_kwargs = {}
+    if interchange_id:
+        unb_kwargs['interchange_id'] = interchange_id
+    if interchange_id_qual:
+        # Auto-format qualifier if user provides short form (e.g., '14' -> 'EDIFACTIDQUAL_14')
+        if not interchange_id_qual.startswith('EDIFACTIDQUAL_'):
+            interchange_id_qual = f'EDIFACTIDQUAL_{interchange_id_qual}'
+        unb_kwargs['interchange_id_qual'] = interchange_id_qual
+    if syntax_id:
+        unb_kwargs['syntax_id'] = syntax_id.upper()  # UNOA, UNOB, etc.
+    if syntax_version:
+        # Auto-format version (e.g., '3' -> 'EDIFACTSYNTAXVERSION_3')
+        if not str(syntax_version).startswith('EDIFACTSYNTAXVERSION_'):
+            syntax_version = f'EDIFACTSYNTAXVERSION_{syntax_version}'
+        unb_kwargs['syntax_version'] = syntax_version
+    if test_indicator:
+        # Auto-format (e.g., '1' -> 'EDIFACTTEST_1', 'NA' -> 'EDIFACTTEST_NA')
+        if not str(test_indicator).startswith('EDIFACTTEST_'):
+            test_indicator = f'EDIFACTTEST_{test_indicator}'
+        unb_kwargs['test_indicator'] = test_indicator
+
+    unb_control_info = UnbControlInfo(**unb_kwargs) if unb_kwargs else None
+    edifact_control_info = EdifactControlInfo(unb_control_info=unb_control_info) if unb_control_info else EdifactControlInfo()
+
+    # EdifactOptions with REQUIRED delimiters (use EDIFACT defaults)
+    # Standard EDIFACT delimiters: + for element, : for composite, ' for segment terminator
+    edifact_options = EdifactOptions(
+        composite_delimiter=EdiDelimiter(delimiter_value=DelimiterValue.COLONDELIMITED),
+        element_delimiter=EdiDelimiter(delimiter_value=DelimiterValue.PLUSDELIMITED),
+        segment_terminator=EdiSegmentTerminator(segment_terminator_value=SegmentTerminatorValue.SINGLEQUOTE)
+    )
+
+    return EdifactPartnerInfo(
+        edifact_control_info=edifact_control_info,
+        edifact_options=edifact_options
+    )
 
 
 def build_hl7_partner_info(**kwargs):
-    """Build HL7-specific partner information"""
-    from boomi.models import Hl7PartnerInfo
+    """Build HL7-specific partner information.
 
-    hl7_fields = {
-        'sending_application': kwargs.get('sending_application'),
-        'sending_facility': kwargs.get('sending_facility'),
-        'receiving_application': kwargs.get('receiving_application'),
-        'receiving_facility': kwargs.get('receiving_facility')
-    }
+    Args:
+        hl7_sending_application: Sending application name (MSH-3)
+        hl7_sending_facility: Sending facility name (MSH-4)
+        hl7_receiving_application: Receiving application name (MSH-5)
+        hl7_receiving_facility: Receiving facility name (MSH-6)
 
-    if not any(hl7_fields.values()):
+    Structure: Hl7PartnerInfo → Hl7ControlInfo → MshControlInfo → HdType
+    """
+    from boomi.models import Hl7PartnerInfo, Hl7ControlInfo, MshControlInfo, HdType
+
+    sending_app = kwargs.get('hl7_sending_application')
+    sending_fac = kwargs.get('hl7_sending_facility')
+    receiving_app = kwargs.get('hl7_receiving_application')
+    receiving_fac = kwargs.get('hl7_receiving_facility')
+
+    if not any([sending_app, sending_fac, receiving_app, receiving_fac]):
         return None
 
-    # Placeholder - need to understand Hl7PartnerInfo structure
-    return None  # Will implement after inspecting the model
+    # Build MSH control info with HdType objects
+    msh_kwargs = {}
+    if sending_app:
+        msh_kwargs['application'] = HdType(namespace_id=sending_app)
+    if sending_fac:
+        msh_kwargs['facility'] = HdType(namespace_id=sending_fac)
+    # Note: receiving_app and receiving_fac are for the partner (not our MSH)
+    # They would be used when building "my company" trading partner
+
+    if not msh_kwargs:
+        return None
+
+    msh_control_info = MshControlInfo(**msh_kwargs)
+    hl7_control_info = Hl7ControlInfo(msh_control_info=msh_control_info)
+
+    return Hl7PartnerInfo(hl7_control_info=hl7_control_info)
 
 
 def build_rosettanet_partner_info(**kwargs):
-    """Build RosettaNet-specific partner information"""
-    from boomi.models import RosettaNetPartnerInfo
+    """Build RosettaNet-specific partner information.
 
-    rosettanet_fields = {
-        'duns_number': kwargs.get('duns_number'),
-        'global_location_number': kwargs.get('global_location_number')
-    }
+    Args:
+        rosettanet_partner_id: Partner ID (DUNS number)
+        rosettanet_partner_location: Partner location identifier
+        rosettanet_global_usage_code: Test or Production
+        rosettanet_supply_chain_code: Supply chain code
+        rosettanet_classification_code: Global partner classification code
 
-    if not any(rosettanet_fields.values()):
+    Structure: RosettaNetPartnerInfo → RosettaNetControlInfo
+    """
+    from boomi.models import RosettaNetPartnerInfo, RosettaNetControlInfo
+    from boomi.models.rosetta_net_control_info import GlobalUsageCode, PartnerIdType
+
+    partner_id = kwargs.get('rosettanet_partner_id')
+    partner_location = kwargs.get('rosettanet_partner_location')
+    global_usage_code = kwargs.get('rosettanet_global_usage_code')
+    supply_chain_code = kwargs.get('rosettanet_supply_chain_code')
+    classification_code = kwargs.get('rosettanet_classification_code')
+
+    if not any([partner_id, partner_location, global_usage_code, supply_chain_code, classification_code]):
         return None
 
-    # Placeholder - need to understand RosettaNetPartnerInfo structure
-    return None  # Will implement after inspecting the model
+    # Build RosettaNet control info
+    ctrl_kwargs = {}
+    if partner_id:
+        ctrl_kwargs['partner_id'] = partner_id
+        ctrl_kwargs['partner_id_type'] = PartnerIdType.DUNS  # Default to DUNS
+    if partner_location:
+        ctrl_kwargs['partner_location'] = partner_location
+    if global_usage_code:
+        # Map string to enum
+        if global_usage_code.lower() == 'production':
+            ctrl_kwargs['global_usage_code'] = GlobalUsageCode.PRODUCTION
+        else:
+            ctrl_kwargs['global_usage_code'] = GlobalUsageCode.TEST
+    if supply_chain_code:
+        ctrl_kwargs['supply_chain_code'] = supply_chain_code
+    if classification_code:
+        ctrl_kwargs['global_partner_classification_code'] = classification_code
+
+    rosettanet_control_info = RosettaNetControlInfo(**ctrl_kwargs)
+
+    return RosettaNetPartnerInfo(rosetta_net_control_info=rosettanet_control_info)
 
 
 def build_tradacoms_partner_info(**kwargs):
-    """Build TRADACOMS-specific partner information"""
-    from boomi.models import TradacomsPartnerInfo
+    """Build TRADACOMS-specific partner information.
 
-    tradacoms_fields = {
-        'sender_code': kwargs.get('sender_code'),
-        'recipient_code': kwargs.get('recipient_code')
-    }
+    Args:
+        tradacoms_interchange_id: Interchange ID (STX segment)
+        tradacoms_interchange_id_qualifier: Interchange ID qualifier
 
-    if not any(tradacoms_fields.values()):
+    Structure: TradacomsPartnerInfo → TradacomsControlInfo → StxControlInfo
+    """
+    from boomi.models import TradacomsPartnerInfo, TradacomsControlInfo, StxControlInfo
+
+    interchange_id = kwargs.get('tradacoms_interchange_id')
+    interchange_id_qualifier = kwargs.get('tradacoms_interchange_id_qualifier')
+
+    if not any([interchange_id, interchange_id_qualifier]):
         return None
 
-    # Placeholder - need to understand TradacomsPartnerInfo structure
-    return None  # Will implement after inspecting the model
+    # Build STX control info
+    stx_kwargs = {}
+    if interchange_id:
+        stx_kwargs['interchange_id'] = interchange_id
+    if interchange_id_qualifier:
+        stx_kwargs['interchange_id_qualifier'] = interchange_id_qualifier
+
+    stx_control_info = StxControlInfo(**stx_kwargs)
+    tradacoms_control_info = TradacomsControlInfo(stx_control_info=stx_control_info)
+
+    return TradacomsPartnerInfo(tradacoms_control_info=tradacoms_control_info)
 
 
 def build_odette_partner_info(**kwargs):
-    """Build ODETTE-specific partner information"""
-    from boomi.models import OdettePartnerInfo
+    """Build ODETTE-specific partner information.
 
-    odette_fields = {
-        'originator_code': kwargs.get('originator_code'),
-        'destination_code': kwargs.get('destination_code')
-    }
+    Args:
+        odette_interchange_id: Interchange ID (UNB segment)
+        odette_interchange_id_qual: Interchange ID qualifier (e.g., 14 for EAN, ZZ for mutually defined)
+        odette_syntax_id: Syntax identifier (UNOA, UNOB, UNOC, UNOD, UNOE, UNOF)
+        odette_syntax_version: Syntax version (1, 2, 3)
+        odette_test_indicator: Test indicator (1 for test, NA for production)
 
-    if not any(odette_fields.values()):
+    Structure: OdettePartnerInfo → (OdetteControlInfo, OdetteOptions)
+    Note: OdetteOptions with delimiters is REQUIRED (similar to EDIFACT)
+    """
+    from boomi.models import (
+        OdettePartnerInfo, OdetteControlInfo, OdetteOptions,
+        OdetteUnbControlInfo, EdiDelimiter, EdiSegmentTerminator
+    )
+    from boomi.models.edi_delimiter import DelimiterValue
+    from boomi.models.edi_segment_terminator import SegmentTerminatorValue
+
+    interchange_id = kwargs.get('odette_interchange_id')
+    interchange_id_qual = kwargs.get('odette_interchange_id_qual')
+    syntax_id = kwargs.get('odette_syntax_id')
+    syntax_version = kwargs.get('odette_syntax_version')
+    test_indicator = kwargs.get('odette_test_indicator')
+
+    # Only build if at least one field is provided
+    if not any([interchange_id, interchange_id_qual, syntax_id, syntax_version, test_indicator]):
         return None
 
-    # Placeholder - need to understand OdettePartnerInfo structure
-    return None  # Will implement after inspecting the model
+    # Build ODETTE UNB control info if any fields provided
+    unb_kwargs = {}
+    if interchange_id:
+        unb_kwargs['interchange_id'] = interchange_id
+    if interchange_id_qual:
+        # Auto-format qualifier if user provides short form (e.g., '14' -> 'ODETTEIDQUAL_14')
+        if not interchange_id_qual.startswith('ODETTEIDQUAL_'):
+            interchange_id_qual = f'ODETTEIDQUAL_{interchange_id_qual}'
+        unb_kwargs['interchange_id_qual'] = interchange_id_qual
+    if syntax_id:
+        unb_kwargs['syntax_id'] = syntax_id.upper()  # UNOA, UNOB, etc.
+    if syntax_version:
+        # Auto-format version (e.g., '3' -> 'ODETTESYNTAXVERSION_3')
+        if not str(syntax_version).startswith('ODETTESYNTAXVERSION_'):
+            syntax_version = f'ODETTESYNTAXVERSION_{syntax_version}'
+        unb_kwargs['syntax_version'] = syntax_version
+    if test_indicator:
+        # Auto-format (e.g., '1' -> 'ODETTETEST_1', 'NA' -> 'ODETTETEST_NA')
+        if not str(test_indicator).startswith('ODETTETEST_'):
+            test_indicator = f'ODETTETEST_{test_indicator}'
+        unb_kwargs['test_indicator'] = test_indicator
+
+    unb_control_info = OdetteUnbControlInfo(**unb_kwargs) if unb_kwargs else None
+    odette_control_info = OdetteControlInfo(odette_unb_control_info=unb_control_info) if unb_control_info else OdetteControlInfo()
+
+    # OdetteOptions with REQUIRED delimiters (use ODETTE/EDIFACT defaults)
+    # Standard delimiters: + for element, : for composite, ' for segment terminator
+    odette_options = OdetteOptions(
+        composite_delimiter=EdiDelimiter(delimiter_value=DelimiterValue.COLONDELIMITED),
+        element_delimiter=EdiDelimiter(delimiter_value=DelimiterValue.PLUSDELIMITED),
+        segment_terminator=EdiSegmentTerminator(segment_terminator_value=SegmentTerminatorValue.SINGLEQUOTE)
+    )
+
+    return OdettePartnerInfo(
+        odette_control_info=odette_control_info,
+        odette_options=odette_options
+    )
 
 
 def build_partner_info(standard: str, **kwargs) -> Optional[PartnerInfo]:

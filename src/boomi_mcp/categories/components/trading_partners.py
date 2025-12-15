@@ -652,7 +652,7 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
             "_success": True,
             "trading_partner": {
                 "component_id": component_id,
-                "name": updates.get("component_name", getattr(component, 'name', None)),
+                "name": updates.get("component_name", getattr(existing_tp, 'component_name', None)),
                 "updated_fields": list(updates.keys())
             },
             "message": f"Successfully updated trading partner: {component_id}"

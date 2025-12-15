@@ -424,7 +424,45 @@ if manage_trading_partner_action:
         as2_mdn_signed: str = None,
         as2_mdn_digest_alg: str = None,
         as2_synchronous_mdn: str = None,
-        as2_fail_on_negative_mdn: str = None
+        as2_fail_on_negative_mdn: str = None,
+        # New standard-specific fields
+        edifact_interchange_id: str = None,
+        edifact_interchange_id_qual: str = None,
+        edifact_syntax_id: str = None,
+        edifact_syntax_version: str = None,
+        edifact_test_indicator: str = None,
+        hl7_sending_application: str = None,
+        hl7_sending_facility: str = None,
+        hl7_receiving_application: str = None,
+        hl7_receiving_facility: str = None,
+        rosettanet_partner_id: str = None,
+        rosettanet_partner_location: str = None,
+        rosettanet_global_usage_code: str = None,
+        rosettanet_supply_chain_code: str = None,
+        rosettanet_classification_code: str = None,
+        tradacoms_interchange_id: str = None,
+        tradacoms_interchange_id_qualifier: str = None,
+        odette_interchange_id: str = None,
+        odette_interchange_id_qual: str = None,
+        odette_syntax_id: str = None,
+        odette_syntax_version: str = None,
+        odette_test_indicator: str = None,
+        # New protocol-specific fields
+        ftp_ssl_mode: str = None,
+        ftp_connection_mode: str = None,
+        sftp_ssh_key_auth: str = None,
+        sftp_known_host_entry: str = None,
+        mllp_host: str = None,
+        mllp_port: str = None,
+        mllp_use_ssl: str = None,
+        mllp_persistent: str = None,
+        mllp_receive_timeout: str = None,
+        mllp_send_timeout: str = None,
+        mllp_max_connections: str = None,
+        oftp_port: str = None,
+        oftp_ssid_code: str = None,
+        oftp_ssid_password: str = None,
+        oftp_compress: str = None
     ):
         """
         Manage B2B/EDI trading partners (all 7 standards).
@@ -649,6 +687,132 @@ if manage_trading_partner_action:
                     request_data["as2_identifier"] = as2_identifier
                 if as2_partner_identifier:
                     request_data["as2_partner_identifier"] = as2_partner_identifier
+                if as2_signed:
+                    request_data["as2_signed"] = as2_signed
+                if as2_encrypted:
+                    request_data["as2_encrypted"] = as2_encrypted
+                if as2_compressed:
+                    request_data["as2_compressed"] = as2_compressed
+                if as2_encryption_algorithm:
+                    request_data["as2_encryption_algorithm"] = as2_encryption_algorithm
+                if as2_signing_digest_alg:
+                    request_data["as2_signing_digest_alg"] = as2_signing_digest_alg
+                if as2_request_mdn:
+                    request_data["as2_request_mdn"] = as2_request_mdn
+                if as2_mdn_signed:
+                    request_data["as2_mdn_signed"] = as2_mdn_signed
+                if as2_synchronous_mdn:
+                    request_data["as2_synchronous_mdn"] = as2_synchronous_mdn
+
+                # Pass EDIFACT fields flat
+                if edifact_interchange_id:
+                    request_data["edifact_interchange_id"] = edifact_interchange_id
+                if edifact_interchange_id_qual:
+                    request_data["edifact_interchange_id_qual"] = edifact_interchange_id_qual
+                if edifact_syntax_id:
+                    request_data["edifact_syntax_id"] = edifact_syntax_id
+                if edifact_syntax_version:
+                    request_data["edifact_syntax_version"] = edifact_syntax_version
+                if edifact_test_indicator:
+                    request_data["edifact_test_indicator"] = edifact_test_indicator
+
+                # Pass HL7 fields flat
+                if hl7_sending_application:
+                    request_data["hl7_sending_application"] = hl7_sending_application
+                if hl7_sending_facility:
+                    request_data["hl7_sending_facility"] = hl7_sending_facility
+                if hl7_receiving_application:
+                    request_data["hl7_receiving_application"] = hl7_receiving_application
+                if hl7_receiving_facility:
+                    request_data["hl7_receiving_facility"] = hl7_receiving_facility
+
+                # Pass RosettaNet fields flat
+                if rosettanet_partner_id:
+                    request_data["rosettanet_partner_id"] = rosettanet_partner_id
+                if rosettanet_partner_location:
+                    request_data["rosettanet_partner_location"] = rosettanet_partner_location
+                if rosettanet_global_usage_code:
+                    request_data["rosettanet_global_usage_code"] = rosettanet_global_usage_code
+                if rosettanet_supply_chain_code:
+                    request_data["rosettanet_supply_chain_code"] = rosettanet_supply_chain_code
+                if rosettanet_classification_code:
+                    request_data["rosettanet_classification_code"] = rosettanet_classification_code
+
+                # Pass TRADACOMS fields flat
+                if tradacoms_interchange_id:
+                    request_data["tradacoms_interchange_id"] = tradacoms_interchange_id
+                if tradacoms_interchange_id_qualifier:
+                    request_data["tradacoms_interchange_id_qualifier"] = tradacoms_interchange_id_qualifier
+
+                # Pass ODETTE fields flat
+                if odette_interchange_id:
+                    request_data["odette_interchange_id"] = odette_interchange_id
+                if odette_interchange_id_qual:
+                    request_data["odette_interchange_id_qual"] = odette_interchange_id_qual
+                if odette_syntax_id:
+                    request_data["odette_syntax_id"] = odette_syntax_id
+                if odette_syntax_version:
+                    request_data["odette_syntax_version"] = odette_syntax_version
+                if odette_test_indicator:
+                    request_data["odette_test_indicator"] = odette_test_indicator
+
+                # Pass enhanced FTP fields flat
+                if ftp_ssl_mode:
+                    request_data["ftp_ssl_mode"] = ftp_ssl_mode
+                if ftp_connection_mode:
+                    request_data["ftp_connection_mode"] = ftp_connection_mode
+
+                # Pass enhanced SFTP fields flat
+                if sftp_ssh_key_auth:
+                    request_data["sftp_ssh_key_auth"] = sftp_ssh_key_auth
+                if sftp_known_host_entry:
+                    request_data["sftp_known_host_entry"] = sftp_known_host_entry
+
+                # Pass HTTP additional fields flat
+                if http_authentication_type:
+                    request_data["http_authentication_type"] = http_authentication_type
+                if http_client_auth:
+                    request_data["http_client_auth"] = http_client_auth
+                if http_trust_server_cert:
+                    request_data["http_trust_server_cert"] = http_trust_server_cert
+                if http_method_type:
+                    request_data["http_method_type"] = http_method_type
+                if http_data_content_type:
+                    request_data["http_data_content_type"] = http_data_content_type
+                if http_follow_redirects:
+                    request_data["http_follow_redirects"] = http_follow_redirects
+                if http_return_errors:
+                    request_data["http_return_errors"] = http_return_errors
+
+                # Pass MLLP fields flat
+                if mllp_host:
+                    request_data["mllp_host"] = mllp_host
+                if mllp_port:
+                    request_data["mllp_port"] = mllp_port
+                if mllp_use_ssl:
+                    request_data["mllp_use_ssl"] = mllp_use_ssl
+                if mllp_persistent:
+                    request_data["mllp_persistent"] = mllp_persistent
+                if mllp_receive_timeout:
+                    request_data["mllp_receive_timeout"] = mllp_receive_timeout
+                if mllp_send_timeout:
+                    request_data["mllp_send_timeout"] = mllp_send_timeout
+                if mllp_max_connections:
+                    request_data["mllp_max_connections"] = mllp_max_connections
+
+                # Pass OFTP fields flat
+                if oftp_host:
+                    request_data["oftp_host"] = oftp_host
+                if oftp_port:
+                    request_data["oftp_port"] = oftp_port
+                if oftp_tls:
+                    request_data["oftp_tls"] = oftp_tls
+                if oftp_ssid_code:
+                    request_data["oftp_ssid_code"] = oftp_ssid_code
+                if oftp_ssid_password:
+                    request_data["oftp_ssid_password"] = oftp_ssid_password
+                if oftp_compress:
+                    request_data["oftp_compress"] = oftp_compress
 
                 params["request_data"] = request_data
 
