@@ -538,9 +538,14 @@ def build_oftp_communication_options(**kwargs):
     return {'OFTPConnectionSettings': connection_settings}
 
 
-class PartnerCommunicationDict:
-    """Wrapper to allow dict-based partner communication that serializes correctly."""
+class PartnerCommunicationDict(dict):
+    """Wrapper to allow dict-based partner communication that serializes correctly.
+
+    Extends dict so that SDK's _define_object and _unmap can iterate over it,
+    and provides _map() method for SDK serialization.
+    """
     def __init__(self, data: dict):
+        super().__init__(data)
         self._data = data
 
     def _map(self):
