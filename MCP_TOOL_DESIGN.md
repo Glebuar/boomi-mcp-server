@@ -1,21 +1,21 @@
 # Boomi MCP Server - Tool Design & Architecture
 
-**Version**: 1.1
+**Version**: 1.2
 **Date**: 2025-01-17
-**Last Updated**: 2025-01-18 (Process components implementation complete)
-**Status**: Phase 1 Complete ✅ (Trading Partners, Process Components with Orchestrator)
+**Last Updated**: 2025-12-14 (Organizations tool added, SDK-only implementation)
+**Status**: Phase 1 Complete ✅ (Trading Partners, Organizations, Process Components)
 
 ---
 
 ## Executive Summary
 
-### Final Recommendation: Hybrid 21-Tool Architecture
+### Final Recommendation: Hybrid 22-Tool Architecture
 
-After comprehensive research of popular MCP servers and analysis of all 67 Boomi SDK examples, we recommend a **21-tool hybrid architecture** that balances token efficiency with practical usability.
+After comprehensive research of popular MCP servers and analysis of all 67 Boomi SDK examples, we recommend a **22-tool hybrid architecture** that balances token efficiency with practical usability.
 
 **Key Metrics:**
-- **Tool Count**: 21 tools (vs 100+ individual operations)
-- **Token Budget**: ~8,400 tokens (79% reduction from 40,000)
+- **Tool Count**: 22 tools (vs 100+ individual operations)
+- **Token Budget**: ~8,800 tokens (78% reduction from 40,000)
 - **Coverage**: 85% direct coverage, 100% via generic invoker
 - **Pattern**: Consolidation where it matters most (components), separation where it's practical (execution/monitoring)
 
@@ -38,7 +38,20 @@ After comprehensive research of popular MCP servers and analysis of all 67 Boomi
 - Communication protocols (AS2, FTP, SFTP, HTTP, MLLP, OFTP, Disk)
 - CRUD operations (list, get, create, update, delete)
 - Usage analysis
-- XML builders for component creation
+- SDK-only implementation (no raw HTTP calls)
+- Organization linking via `organization_id` parameter
+
+#### Organizations Tool ✅
+**Status**: Production Ready (Dev Branch)
+**Implementation**: `src/boomi_mcp/categories/components/organizations.py`
+**Tool**: `manage_organization` (1 consolidated tool)
+
+**Features**:
+- CRUD operations (list, get, create, update, delete)
+- Full contact information support (11 fields)
+- Integration with trading partners via `organization_id`
+- JSON-based API (no XML builders required)
+- SDK-only implementation
 
 #### Process Components Tool ✅
 **Status**: Production Ready (Dev Branch)
@@ -610,7 +623,7 @@ def manage_environment_extensions(
 
 ---
 
-### Category 3: Deployment & Configuration (3 tools, ~1,200 tokens)
+### Category 3: Deployment & Configuration (4 tools, ~1,600 tokens)
 
 #### 7. manage_packages
 ```python
@@ -710,11 +723,57 @@ def manage_trading_partner(
 
 **Token Savings**: ~1,600 tokens (67% reduction)
 
+#### 10. manage_organization
+```python
+@mcp.tool()
+def manage_organization(
+    profile: str,
+    action: Literal["list", "get", "create", "update", "delete"],
+    organization_id: Optional[str] = None,
+    component_name: Optional[str] = None,
+    folder_name: Optional[str] = "Home",
+    # Contact Information (11 fields)
+    contact_name: Optional[str] = None,
+    contact_email: Optional[str] = None,
+    contact_phone: Optional[str] = None,
+    contact_fax: Optional[str] = None,
+    contact_url: Optional[str] = None,
+    contact_address: Optional[str] = None,
+    contact_address2: Optional[str] = None,
+    contact_city: Optional[str] = None,
+    contact_state: Optional[str] = None,
+    contact_country: Optional[str] = None,
+    contact_postalcode: Optional[str] = None
+) -> dict:
+    """Manage Boomi organizations (shared contact info for trading partners).
+
+    Organizations provide centralized contact information that can be linked
+    to multiple trading partners via the organization_id field.
+
+    Actions:
+    - list: List all organizations with optional name filter
+    - get: Get specific organization by ID with full contact details
+    - create: Create new organization with contact information
+    - update: Update existing organization fields
+    - delete: Remove organization component
+
+    JSON-based API (no XML required).
+    """
+```
+
+**SDK Examples Covered:**
+- Organization CRUD via `organization_component` API
+
+**Relationship with Trading Partners:**
+- Organizations can be linked to trading partners via `organization_id` parameter
+- Provides shared contact information across multiple partners
+- Use `manage_trading_partner` with `organization_id` to link
+
 ---
 
 ### Category 4: Execution (3 tools, ~1,200 tokens)
 
-#### 10. execute_process
+#### 11. execute_process
 ```python
 @mcp.tool()
 def execute_process(
@@ -739,7 +798,7 @@ def execute_process(
 **SDK Examples Covered:**
 - `execute_process.py`
 
-#### 11. get_execution_status
+#### 12. get_execution_status
 ```python
 @mcp.tool(readOnlyHint=True)
 def get_execution_status(
@@ -759,7 +818,7 @@ def get_execution_status(
 - `poll_execution_status.py`
 - `get_execution_summary.py`
 
-#### 12. query_execution_records
+#### 13. query_execution_records
 ```python
 @mcp.tool(readOnlyHint=True)
 def query_execution_records(
@@ -788,7 +847,7 @@ def query_execution_records(
 
 ### Category 5: Monitoring (4 tools, ~1,600 tokens)
 
-#### 13. download_execution_logs
+#### 14. download_execution_logs
 ```python
 @mcp.tool(readOnlyHint=True)
 def download_execution_logs(
@@ -808,7 +867,7 @@ def download_execution_logs(
 **SDK Examples Covered:**
 - `download_process_log.py`
 
-#### 14. download_execution_artifacts
+#### 15. download_execution_artifacts
 ```python
 @mcp.tool(readOnlyHint=True)
 def download_execution_artifacts(
@@ -828,7 +887,7 @@ def download_execution_artifacts(
 **SDK Examples Covered:**
 - `download_execution_artifacts.py`
 
-#### 15. query_audit_logs
+#### 16. query_audit_logs
 ```python
 @mcp.tool(readOnlyHint=True)
 def query_audit_logs(
@@ -852,7 +911,7 @@ def query_audit_logs(
 **SDK Examples Covered:**
 - `query_audit_logs.py`
 
-#### 16. query_events
+#### 17. query_events
 ```python
 @mcp.tool(readOnlyHint=True)
 def query_events(
@@ -880,7 +939,7 @@ def query_events(
 
 ### Category 6: Organization (2 tools, ~800 tokens)
 
-#### 17. manage_folders
+#### 18. manage_folders
 ```python
 @mcp.tool()
 def manage_folders(
@@ -902,7 +961,7 @@ def manage_folders(
 - `manage_folders.py`
 - `folder_structure.py`
 
-#### 18. manage_schedules
+#### 19. manage_schedules
 ```python
 @mcp.tool()
 def manage_schedules(
@@ -928,7 +987,7 @@ def manage_schedules(
 
 ### Category 7: Meta/Power Tools (3 tools, ~1,200 tokens)
 
-#### 19. get_schema_template
+#### 20. get_schema_template
 ```python
 @mcp.tool(readOnlyHint=True)
 def get_schema_template(
@@ -950,7 +1009,7 @@ def get_schema_template(
 
 **Purpose**: Self-documentation, reduces errors from malformed inputs
 
-#### 20. invoke_boomi_api
+#### 21. invoke_boomi_api
 ```python
 @mcp.tool()
 def invoke_boomi_api(
@@ -991,7 +1050,7 @@ def invoke_boomi_api(
 - `reprocess_documents.py`
 - `manage_queues.py`
 
-#### 21. list_capabilities
+#### 22. list_capabilities
 ```python
 @mcp.tool(readOnlyHint=True)
 def list_capabilities() -> dict:
