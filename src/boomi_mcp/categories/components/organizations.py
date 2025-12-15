@@ -271,32 +271,31 @@ def update_organization(boomi_client, profile: str, organization_id: str, update
         if "folder_name" in updates:
             existing_org.folder_name = updates["folder_name"]
 
-        # Check for contact info updates
+        # Boomi API REQUIRES OrganizationContactInfo to be present in update payload
+        # Build contact info from existing values merged with any updates
+        existing_contact = getattr(existing_org, 'organization_contact_info', None)
+
+        # Get existing values or defaults
+        contact_params = {
+            'contact_name': getattr(existing_contact, 'contact_name', '') if existing_contact else '',
+            'contact_email': getattr(existing_contact, 'email', '') if existing_contact else '',
+            'contact_phone': getattr(existing_contact, 'phone', '') if existing_contact else '',
+            'contact_fax': getattr(existing_contact, 'fax', '') if existing_contact else '',
+            'contact_url': getattr(existing_contact, 'contact_url', '') if existing_contact else '',
+            'contact_address': getattr(existing_contact, 'address1', '') if existing_contact else '',
+            'contact_address2': getattr(existing_contact, 'address2', '') if existing_contact else '',
+            'contact_city': getattr(existing_contact, 'city', '') if existing_contact else '',
+            'contact_state': getattr(existing_contact, 'state', '') if existing_contact else '',
+            'contact_country': getattr(existing_contact, 'country', '') if existing_contact else '',
+            'contact_postalcode': getattr(existing_contact, 'postalcode', '') if existing_contact else ''
+        }
+
+        # Override with any contact updates
         contact_updates = {k: v for k, v in updates.items() if k.startswith('contact_')}
-        if contact_updates:
-            # Build new contact info, merging with existing
-            existing_contact = getattr(existing_org, 'organization_contact_info', None)
+        contact_params.update(contact_updates)
 
-            # Get existing values or defaults
-            contact_params = {
-                'contact_name': getattr(existing_contact, 'contact_name', '') if existing_contact else '',
-                'contact_email': getattr(existing_contact, 'email', '') if existing_contact else '',
-                'contact_phone': getattr(existing_contact, 'phone', '') if existing_contact else '',
-                'contact_fax': getattr(existing_contact, 'fax', '') if existing_contact else '',
-                'contact_url': getattr(existing_contact, 'contact_url', '') if existing_contact else '',
-                'contact_address': getattr(existing_contact, 'address1', '') if existing_contact else '',
-                'contact_address2': getattr(existing_contact, 'address2', '') if existing_contact else '',
-                'contact_city': getattr(existing_contact, 'city', '') if existing_contact else '',
-                'contact_state': getattr(existing_contact, 'state', '') if existing_contact else '',
-                'contact_country': getattr(existing_contact, 'country', '') if existing_contact else '',
-                'contact_postalcode': getattr(existing_contact, 'postalcode', '') if existing_contact else ''
-            }
-
-            # Override with updates
-            contact_params.update(contact_updates)
-
-            # Build new contact info
-            existing_org.organization_contact_info = build_organization_contact_info(**contact_params)
+        # Always set contact info (required by Boomi API)
+        existing_org.organization_contact_info = build_organization_contact_info(**contact_params)
 
         # Update organization
         result = boomi_client.organization_component.update_organization_component(
