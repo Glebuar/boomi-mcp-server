@@ -143,7 +143,6 @@ try:
 
     print(f"[INFO] OAuth tokens will be stored in MongoDB Atlas")
     print(f"[INFO] Token storage encrypted with Fernet")
-    print(f"[DEBUG] Encryption key prefix: {storage_encryption_key[:10]}...")
 
     auth = GoogleProvider(
         client_id=client_id,
