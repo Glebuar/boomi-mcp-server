@@ -117,9 +117,18 @@ class DebugStorageWrapper:
         self._storage = storage
 
     async def get(self, key: str, *, collection: str | None = None):
-        result = await self._storage.get(key=key, collection=collection)
-        print(f"[DEBUG] Storage GET key={key[:20]}... collection={collection} found={result is not None}")
-        return result
+        try:
+            result = await self._storage.get(key=key, collection=collection)
+            if result is not None:
+                # Log the keys in the result to help debug
+                result_keys = list(result.keys()) if isinstance(result, dict) else "not-dict"
+                print(f"[DEBUG] Storage GET key={key[:20]}... collection={collection} found=True keys={result_keys}")
+            else:
+                print(f"[DEBUG] Storage GET key={key[:20]}... collection={collection} found=False")
+            return result
+        except Exception as e:
+            print(f"[DEBUG] Storage GET key={key[:20]}... collection={collection} ERROR={type(e).__name__}: {e}")
+            raise
 
     async def get_many(self, keys: list[str], *, collection: str | None = None):
         results = await self._storage.get_many(keys=keys, collection=collection)
@@ -192,7 +201,8 @@ try:
     print(f"[INFO] OAuth tokens will be stored in MongoDB Atlas")
     print(f"[INFO] Token storage encrypted with Fernet")
 
-    auth = GoogleProvider(
+    # Create base GoogleProvider
+    base_auth = GoogleProvider(
         client_id=client_id,
         client_secret=client_secret,
         base_url=base_url,
@@ -203,6 +213,32 @@ try:
             "prompt": "consent",       # Force consent to ensure refresh token is issued
         },
     )
+
+    # Wrap get_client to add debug logging
+    original_get_client = base_auth.get_client
+    async def debug_get_client(client_id_param: str):
+        print(f"[DEBUG] get_client called with client_id={client_id_param[:20]}...")
+        result = await original_get_client(client_id_param)
+        if result:
+            print(f"[DEBUG] get_client returned client with id={result.client_id[:20]}... grant_types={result.grant_types}")
+        else:
+            print(f"[DEBUG] get_client returned None")
+        return result
+    base_auth.get_client = debug_get_client
+
+    # Wrap load_authorization_code to add debug logging
+    original_load_auth_code = base_auth.load_authorization_code
+    async def debug_load_auth_code(client, auth_code: str):
+        print(f"[DEBUG] load_authorization_code called with code={auth_code[:20]}... client_id={client.client_id[:20]}...")
+        result = await original_load_auth_code(client, auth_code)
+        if result:
+            print(f"[DEBUG] load_authorization_code returned code with client_id={result.client_id[:20]}...")
+        else:
+            print(f"[DEBUG] load_authorization_code returned None")
+        return result
+    base_auth.load_authorization_code = debug_load_auth_code
+
+    auth = base_auth
 
     print(f"[INFO] Google OAuth 2.0 configured")
     print(f"[INFO] Base URL: {base_url}")
