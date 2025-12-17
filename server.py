@@ -238,6 +238,20 @@ try:
         return result
     base_auth.load_authorization_code = debug_load_auth_code
 
+    # FIX: Wrap register_client to clear client_secret when token_endpoint_auth_method="none"
+    # This fixes a bug where MCP clients send a secret during registration but don't send it
+    # during token exchange when using auth_method="none". The MCP SDK's ClientAuthenticator
+    # incorrectly requires the secret if it's stored, regardless of auth_method.
+    original_register_client = base_auth.register_client
+    async def patched_register_client(client_info):
+        # Clear client_secret to prevent auth issues with "none" auth method
+        if hasattr(client_info, 'client_secret') and client_info.client_secret:
+            print(f"[DEBUG] Clearing client_secret for client {client_info.client_id[:20]}... (auth_method=none)")
+            # Create a copy with client_secret cleared
+            client_info = client_info.model_copy(update={"client_secret": None})
+        return await original_register_client(client_info)
+    base_auth.register_client = patched_register_client
+
     auth = base_auth
 
     print(f"[INFO] Google OAuth 2.0 configured")
