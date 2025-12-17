@@ -106,6 +106,50 @@ from fastmcp.server.auth.providers.google import GoogleProvider
 from key_value.aio.stores.mongodb import MongoDBStore
 from key_value.aio.wrappers.encryption import FernetEncryptionWrapper
 from cryptography.fernet import Fernet
+from collections.abc import Sequence
+from typing import Any, SupportsFloat
+
+# Debug wrapper to log storage operations
+class DebugStorageWrapper:
+    """Wrapper that logs all storage operations for debugging."""
+
+    def __init__(self, storage):
+        self._storage = storage
+
+    async def get(self, key: str, *, collection: str | None = None):
+        result = await self._storage.get(key=key, collection=collection)
+        print(f"[DEBUG] Storage GET key={key[:20]}... collection={collection} found={result is not None}")
+        return result
+
+    async def get_many(self, keys: list[str], *, collection: str | None = None):
+        results = await self._storage.get_many(keys=keys, collection=collection)
+        print(f"[DEBUG] Storage GET_MANY keys={len(keys)} collection={collection} found={sum(1 for r in results if r)}")
+        return results
+
+    async def put(self, key: str, value: dict[str, Any], *, collection: str | None = None, ttl: SupportsFloat | None = None):
+        print(f"[DEBUG] Storage PUT key={key[:20]}... collection={collection} ttl={ttl}")
+        return await self._storage.put(key=key, value=value, collection=collection, ttl=ttl)
+
+    async def put_many(self, keys: list[str], values: Sequence[dict[str, Any]], *, collection: str | None = None, ttl: Sequence[SupportsFloat | None] | None = None):
+        print(f"[DEBUG] Storage PUT_MANY keys={len(keys)} collection={collection}")
+        return await self._storage.put_many(keys=keys, values=values, collection=collection, ttl=ttl)
+
+    async def delete(self, key: str, *, collection: str | None = None) -> bool:
+        result = await self._storage.delete(key=key, collection=collection)
+        print(f"[DEBUG] Storage DELETE key={key[:20]}... collection={collection} deleted={result}")
+        return result
+
+    async def delete_many(self, keys: list[str], *, collection: str | None = None) -> int:
+        result = await self._storage.delete_many(keys=keys, collection=collection)
+        print(f"[DEBUG] Storage DELETE_MANY keys={len(keys)} collection={collection} deleted={result}")
+        return result
+
+    async def ttl(self, key: str, *, collection: str | None = None):
+        return await self._storage.ttl(key=key, collection=collection)
+
+    async def ttl_many(self, keys: list[str], *, collection: str | None = None):
+        return await self._storage.ttl_many(keys=keys, collection=collection)
+
 
 # Create Google OAuth provider
 try:
@@ -141,6 +185,10 @@ try:
         fernet=Fernet(storage_encryption_key.encode())
     )
 
+    # Wrap with debug logger
+    debug_storage = DebugStorageWrapper(encrypted_storage)
+    print(f"[DEBUG] Storage encryption key prefix: {storage_encryption_key[:10]}...")
+
     print(f"[INFO] OAuth tokens will be stored in MongoDB Atlas")
     print(f"[INFO] Token storage encrypted with Fernet")
 
@@ -149,7 +197,7 @@ try:
         client_secret=client_secret,
         base_url=base_url,
         jwt_signing_key=jwt_signing_key,  # Explicit JWT signing key (production requirement)
-        client_storage=encrypted_storage,  # Encrypted Redis storage (production requirement)
+        client_storage=debug_storage,  # Debug-wrapped encrypted MongoDB storage
         extra_authorize_params={
             "access_type": "offline",  # Request refresh tokens from Google
             "prompt": "consent",       # Force consent to ensure refresh token is issued
