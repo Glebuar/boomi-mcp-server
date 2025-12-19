@@ -534,10 +534,17 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
         # so communications are automatically preserved during updates.
 
         # Check if protocol updates were specified (these will REPLACE existing communications)
+        # Support both nested format (as2_settings, http_settings, etc.) and flat format (ftp_host, http_url, etc.)
         from boomi_mcp.models.trading_partner_builders import PartnerCommunicationDict
-        has_protocol_updates = any(key in updates for key in [
+        flat_protocol_prefixes = ["ftp_", "sftp_", "http_", "as2_", "disk_", "mllp_", "oftp_"]
+        has_flat_protocol_updates = any(
+            any(key.startswith(prefix) for prefix in flat_protocol_prefixes)
+            for key in updates
+        )
+        has_nested_protocol_updates = any(key in updates for key in [
             "as2_settings", "http_settings", "sftp_settings", "ftp_settings", "disk_settings"
         ])
+        has_protocol_updates = has_flat_protocol_updates or has_nested_protocol_updates or "communication_protocols" in updates
 
         # Update basic component fields
         if "component_name" in updates:
@@ -663,6 +670,43 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                     disk_params["disk_get_directory"] = disk["get_directory"]
                 if "send_directory" in disk:
                     disk_params["disk_send_directory"] = disk["send_directory"]
+                if disk_params:
+                    disk_opts = build_disk_communication_options(**disk_params)
+                    if disk_opts:
+                        comm_dict["DiskCommunicationOptions"] = disk_opts
+
+            # Handle flat protocol parameters (preferred format from MCP tool)
+            if has_flat_protocol_updates:
+                # HTTP flat params
+                http_params = {k: v for k, v in updates.items() if k.startswith('http_')}
+                if http_params:
+                    http_opts = build_http_communication_options(**http_params)
+                    if http_opts:
+                        comm_dict["HTTPCommunicationOptions"] = http_opts
+
+                # FTP flat params
+                ftp_params = {k: v for k, v in updates.items() if k.startswith('ftp_')}
+                if ftp_params:
+                    ftp_opts = build_ftp_communication_options(**ftp_params)
+                    if ftp_opts:
+                        comm_dict["FTPCommunicationOptions"] = ftp_opts
+
+                # SFTP flat params
+                sftp_params = {k: v for k, v in updates.items() if k.startswith('sftp_')}
+                if sftp_params:
+                    sftp_opts = build_sftp_communication_options(**sftp_params)
+                    if sftp_opts:
+                        comm_dict["SFTPCommunicationOptions"] = sftp_opts
+
+                # AS2 flat params
+                as2_params = {k: v for k, v in updates.items() if k.startswith('as2_')}
+                if as2_params:
+                    as2_opts = build_as2_communication_options(**as2_params)
+                    if as2_opts:
+                        comm_dict["AS2CommunicationOptions"] = as2_opts
+
+                # Disk flat params
+                disk_params = {k: v for k, v in updates.items() if k.startswith('disk_')}
                 if disk_params:
                     disk_opts = build_disk_communication_options(**disk_params)
                     if disk_opts:

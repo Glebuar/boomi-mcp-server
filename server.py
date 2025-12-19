@@ -796,6 +796,205 @@ if manage_trading_partner_action:
                 if gs_id:
                     updates["gs_id"] = gs_id
 
+                # Communication protocols
+                if communication_protocols:
+                    protocols_list = [p.strip() for p in communication_protocols.split(',')]
+                    updates["communication_protocols"] = protocols_list
+
+                # Disk fields
+                if disk_directory:
+                    updates["disk_directory"] = disk_directory
+                if disk_get_directory:
+                    updates["disk_get_directory"] = disk_get_directory
+                if disk_send_directory:
+                    updates["disk_send_directory"] = disk_send_directory
+
+                # FTP fields
+                if ftp_host:
+                    updates["ftp_host"] = ftp_host
+                if ftp_port:
+                    updates["ftp_port"] = ftp_port
+                if ftp_username:
+                    updates["ftp_username"] = ftp_username
+                if ftp_password:
+                    updates["ftp_password"] = ftp_password
+                if ftp_remote_directory:
+                    updates["ftp_remote_directory"] = ftp_remote_directory
+                if ftp_ssl_mode:
+                    updates["ftp_ssl_mode"] = ftp_ssl_mode
+                if ftp_connection_mode:
+                    updates["ftp_connection_mode"] = ftp_connection_mode
+
+                # SFTP fields
+                if sftp_host:
+                    updates["sftp_host"] = sftp_host
+                if sftp_port:
+                    updates["sftp_port"] = sftp_port
+                if sftp_username:
+                    updates["sftp_username"] = sftp_username
+                if sftp_password:
+                    updates["sftp_password"] = sftp_password
+                if sftp_remote_directory:
+                    updates["sftp_remote_directory"] = sftp_remote_directory
+                if sftp_ssh_key_auth:
+                    updates["sftp_ssh_key_auth"] = sftp_ssh_key_auth
+                if sftp_known_host_entry:
+                    updates["sftp_known_host_entry"] = sftp_known_host_entry
+
+                # HTTP fields
+                if http_url:
+                    updates["http_url"] = http_url
+                if http_username:
+                    updates["http_username"] = http_username
+                if http_password:
+                    updates["http_password"] = http_password
+                if http_authentication_type:
+                    updates["http_authentication_type"] = http_authentication_type
+                if http_connect_timeout:
+                    updates["http_connect_timeout"] = http_connect_timeout
+                if http_read_timeout:
+                    updates["http_read_timeout"] = http_read_timeout
+                if http_client_auth:
+                    updates["http_client_auth"] = http_client_auth
+                if http_trust_server_cert:
+                    updates["http_trust_server_cert"] = http_trust_server_cert
+                if http_method_type:
+                    updates["http_method_type"] = http_method_type
+                if http_data_content_type:
+                    updates["http_data_content_type"] = http_data_content_type
+                if http_follow_redirects:
+                    updates["http_follow_redirects"] = http_follow_redirects
+                if http_return_errors:
+                    updates["http_return_errors"] = http_return_errors
+
+                # AS2 fields
+                if as2_url:
+                    updates["as2_url"] = as2_url
+                if as2_identifier:
+                    updates["as2_identifier"] = as2_identifier
+                if as2_partner_identifier:
+                    updates["as2_partner_identifier"] = as2_partner_identifier
+                if as2_username:
+                    updates["as2_username"] = as2_username
+                if as2_password:
+                    updates["as2_password"] = as2_password
+                if as2_authentication_type:
+                    updates["as2_authentication_type"] = as2_authentication_type
+                if as2_verify_hostname:
+                    updates["as2_verify_hostname"] = as2_verify_hostname
+                if as2_client_ssl_alias:
+                    updates["as2_client_ssl_alias"] = as2_client_ssl_alias
+                if as2_encrypt_alias:
+                    updates["as2_encrypt_alias"] = as2_encrypt_alias
+                if as2_sign_alias:
+                    updates["as2_sign_alias"] = as2_sign_alias
+                if as2_mdn_alias:
+                    updates["as2_mdn_alias"] = as2_mdn_alias
+                if as2_signed:
+                    updates["as2_signed"] = as2_signed
+                if as2_encrypted:
+                    updates["as2_encrypted"] = as2_encrypted
+                if as2_compressed:
+                    updates["as2_compressed"] = as2_compressed
+                if as2_encryption_algorithm:
+                    updates["as2_encryption_algorithm"] = as2_encryption_algorithm
+                if as2_signing_digest_alg:
+                    updates["as2_signing_digest_alg"] = as2_signing_digest_alg
+                if as2_data_content_type:
+                    updates["as2_data_content_type"] = as2_data_content_type
+                if as2_request_mdn:
+                    updates["as2_request_mdn"] = as2_request_mdn
+                if as2_mdn_signed:
+                    updates["as2_mdn_signed"] = as2_mdn_signed
+                if as2_mdn_digest_alg:
+                    updates["as2_mdn_digest_alg"] = as2_mdn_digest_alg
+                if as2_synchronous_mdn:
+                    updates["as2_synchronous_mdn"] = as2_synchronous_mdn
+                if as2_fail_on_negative_mdn:
+                    updates["as2_fail_on_negative_mdn"] = as2_fail_on_negative_mdn
+
+                # MLLP fields (HL7)
+                if mllp_host:
+                    updates["mllp_host"] = mllp_host
+                if mllp_port:
+                    updates["mllp_port"] = mllp_port
+                if mllp_use_ssl:
+                    updates["mllp_use_ssl"] = mllp_use_ssl
+                if mllp_persistent:
+                    updates["mllp_persistent"] = mllp_persistent
+                if mllp_receive_timeout:
+                    updates["mllp_receive_timeout"] = mllp_receive_timeout
+                if mllp_send_timeout:
+                    updates["mllp_send_timeout"] = mllp_send_timeout
+                if mllp_max_connections:
+                    updates["mllp_max_connections"] = mllp_max_connections
+
+                # OFTP fields
+                if oftp_host:
+                    updates["oftp_host"] = oftp_host
+                if oftp_port:
+                    updates["oftp_port"] = oftp_port
+                if oftp_tls:
+                    updates["oftp_tls"] = oftp_tls
+                if oftp_ssid_code:
+                    updates["oftp_ssid_code"] = oftp_ssid_code
+                if oftp_ssid_password:
+                    updates["oftp_ssid_password"] = oftp_ssid_password
+                if oftp_compress:
+                    updates["oftp_compress"] = oftp_compress
+
+                # EDIFACT fields
+                if edifact_interchange_id:
+                    updates["edifact_interchange_id"] = edifact_interchange_id
+                if edifact_interchange_id_qual:
+                    updates["edifact_interchange_id_qual"] = edifact_interchange_id_qual
+                if edifact_syntax_id:
+                    updates["edifact_syntax_id"] = edifact_syntax_id
+                if edifact_syntax_version:
+                    updates["edifact_syntax_version"] = edifact_syntax_version
+                if edifact_test_indicator:
+                    updates["edifact_test_indicator"] = edifact_test_indicator
+
+                # HL7 fields
+                if hl7_sending_application:
+                    updates["hl7_sending_application"] = hl7_sending_application
+                if hl7_sending_facility:
+                    updates["hl7_sending_facility"] = hl7_sending_facility
+                if hl7_receiving_application:
+                    updates["hl7_receiving_application"] = hl7_receiving_application
+                if hl7_receiving_facility:
+                    updates["hl7_receiving_facility"] = hl7_receiving_facility
+
+                # RosettaNet fields
+                if rosettanet_partner_id:
+                    updates["rosettanet_partner_id"] = rosettanet_partner_id
+                if rosettanet_partner_location:
+                    updates["rosettanet_partner_location"] = rosettanet_partner_location
+                if rosettanet_global_usage_code:
+                    updates["rosettanet_global_usage_code"] = rosettanet_global_usage_code
+                if rosettanet_supply_chain_code:
+                    updates["rosettanet_supply_chain_code"] = rosettanet_supply_chain_code
+                if rosettanet_classification_code:
+                    updates["rosettanet_classification_code"] = rosettanet_classification_code
+
+                # TRADACOMS fields
+                if tradacoms_interchange_id:
+                    updates["tradacoms_interchange_id"] = tradacoms_interchange_id
+                if tradacoms_interchange_id_qualifier:
+                    updates["tradacoms_interchange_id_qualifier"] = tradacoms_interchange_id_qualifier
+
+                # ODETTE fields
+                if odette_interchange_id:
+                    updates["odette_interchange_id"] = odette_interchange_id
+                if odette_interchange_id_qual:
+                    updates["odette_interchange_id_qual"] = odette_interchange_id_qual
+                if odette_syntax_id:
+                    updates["odette_syntax_id"] = odette_syntax_id
+                if odette_syntax_version:
+                    updates["odette_syntax_version"] = odette_syntax_version
+                if odette_test_indicator:
+                    updates["odette_test_indicator"] = odette_test_indicator
+
                 # Organization linking
                 if organization_id:
                     updates["organization_id"] = organization_id
