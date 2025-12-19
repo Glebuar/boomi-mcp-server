@@ -54,7 +54,7 @@ except ImportError as e:
 
 # --- Trading Partner Tools ---
 try:
-    from boomi_mcp.categories.deployment.trading_partners import manage_trading_partner_action
+    from boomi_mcp.categories.components.trading_partners import manage_trading_partner_action
     print(f"[INFO] Trading partner tools loaded successfully")
 except ImportError as e:
     print(f"[WARNING] Failed to import trading partner tools: {e}")
@@ -370,55 +370,83 @@ if manage_trading_partner_action:
         standard: str = None,
         classification: str = None,
         folder_name: str = None,
+        # X12 standard fields
         isa_id: str = None,
         isa_qualifier: str = None,
         gs_id: str = None,
+        # Contact Information
         contact_name: str = None,
         contact_email: str = None,
-        contact_phone: str = None
+        contact_phone: str = None,
+        contact_fax: str = None,
+        contact_address: str = None,
+        contact_address2: str = None,
+        contact_city: str = None,
+        contact_state: str = None,
+        contact_country: str = None,
+        contact_postalcode: str = None,
+        # Communication Protocols
+        communication_protocols: str = None,
+        # Disk protocol fields
+        disk_get_directory: str = None,
+        disk_send_directory: str = None,
+        # FTP protocol fields
+        ftp_host: str = None,
+        ftp_port: str = None,
+        ftp_username: str = None,
+        ftp_password: str = None,
+        ftp_remote_directory: str = None,
+        # SFTP protocol fields
+        sftp_host: str = None,
+        sftp_port: str = None,
+        sftp_username: str = None,
+        sftp_password: str = None,
+        sftp_remote_directory: str = None,
+        # HTTP protocol fields
+        http_url: str = None,
+        http_username: str = None,
+        http_password: str = None,
+        http_authentication_type: str = None,
+        # AS2 protocol fields
+        as2_url: str = None,
+        as2_identifier: str = None,
+        as2_partner_identifier: str = None,
+        as2_username: str = None,
+        as2_password: str = None
     ):
         """
-        Manage B2B/EDI trading partners (all 7 standards).
-
-        Consolidated tool for all trading partner operations.
+        Manage B2B/EDI trading partners with communication protocols.
 
         IMPORTANT: Before calling this tool, ask the user to choose:
 
-        1. TRADING STANDARD - Which EDI/B2B standard to use:
-           • x12 - North American EDI standard
-           • edifact - International EDI standard
-           • hl7 - Healthcare messaging standard
-           • rosettanet - Supply chain messaging
-           • custom - Flexible custom format
-           • tradacoms - UK retail EDI standard
-           • odette - Automotive industry standard
-
-        2. CLASSIFICATION - What type of partner (for create action):
-           • "tradingpartner" = "This is a partner that I trade with"
-           • "mytradingpartner" = "This is my company"
+        1. TRADING STANDARD: x12, edifact, hl7, rosettanet, custom, tradacoms, odette
+        2. CLASSIFICATION: "tradingpartner" or "mytradingpartner" (my company)
+        3. COMMUNICATION PROTOCOL: disk, ftp, sftp, http, as2 (comma-separated for multiple)
 
         Args:
             profile: Boomi profile name (required)
-            action: Action to perform - must be one of: list, get, create, update, delete, analyze_usage
-            partner_id: Trading partner component ID (required for get, update, delete, analyze_usage)
-            component_name: Trading partner name (required for create, optional for update)
-            standard: Trading standard (required for create, optional filter for list)
-            classification: Partner classification (optional for create/list)
-            folder_name: Folder to place partner in (optional for create/list)
-            isa_id: ISA ID for X12 partners (X12 only)
-            isa_qualifier: ISA Qualifier for X12 partners (X12 only)
-            gs_id: GS ID for X12 partners (X12 only)
-            contact_name: Contact person name (optional)
-            contact_email: Contact email address (optional)
-            contact_phone: Contact phone number (optional)
+            action: list, get, create, update, delete, analyze_usage
+            partner_id: Component ID (required for get/update/delete)
+            component_name: Partner name (required for create)
+            standard: x12, edifact, hl7, rosettanet, custom, tradacoms, odette
+            classification: tradingpartner or mytradingpartner
+            folder_name: Folder location
 
-        Actions:
-            - list: List all trading partners with optional filtering
-            - get: Get specific trading partner details by ID
-            - create: Create new trading partner
-            - update: Update existing trading partner
-            - delete: Delete trading partner
-            - analyze_usage: Analyze where trading partner is used
+            # X12 Fields
+            isa_id, isa_qualifier, gs_id: X12 identifiers
+
+            # Contact Info
+            contact_name, contact_email, contact_phone, contact_fax
+            contact_address, contact_address2, contact_city, contact_state, contact_country, contact_postalcode
+
+            # Communication Protocols
+            communication_protocols: Comma-separated list (e.g., "ftp,http")
+
+            # Disk: disk_get_directory, disk_send_directory
+            # FTP: ftp_host, ftp_port, ftp_username, ftp_password, ftp_remote_directory
+            # SFTP: sftp_host, sftp_port, sftp_username, sftp_password, sftp_remote_directory
+            # HTTP: http_url, http_username, http_password, http_authentication_type
+            # AS2: as2_url, as2_identifier, as2_partner_identifier, as2_username, as2_password
 
         Returns:
             Action result with success status and data/error
@@ -455,7 +483,7 @@ if manage_trading_partner_action:
                 params["partner_id"] = partner_id
 
             elif action == "create":
-                # Build request data
+                # Build request data with flat parameters
                 request_data = {}
                 if component_name:
                     request_data["component_name"] = component_name
@@ -466,55 +494,189 @@ if manage_trading_partner_action:
                 if folder_name:
                     request_data["folder_name"] = folder_name
 
-                # Add partner info for X12
-                if standard and standard.lower() == "x12" and (isa_id or isa_qualifier or gs_id):
-                    request_data["partner_info"] = {}
-                    if isa_id:
-                        request_data["partner_info"]["isa_id"] = isa_id
-                    if isa_qualifier:
-                        request_data["partner_info"]["isa_qualifier"] = isa_qualifier
-                    if gs_id:
-                        request_data["partner_info"]["gs_id"] = gs_id
+                # X12 fields (flat)
+                if isa_id:
+                    request_data["isa_id"] = isa_id
+                if isa_qualifier:
+                    request_data["isa_qualifier"] = isa_qualifier
+                if gs_id:
+                    request_data["gs_id"] = gs_id
 
-                # Add contact info
-                if contact_name or contact_email or contact_phone:
-                    request_data["contact_info"] = {}
-                    if contact_name:
-                        request_data["contact_info"]["name"] = contact_name
-                    if contact_email:
-                        request_data["contact_info"]["email"] = contact_email
-                    if contact_phone:
-                        request_data["contact_info"]["phone"] = contact_phone
+                # Contact info (flat)
+                if contact_name:
+                    request_data["contact_name"] = contact_name
+                if contact_email:
+                    request_data["contact_email"] = contact_email
+                if contact_phone:
+                    request_data["contact_phone"] = contact_phone
+                if contact_fax:
+                    request_data["contact_fax"] = contact_fax
+                if contact_address:
+                    request_data["contact_address"] = contact_address
+                if contact_address2:
+                    request_data["contact_address2"] = contact_address2
+                if contact_city:
+                    request_data["contact_city"] = contact_city
+                if contact_state:
+                    request_data["contact_state"] = contact_state
+                if contact_country:
+                    request_data["contact_country"] = contact_country
+                if contact_postalcode:
+                    request_data["contact_postalcode"] = contact_postalcode
+
+                # Communication protocols
+                if communication_protocols:
+                    protocols_list = [p.strip() for p in communication_protocols.split(',')]
+                    request_data["communication_protocols"] = protocols_list
+
+                # Disk protocol fields
+                if disk_get_directory:
+                    request_data["disk_get_directory"] = disk_get_directory
+                if disk_send_directory:
+                    request_data["disk_send_directory"] = disk_send_directory
+
+                # FTP protocol fields
+                if ftp_host:
+                    request_data["ftp_host"] = ftp_host
+                if ftp_port:
+                    request_data["ftp_port"] = ftp_port
+                if ftp_username:
+                    request_data["ftp_username"] = ftp_username
+                if ftp_password:
+                    request_data["ftp_password"] = ftp_password
+                if ftp_remote_directory:
+                    request_data["ftp_remote_directory"] = ftp_remote_directory
+
+                # SFTP protocol fields
+                if sftp_host:
+                    request_data["sftp_host"] = sftp_host
+                if sftp_port:
+                    request_data["sftp_port"] = sftp_port
+                if sftp_username:
+                    request_data["sftp_username"] = sftp_username
+                if sftp_password:
+                    request_data["sftp_password"] = sftp_password
+                if sftp_remote_directory:
+                    request_data["sftp_remote_directory"] = sftp_remote_directory
+
+                # HTTP protocol fields
+                if http_url:
+                    request_data["http_url"] = http_url
+                if http_username:
+                    request_data["http_username"] = http_username
+                if http_password:
+                    request_data["http_password"] = http_password
+                if http_authentication_type:
+                    request_data["http_authentication_type"] = http_authentication_type
+
+                # AS2 protocol fields
+                if as2_url:
+                    request_data["as2_url"] = as2_url
+                if as2_identifier:
+                    request_data["as2_identifier"] = as2_identifier
+                if as2_partner_identifier:
+                    request_data["as2_partner_identifier"] = as2_partner_identifier
+                if as2_username:
+                    request_data["as2_username"] = as2_username
+                if as2_password:
+                    request_data["as2_password"] = as2_password
 
                 params["request_data"] = request_data
 
             elif action == "update":
                 params["partner_id"] = partner_id
 
-                # Build updates
+                # Build updates with flat parameters
                 updates = {}
                 if component_name:
                     updates["component_name"] = component_name
 
-                # Contact info updates
-                if contact_name or contact_email or contact_phone:
-                    updates["contact_info"] = {}
-                    if contact_name:
-                        updates["contact_info"]["name"] = contact_name
-                    if contact_email:
-                        updates["contact_info"]["email"] = contact_email
-                    if contact_phone:
-                        updates["contact_info"]["phone"] = contact_phone
+                # X12 fields
+                if isa_id:
+                    updates["isa_id"] = isa_id
+                if isa_qualifier:
+                    updates["isa_qualifier"] = isa_qualifier
+                if gs_id:
+                    updates["gs_id"] = gs_id
 
-                # Partner info updates
-                if isa_id or isa_qualifier or gs_id:
-                    updates["partner_info"] = {}
-                    if isa_id:
-                        updates["partner_info"]["isa_id"] = isa_id
-                    if isa_qualifier:
-                        updates["partner_info"]["isa_qualifier"] = isa_qualifier
-                    if gs_id:
-                        updates["partner_info"]["gs_id"] = gs_id
+                # Contact info (flat)
+                if contact_name:
+                    updates["contact_name"] = contact_name
+                if contact_email:
+                    updates["contact_email"] = contact_email
+                if contact_phone:
+                    updates["contact_phone"] = contact_phone
+                if contact_fax:
+                    updates["contact_fax"] = contact_fax
+                if contact_address:
+                    updates["contact_address"] = contact_address
+                if contact_address2:
+                    updates["contact_address2"] = contact_address2
+                if contact_city:
+                    updates["contact_city"] = contact_city
+                if contact_state:
+                    updates["contact_state"] = contact_state
+                if contact_country:
+                    updates["contact_country"] = contact_country
+                if contact_postalcode:
+                    updates["contact_postalcode"] = contact_postalcode
+
+                # Communication protocols
+                if communication_protocols:
+                    protocols_list = [p.strip() for p in communication_protocols.split(',')]
+                    updates["communication_protocols"] = protocols_list
+
+                # Disk protocol fields
+                if disk_get_directory:
+                    updates["disk_get_directory"] = disk_get_directory
+                if disk_send_directory:
+                    updates["disk_send_directory"] = disk_send_directory
+
+                # FTP protocol fields
+                if ftp_host:
+                    updates["ftp_host"] = ftp_host
+                if ftp_port:
+                    updates["ftp_port"] = ftp_port
+                if ftp_username:
+                    updates["ftp_username"] = ftp_username
+                if ftp_password:
+                    updates["ftp_password"] = ftp_password
+                if ftp_remote_directory:
+                    updates["ftp_remote_directory"] = ftp_remote_directory
+
+                # SFTP protocol fields
+                if sftp_host:
+                    updates["sftp_host"] = sftp_host
+                if sftp_port:
+                    updates["sftp_port"] = sftp_port
+                if sftp_username:
+                    updates["sftp_username"] = sftp_username
+                if sftp_password:
+                    updates["sftp_password"] = sftp_password
+                if sftp_remote_directory:
+                    updates["sftp_remote_directory"] = sftp_remote_directory
+
+                # HTTP protocol fields
+                if http_url:
+                    updates["http_url"] = http_url
+                if http_username:
+                    updates["http_username"] = http_username
+                if http_password:
+                    updates["http_password"] = http_password
+                if http_authentication_type:
+                    updates["http_authentication_type"] = http_authentication_type
+
+                # AS2 protocol fields
+                if as2_url:
+                    updates["as2_url"] = as2_url
+                if as2_identifier:
+                    updates["as2_identifier"] = as2_identifier
+                if as2_partner_identifier:
+                    updates["as2_partner_identifier"] = as2_partner_identifier
+                if as2_username:
+                    updates["as2_username"] = as2_username
+                if as2_password:
+                    updates["as2_password"] = as2_password
 
                 params["updates"] = updates
 

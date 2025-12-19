@@ -534,10 +534,17 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
         # so communications are automatically preserved during updates.
 
         # Check if protocol updates were specified (these will REPLACE existing communications)
+        # Support both nested format (*_settings) and flat format (*_host, *_url, etc.)
         from boomi_mcp.models.trading_partner_builders import PartnerCommunicationDict
-        has_protocol_updates = any(key in updates for key in [
+        flat_protocol_prefixes = ["ftp_", "sftp_", "http_", "as2_", "disk_"]
+        has_flat_protocol_updates = any(
+            any(key.startswith(prefix) for prefix in flat_protocol_prefixes)
+            for key in updates
+        )
+        has_nested_protocol_updates = any(key in updates for key in [
             "as2_settings", "http_settings", "sftp_settings", "ftp_settings", "disk_settings"
         ])
+        has_protocol_updates = has_flat_protocol_updates or has_nested_protocol_updates or "communication_protocols" in updates
 
         # Update basic component fields
         if "component_name" in updates:
@@ -591,82 +598,118 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
 
             comm_dict = {}
 
-            # AS2 settings
-            if "as2_settings" in updates:
-                as2 = updates["as2_settings"]
-                as2_params = {}
-                if "url" in as2:
-                    as2_params["as2_url"] = as2["url"]
-                if "as2_identifier" in as2:
-                    as2_params["as2_identifier"] = as2["as2_identifier"]
-                if "partner_as2_identifier" in as2:
-                    as2_params["as2_partner_identifier"] = as2["partner_as2_identifier"]
-                if "authentication_type" in as2:
-                    as2_params["as2_authentication_type"] = as2["authentication_type"]
-                if "username" in as2:
-                    as2_params["as2_username"] = as2["username"]
+            # Handle flat parameters (preferred format from server.py)
+            if has_flat_protocol_updates:
+                # Extract flat params by prefix
+                as2_params = {k: v for k, v in updates.items() if k.startswith('as2_')}
+                http_params = {k: v for k, v in updates.items() if k.startswith('http_')}
+                sftp_params = {k: v for k, v in updates.items() if k.startswith('sftp_')}
+                ftp_params = {k: v for k, v in updates.items() if k.startswith('ftp_')}
+                disk_params = {k: v for k, v in updates.items() if k.startswith('disk_')}
+
                 if as2_params:
                     as2_opts = build_as2_communication_options(**as2_params)
                     if as2_opts:
                         comm_dict["AS2CommunicationOptions"] = as2_opts
 
-            # HTTP settings
-            if "http_settings" in updates:
-                http = updates["http_settings"]
-                http_params = {}
-                if "url" in http:
-                    http_params["http_url"] = http["url"]
-                if "authentication_type" in http:
-                    http_params["http_authentication_type"] = http["authentication_type"]
-                if "username" in http:
-                    http_params["http_username"] = http["username"]
                 if http_params:
                     http_opts = build_http_communication_options(**http_params)
                     if http_opts:
                         comm_dict["HTTPCommunicationOptions"] = http_opts
 
-            # SFTP settings
-            if "sftp_settings" in updates:
-                sftp = updates["sftp_settings"]
-                sftp_params = {}
-                if "host" in sftp:
-                    sftp_params["sftp_host"] = sftp["host"]
-                if "port" in sftp:
-                    sftp_params["sftp_port"] = sftp["port"]
-                if "username" in sftp:
-                    sftp_params["sftp_username"] = sftp["username"]
                 if sftp_params:
                     sftp_opts = build_sftp_communication_options(**sftp_params)
                     if sftp_opts:
                         comm_dict["SFTPCommunicationOptions"] = sftp_opts
 
-            # FTP settings
-            if "ftp_settings" in updates:
-                ftp = updates["ftp_settings"]
-                ftp_params = {}
-                if "host" in ftp:
-                    ftp_params["ftp_host"] = ftp["host"]
-                if "port" in ftp:
-                    ftp_params["ftp_port"] = ftp["port"]
-                if "username" in ftp:
-                    ftp_params["ftp_username"] = ftp["username"]
                 if ftp_params:
                     ftp_opts = build_ftp_communication_options(**ftp_params)
                     if ftp_opts:
                         comm_dict["FTPCommunicationOptions"] = ftp_opts
 
-            # Disk settings
-            if "disk_settings" in updates:
-                disk = updates["disk_settings"]
-                disk_params = {}
-                if "get_directory" in disk:
-                    disk_params["disk_get_directory"] = disk["get_directory"]
-                if "send_directory" in disk:
-                    disk_params["disk_send_directory"] = disk["send_directory"]
                 if disk_params:
                     disk_opts = build_disk_communication_options(**disk_params)
                     if disk_opts:
                         comm_dict["DiskCommunicationOptions"] = disk_opts
+
+            # Handle nested format (legacy support)
+            elif has_nested_protocol_updates:
+                # AS2 settings
+                if "as2_settings" in updates:
+                    as2 = updates["as2_settings"]
+                    as2_params = {}
+                    if "url" in as2:
+                        as2_params["as2_url"] = as2["url"]
+                    if "as2_identifier" in as2:
+                        as2_params["as2_identifier"] = as2["as2_identifier"]
+                    if "partner_as2_identifier" in as2:
+                        as2_params["as2_partner_identifier"] = as2["partner_as2_identifier"]
+                    if "authentication_type" in as2:
+                        as2_params["as2_authentication_type"] = as2["authentication_type"]
+                    if "username" in as2:
+                        as2_params["as2_username"] = as2["username"]
+                    if as2_params:
+                        as2_opts = build_as2_communication_options(**as2_params)
+                        if as2_opts:
+                            comm_dict["AS2CommunicationOptions"] = as2_opts
+
+                # HTTP settings
+                if "http_settings" in updates:
+                    http = updates["http_settings"]
+                    http_params = {}
+                    if "url" in http:
+                        http_params["http_url"] = http["url"]
+                    if "authentication_type" in http:
+                        http_params["http_authentication_type"] = http["authentication_type"]
+                    if "username" in http:
+                        http_params["http_username"] = http["username"]
+                    if http_params:
+                        http_opts = build_http_communication_options(**http_params)
+                        if http_opts:
+                            comm_dict["HTTPCommunicationOptions"] = http_opts
+
+                # SFTP settings
+                if "sftp_settings" in updates:
+                    sftp = updates["sftp_settings"]
+                    sftp_params = {}
+                    if "host" in sftp:
+                        sftp_params["sftp_host"] = sftp["host"]
+                    if "port" in sftp:
+                        sftp_params["sftp_port"] = sftp["port"]
+                    if "username" in sftp:
+                        sftp_params["sftp_username"] = sftp["username"]
+                    if sftp_params:
+                        sftp_opts = build_sftp_communication_options(**sftp_params)
+                        if sftp_opts:
+                            comm_dict["SFTPCommunicationOptions"] = sftp_opts
+
+                # FTP settings
+                if "ftp_settings" in updates:
+                    ftp = updates["ftp_settings"]
+                    ftp_params = {}
+                    if "host" in ftp:
+                        ftp_params["ftp_host"] = ftp["host"]
+                    if "port" in ftp:
+                        ftp_params["ftp_port"] = ftp["port"]
+                    if "username" in ftp:
+                        ftp_params["ftp_username"] = ftp["username"]
+                    if ftp_params:
+                        ftp_opts = build_ftp_communication_options(**ftp_params)
+                        if ftp_opts:
+                            comm_dict["FTPCommunicationOptions"] = ftp_opts
+
+                # Disk settings
+                if "disk_settings" in updates:
+                    disk = updates["disk_settings"]
+                    disk_params = {}
+                    if "get_directory" in disk:
+                        disk_params["disk_get_directory"] = disk["get_directory"]
+                    if "send_directory" in disk:
+                        disk_params["disk_send_directory"] = disk["send_directory"]
+                    if disk_params:
+                        disk_opts = build_disk_communication_options(**disk_params)
+                        if disk_opts:
+                            comm_dict["DiskCommunicationOptions"] = disk_opts
 
             # Assign new communications (replaces existing)
             if comm_dict:
