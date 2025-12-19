@@ -866,135 +866,66 @@ if manage_trading_partner_action:
                 if gs_id:
                     updates["gs_id"] = gs_id
 
-                # Add communication protocols if provided
+                # Communication protocols (flat params - same as create)
                 if communication_protocols:
                     protocols_list = [p.strip() for p in communication_protocols.split(',')]
                     updates["communication_protocols"] = protocols_list
 
-                # Add Disk communication directories if provided
-                if disk_directory is not None or disk_get_directory is not None or disk_send_directory is not None:
-                    updates["disk_settings"] = {}
-                    if disk_directory is not None:
-                        updates["disk_settings"]["directory"] = disk_directory
-                    if disk_get_directory is not None:
-                        updates["disk_settings"]["get_directory"] = disk_get_directory
-                    if disk_send_directory is not None:
-                        updates["disk_settings"]["send_directory"] = disk_send_directory
+                # Disk protocol fields (flat)
+                if disk_get_directory:
+                    updates["disk_get_directory"] = disk_get_directory
+                if disk_send_directory:
+                    updates["disk_send_directory"] = disk_send_directory
 
-                # Add FTP settings if provided
-                if ftp_host is not None or ftp_port is not None or ftp_username is not None:
-                    updates["ftp_settings"] = {}
-                    if ftp_host is not None:
-                        updates["ftp_settings"]["host"] = ftp_host
-                    if ftp_port is not None:
-                        updates["ftp_settings"]["port"] = ftp_port
-                    if ftp_username is not None:
-                        updates["ftp_settings"]["username"] = ftp_username
+                # FTP protocol fields (flat)
+                if ftp_host:
+                    updates["ftp_host"] = ftp_host
+                if ftp_port:
+                    updates["ftp_port"] = ftp_port
+                if ftp_username:
+                    updates["ftp_username"] = ftp_username
+                if ftp_password:
+                    updates["ftp_password"] = ftp_password
+                if ftp_remote_directory:
+                    updates["ftp_remote_directory"] = ftp_remote_directory
 
-                # Add SFTP settings if provided
-                if sftp_host is not None or sftp_port is not None or sftp_username is not None:
-                    updates["sftp_settings"] = {}
-                    if sftp_host is not None:
-                        updates["sftp_settings"]["host"] = sftp_host
-                    if sftp_port is not None:
-                        updates["sftp_settings"]["port"] = sftp_port
-                    if sftp_username is not None:
-                        updates["sftp_settings"]["username"] = sftp_username
+                # SFTP protocol fields (flat)
+                if sftp_host:
+                    updates["sftp_host"] = sftp_host
+                if sftp_port:
+                    updates["sftp_port"] = sftp_port
+                if sftp_username:
+                    updates["sftp_username"] = sftp_username
+                if sftp_password:
+                    updates["sftp_password"] = sftp_password
+                if sftp_remote_directory:
+                    updates["sftp_remote_directory"] = sftp_remote_directory
 
-                # Add HTTP settings if provided
-                if (http_url is not None or http_authentication_type is not None or
-                    http_connect_timeout is not None or http_read_timeout is not None or
-                    http_username is not None or http_client_auth is not None or
-                    http_trust_server_cert is not None or http_method_type is not None or
-                    http_data_content_type is not None or http_follow_redirects is not None or
-                    http_return_errors is not None):
-                    updates["http_settings"] = {}
-                    if http_url is not None:
-                        updates["http_settings"]["url"] = http_url
-                    if http_authentication_type is not None:
-                        updates["http_settings"]["authentication_type"] = http_authentication_type
-                    if http_connect_timeout is not None:
-                        updates["http_settings"]["connect_timeout"] = http_connect_timeout
-                    if http_read_timeout is not None:
-                        updates["http_settings"]["read_timeout"] = http_read_timeout
-                    if http_username is not None:
-                        updates["http_settings"]["username"] = http_username
-                    if http_client_auth is not None:
-                        updates["http_settings"]["client_auth"] = http_client_auth
-                    if http_trust_server_cert is not None:
-                        updates["http_settings"]["trust_server_cert"] = http_trust_server_cert
-                    if http_method_type is not None:
-                        updates["http_settings"]["method_type"] = http_method_type
-                    if http_data_content_type is not None:
-                        updates["http_settings"]["data_content_type"] = http_data_content_type
-                    if http_follow_redirects is not None:
-                        updates["http_settings"]["follow_redirects"] = http_follow_redirects
-                    if http_return_errors is not None:
-                        updates["http_settings"]["return_errors"] = http_return_errors
+                # HTTP protocol fields (flat)
+                if http_url:
+                    updates["http_url"] = http_url
+                if http_username:
+                    updates["http_username"] = http_username
+                if http_password:
+                    updates["http_password"] = http_password
+                if http_authentication_type:
+                    updates["http_authentication_type"] = http_authentication_type
+                if http_connect_timeout:
+                    updates["http_connect_timeout"] = http_connect_timeout
+                if http_read_timeout:
+                    updates["http_read_timeout"] = http_read_timeout
 
-                # Add AS2 settings if provided
-                if (as2_url is not None or as2_identifier is not None or
-                    as2_partner_identifier is not None or as2_authentication_type is not None or
-                    as2_verify_hostname is not None or as2_client_ssl_alias is not None or
-                    as2_username is not None or as2_encrypt_alias is not None or
-                    as2_sign_alias is not None or as2_mdn_alias is not None or
-                    as2_signed is not None or as2_encrypted is not None or
-                    as2_compressed is not None or as2_encryption_algorithm is not None or
-                    as2_signing_digest_alg is not None or as2_data_content_type is not None or
-                    as2_request_mdn is not None or as2_mdn_signed is not None or
-                    as2_mdn_digest_alg is not None or as2_synchronous_mdn is not None or
-                    as2_fail_on_negative_mdn is not None):
-                    updates["as2_settings"] = {}
-                    if as2_url is not None:
-                        updates["as2_settings"]["url"] = as2_url
-                    if as2_identifier is not None:
-                        updates["as2_settings"]["as2_identifier"] = as2_identifier
-                    if as2_partner_identifier is not None:
-                        updates["as2_settings"]["partner_as2_identifier"] = as2_partner_identifier
-                    if as2_authentication_type is not None:
-                        updates["as2_settings"]["authentication_type"] = as2_authentication_type
-                    if as2_verify_hostname is not None:
-                        updates["as2_settings"]["verify_hostname"] = as2_verify_hostname
-                    if as2_client_ssl_alias is not None:
-                        updates["as2_settings"]["client_ssl_alias"] = as2_client_ssl_alias
-                    if as2_username is not None:
-                        updates["as2_settings"]["username"] = as2_username
-                    if as2_encrypt_alias is not None:
-                        updates["as2_settings"]["encrypt_alias"] = as2_encrypt_alias
-                    if as2_sign_alias is not None:
-                        updates["as2_settings"]["sign_alias"] = as2_sign_alias
-                    if as2_mdn_alias is not None:
-                        updates["as2_settings"]["mdn_alias"] = as2_mdn_alias
-                    if as2_signed is not None:
-                        updates["as2_settings"]["signed"] = as2_signed
-                    if as2_encrypted is not None:
-                        updates["as2_settings"]["encrypted"] = as2_encrypted
-                    if as2_compressed is not None:
-                        updates["as2_settings"]["compressed"] = as2_compressed
-                    if as2_encryption_algorithm is not None:
-                        updates["as2_settings"]["encryption_algorithm"] = as2_encryption_algorithm
-                    if as2_signing_digest_alg is not None:
-                        updates["as2_settings"]["signing_digest_alg"] = as2_signing_digest_alg
-                    if as2_data_content_type is not None:
-                        updates["as2_settings"]["data_content_type"] = as2_data_content_type
-                    if as2_request_mdn is not None:
-                        updates["as2_settings"]["request_mdn"] = as2_request_mdn
-                    if as2_mdn_signed is not None:
-                        updates["as2_settings"]["mdn_signed"] = as2_mdn_signed
-                    if as2_mdn_digest_alg is not None:
-                        updates["as2_settings"]["mdn_digest_alg"] = as2_mdn_digest_alg
-                    if as2_synchronous_mdn is not None:
-                        updates["as2_settings"]["synchronous_mdn"] = as2_synchronous_mdn
-                    if as2_fail_on_negative_mdn is not None:
-                        updates["as2_settings"]["fail_on_negative_mdn"] = as2_fail_on_negative_mdn
-
-                # Add OFTP settings if provided
-                if oftp_host is not None or oftp_tls is not None:
-                    updates["oftp_settings"] = {}
-                    if oftp_host is not None:
-                        updates["oftp_settings"]["host"] = oftp_host
-                    if oftp_tls is not None:
-                        updates["oftp_settings"]["tls"] = oftp_tls
+                # AS2 protocol fields (flat)
+                if as2_url:
+                    updates["as2_url"] = as2_url
+                if as2_identifier:
+                    updates["as2_identifier"] = as2_identifier
+                if as2_partner_identifier:
+                    updates["as2_partner_identifier"] = as2_partner_identifier
+                if as2_username:
+                    updates["as2_username"] = as2_username
+                if as2_password:
+                    updates["as2_password"] = as2_password
 
                 # Organization linking
                 if organization_id:
