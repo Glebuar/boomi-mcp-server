@@ -377,9 +377,9 @@ def build_as2_communication_options(**kwargs):
     if verify_hostname is not None:
         send_settings['verifyHostname'] = str(verify_hostname).lower() == 'true'
 
-    # Add BASIC auth if specified
+    # Add BASIC auth if specified (SDK maps auth_settings to AuthSettings)
     if auth_type and auth_type.upper() == 'BASIC' and (username or password):
-        send_settings['AS2BasicAuthInfo'] = {
+        send_settings['AuthSettings'] = {
             'username': username or '',
             'password': password or ''
         }
@@ -419,15 +419,21 @@ def build_as2_communication_options(**kwargs):
     if partner_identifier:
         partner_info['as2Id'] = partner_identifier
 
-    # AS2SendOptions requires AS2MDNOptions and AS2MessageOptions (not optional in SDK)
-    # Always include them with defaults
-    send_options = {
-        'AS2MDNOptions': mdn_options if mdn_options else {},
-        'AS2MessageOptions': message_options if message_options else {}
-    }
-    if partner_info:
-        send_options['AS2PartnerInfo'] = partner_info
-    result['AS2SendOptions'] = send_options
+    # Build AS2SendOptions
+    # IMPORTANT: AS2MDNOptions and AS2MessageOptions are REQUIRED by the API
+    # If we're sending AS2SendOptions at all (e.g., with partner_info), we must include them
+
+    has_send_options_content = bool(partner_info or mdn_options or message_options)
+
+    if has_send_options_content:
+        # When AS2SendOptions is present, AS2MDNOptions and AS2MessageOptions are required
+        send_options = {
+            'AS2MDNOptions': mdn_options if mdn_options else {},
+            'AS2MessageOptions': message_options if message_options else {}
+        }
+        if partner_info:
+            send_options['AS2PartnerInfo'] = partner_info
+        result['AS2SendOptions'] = send_options
 
     return result
 

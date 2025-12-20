@@ -297,9 +297,44 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
             if getattr(comm, 'as2_communication_options', None):
                 as2_opts = comm.as2_communication_options
                 as2_info = {"protocol": "as2"}
+
+                # Extract AS2SendSettings
                 settings = getattr(as2_opts, 'as2_send_settings', None)
                 if settings:
                     as2_info["url"] = getattr(settings, 'url', None)
+                    as2_info["authentication_type"] = getattr(settings, 'authentication_type', None)
+                    as2_info["verify_hostname"] = getattr(settings, 'verify_hostname', None)
+                    # Extract basic auth info
+                    auth_settings = getattr(settings, 'auth_settings', None)
+                    if auth_settings:
+                        as2_info["username"] = getattr(auth_settings, 'username', None)
+
+                # Extract AS2SendOptions
+                send_options = getattr(as2_opts, 'as2_send_options', None)
+                if send_options:
+                    # Partner info (as2_id)
+                    partner_info = getattr(send_options, 'as2_partner_info', None)
+                    if partner_info:
+                        as2_info["as2_partner_id"] = getattr(partner_info, 'as2_id', None)
+
+                    # Message options
+                    msg_opts = getattr(send_options, 'as2_message_options', None)
+                    if msg_opts:
+                        as2_info["signed"] = getattr(msg_opts, 'signed', None)
+                        as2_info["encrypted"] = getattr(msg_opts, 'encrypted', None)
+                        as2_info["compressed"] = getattr(msg_opts, 'compressed', None)
+                        as2_info["encryption_algorithm"] = getattr(msg_opts, 'encryption_algorithm', None)
+                        as2_info["signing_digest_alg"] = getattr(msg_opts, 'signing_digest_alg', None)
+
+                    # MDN options
+                    mdn_opts = getattr(send_options, 'as2_mdn_options', None)
+                    if mdn_opts:
+                        as2_info["request_mdn"] = getattr(mdn_opts, 'request_mdn', None)
+                        as2_info["mdn_signed"] = getattr(mdn_opts, 'signed', None)
+                        as2_info["synchronous_mdn"] = getattr(mdn_opts, 'synchronous', None)
+
+                # Filter out None values
+                as2_info = {k: v for k, v in as2_info.items() if v is not None}
                 communication_protocols.append(as2_info)
 
             # MLLP protocol
