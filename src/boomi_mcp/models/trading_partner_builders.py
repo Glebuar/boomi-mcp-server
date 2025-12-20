@@ -125,6 +125,13 @@ def build_ftp_communication_options(**kwargs):
         ftp_remote_directory: Remote directory path
         ftp_ssl_mode: SSL mode - NONE, EXPLICIT, IMPLICIT (default: NONE)
         ftp_connection_mode: Connection mode - ACTIVE, PASSIVE (default: PASSIVE)
+        ftp_transfer_type: Transfer type - ascii, binary (default: binary)
+        ftp_get_action: Get action - actionget, actiongetdelete, actiongetmove
+        ftp_send_action: Send action - actionputrename, actionputappend, actionputerror, actionputoverwrite
+        ftp_max_file_count: Maximum files to retrieve per poll
+        ftp_file_to_move: Directory to move files after get (when action=actiongetmove)
+        ftp_move_to_directory: Directory to move files after send
+        ftp_client_ssl_alias: Client SSL certificate alias for mutual TLS
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -139,6 +146,15 @@ def build_ftp_communication_options(**kwargs):
     ssl_mode = kwargs.get('ftp_ssl_mode', 'NONE')
     connection_mode = kwargs.get('ftp_connection_mode', 'passive')
 
+    # New parameters
+    transfer_type = kwargs.get('ftp_transfer_type')
+    get_action = kwargs.get('ftp_get_action')
+    send_action = kwargs.get('ftp_send_action')
+    max_file_count = kwargs.get('ftp_max_file_count')
+    file_to_move = kwargs.get('ftp_file_to_move')
+    move_to_directory = kwargs.get('ftp_move_to_directory')
+    client_ssl_alias = kwargs.get('ftp_client_ssl_alias')
+
     # Build FTP settings
     ftp_settings = {
         'host': host,
@@ -148,25 +164,52 @@ def build_ftp_communication_options(**kwargs):
         'connectionMode': connection_mode.lower()  # SDK expects lowercase: 'active' or 'passive'
     }
 
-    # Add SSL options if not NONE
+    # Add SSL options if not NONE or if client SSL alias is specified
     # SDK expects lowercase: 'none', 'explicit', 'implicit'
+    ssl_options = {}
     if ssl_mode and ssl_mode.lower() != 'none':
-        ftp_settings['FTPSSLOptions'] = {
-            'sslmode': ssl_mode.lower()
-        }
+        ssl_options['sslmode'] = ssl_mode.lower()
+    if client_ssl_alias:
+        # clientSSLCertificate must be an object with 'alias' field
+        ssl_options['clientSSLCertificate'] = {'alias': client_ssl_alias}
+        ssl_options['useClientAuthentication'] = True
+
+    if ssl_options:
+        ftp_settings['FTPSSLOptions'] = ssl_options
 
     result = {'FTPSettings': ftp_settings}
 
-    # Add get options with remote directory if specified
+    # Build get options
+    get_options = {}
     if remote_directory:
-        result['FTPGetOptions'] = {
-            'remoteDirectory': remote_directory,
-            'useDefaultGetOptions': False
-        }
-        result['FTPSendOptions'] = {
-            'remoteDirectory': remote_directory,
-            'useDefaultSendOptions': False
-        }
+        get_options['remoteDirectory'] = remote_directory
+    if transfer_type:
+        get_options['transferType'] = transfer_type.lower()  # 'ascii' or 'binary'
+    if get_action:
+        get_options['ftpAction'] = get_action.lower()  # 'actionget', 'actiongetdelete', 'actiongetmove'
+    if max_file_count:
+        get_options['maxFileCount'] = int(max_file_count)
+    if file_to_move:
+        get_options['fileToMove'] = file_to_move
+
+    if get_options:
+        get_options['useDefaultGetOptions'] = False
+        result['FTPGetOptions'] = get_options
+
+    # Build send options
+    send_options = {}
+    if remote_directory:
+        send_options['remoteDirectory'] = remote_directory
+    if transfer_type:
+        send_options['transferType'] = transfer_type.lower()
+    if send_action:
+        send_options['ftpAction'] = send_action.lower()  # 'actionputrename', 'actionputappend', etc.
+    if move_to_directory:
+        send_options['moveToDirectory'] = move_to_directory
+
+    if send_options:
+        send_options['useDefaultSendOptions'] = False
+        result['FTPSendOptions'] = send_options
 
     return result
 

@@ -392,6 +392,15 @@ if manage_trading_partner_action:
         ftp_username: str = None,
         ftp_password: str = None,
         ftp_remote_directory: str = None,
+        ftp_ssl_mode: str = None,
+        ftp_connection_mode: str = None,
+        ftp_transfer_type: str = None,
+        ftp_get_action: str = None,
+        ftp_send_action: str = None,
+        ftp_max_file_count: str = None,
+        ftp_file_to_move: str = None,
+        ftp_move_to_directory: str = None,
+        ftp_client_ssl_alias: str = None,
         sftp_host: str = None,
         sftp_port: str = None,
         sftp_username: str = None,
@@ -455,9 +464,7 @@ if manage_trading_partner_action:
         odette_syntax_id: str = None,
         odette_syntax_version: str = None,
         odette_test_indicator: str = None,
-        # New protocol-specific fields
-        ftp_ssl_mode: str = None,
-        ftp_connection_mode: str = None,
+        # New protocol-specific fields (FTP params moved to main FTP section above)
         sftp_ssh_key_auth: str = None,
         sftp_known_host_entry: str = None,
         mllp_host: str = None,
@@ -771,6 +778,20 @@ if manage_trading_partner_action:
                     request_data["ftp_ssl_mode"] = ftp_ssl_mode
                 if ftp_connection_mode:
                     request_data["ftp_connection_mode"] = ftp_connection_mode
+                if ftp_transfer_type:
+                    request_data["ftp_transfer_type"] = ftp_transfer_type
+                if ftp_get_action:
+                    request_data["ftp_get_action"] = ftp_get_action
+                if ftp_send_action:
+                    request_data["ftp_send_action"] = ftp_send_action
+                if ftp_max_file_count:
+                    request_data["ftp_max_file_count"] = ftp_max_file_count
+                if ftp_file_to_move:
+                    request_data["ftp_file_to_move"] = ftp_file_to_move
+                if ftp_move_to_directory:
+                    request_data["ftp_move_to_directory"] = ftp_move_to_directory
+                if ftp_client_ssl_alias:
+                    request_data["ftp_client_ssl_alias"] = ftp_client_ssl_alias
 
                 # Pass enhanced SFTP fields flat
                 if sftp_ssh_key_auth:
@@ -892,6 +913,20 @@ if manage_trading_partner_action:
                     updates["ftp_connection_mode"] = ftp_connection_mode
                 if ftp_ssl_mode:
                     updates["ftp_ssl_mode"] = ftp_ssl_mode
+                if ftp_transfer_type:
+                    updates["ftp_transfer_type"] = ftp_transfer_type
+                if ftp_get_action:
+                    updates["ftp_get_action"] = ftp_get_action
+                if ftp_send_action:
+                    updates["ftp_send_action"] = ftp_send_action
+                if ftp_max_file_count:
+                    updates["ftp_max_file_count"] = ftp_max_file_count
+                if ftp_file_to_move:
+                    updates["ftp_file_to_move"] = ftp_file_to_move
+                if ftp_move_to_directory:
+                    updates["ftp_move_to_directory"] = ftp_move_to_directory
+                if ftp_client_ssl_alias:
+                    updates["ftp_client_ssl_alias"] = ftp_client_ssl_alias
 
                 # SFTP protocol fields (flat)
                 if sftp_host:
