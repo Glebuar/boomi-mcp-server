@@ -381,7 +381,7 @@ def build_as2_communication_options(**kwargs):
     # Add BASIC auth if specified (SDK maps auth_settings to AuthSettings)
     if auth_type and auth_type.upper() == 'BASIC' and (username or password):
         send_settings['AuthSettings'] = {
-            'username': username or '',
+            'user': username or '',
             'password': password or ''
         }
 
@@ -396,24 +396,30 @@ def build_as2_communication_options(**kwargs):
     if compressed is not None:
         message_options['compressed'] = str(compressed).lower() == 'true'
     if encryption_alg:
-        message_options['encryptionAlgorithm'] = encryption_alg.lower()
+        # SDK expects format like 'aes-256' not 'aes256'
+        alg = encryption_alg.lower()
+        # Add hyphen for aes/rc2 formats if missing
+        if alg.startswith('aes') and '-' not in alg:
+            alg = 'aes-' + alg[3:]  # 'aes256' -> 'aes-256'
+        elif alg.startswith('rc2') and '-' not in alg:
+            alg = 'rc2-' + alg[3:]  # 'rc2128' -> 'rc2-128'
+        message_options['encryptionAlgorithm'] = alg
     if signing_alg:
         message_options['signingDigestAlg'] = signing_alg.upper()
     if content_type:
         message_options['dataContentType'] = content_type
 
-    # Build AS2 MDN options
+    # Build AS2 MDN options (note: use JSON key casing like requestMDN, not requestMdn)
     mdn_options = {}
     if request_mdn is not None:
-        mdn_options['requestMdn'] = str(request_mdn).lower() == 'true'
+        mdn_options['requestMDN'] = str(request_mdn).lower() == 'true'
     if mdn_signed is not None:
         mdn_options['signed'] = str(mdn_signed).lower() == 'true'
     if mdn_digest_alg:
         mdn_options['mdnDigestAlg'] = mdn_digest_alg.upper()
     if sync_mdn is not None:
-        mdn_options['synchronous'] = 'SYNC' if str(sync_mdn).lower() == 'true' else 'ASYNC'
-    if fail_on_negative is not None:
-        mdn_options['failOnNegativeMdn'] = str(fail_on_negative).lower() == 'true'
+        mdn_options['synchronous'] = 'sync' if str(sync_mdn).lower() == 'true' else 'async'
+    # Note: failOnNegativeMdn field does not exist in AS2MDNOptions model
 
     # Build AS2 partner info
     partner_info = {}
