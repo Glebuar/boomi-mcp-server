@@ -701,8 +701,7 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
             if contact_info:
                 existing_tp.contact_info = contact_info
 
-        # Protocol-specific updates - build fresh communications using builder format
-        # Note: This REPLACES all existing communications - cannot merge with existing
+        # Protocol-specific updates - PRESERVE existing protocols and merge with updates
         if has_protocol_updates:
             from boomi_mcp.models.trading_partner_builders import (
                 build_as2_communication_options,
@@ -716,7 +715,17 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
 
             comm_dict = {}
 
+            # First, preserve ALL existing protocols using PartnerCommunication._map()
+            # This produces the minimal structure that the API accepts
+            existing_comm = getattr(existing_tp, 'partner_communication', None)
+            if existing_comm and hasattr(existing_comm, '_map'):
+                # Use the SDK's _map() which properly filters to minimal structure
+                preserved = existing_comm._map()
+                if preserved:
+                    comm_dict.update(preserved)
+
             # Handle flat parameters (preferred format from server.py)
+            # These will UPDATE or ADD protocols on top of preserved ones
             if has_flat_protocol_updates:
                 # Extract flat params by prefix
                 as2_params = {k: v for k, v in updates.items() if k.startswith('as2_')}
