@@ -39,6 +39,9 @@ wheels/
 *.swo
 *~
 
+# macOS
+.DS_Store
+
 # Database
 *.db
 *.sqlite
@@ -58,6 +61,8 @@ secrets/
 *.key
 *.pem
 *.crt
+*_local_secrets.json
+.boomi_mcp_local_secrets.json
 
 # Temp files
 *.Zone.Identifier
@@ -72,3 +77,10 @@ setup_claude_code.sh
 
 # Project documentation (local only)
 CLAUDE.md
+STANDARDS_STATUS.md
+TRADING_PARTNER_VERIFICATION.md
+*_VERIFICATION.md
+
+# Test files (local only)
+test_*.py
+analyze_*.py
