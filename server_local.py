@@ -888,6 +888,10 @@ if manage_trading_partner_action:
                     updates["ftp_password"] = ftp_password
                 if ftp_remote_directory:
                     updates["ftp_remote_directory"] = ftp_remote_directory
+                if ftp_connection_mode:
+                    updates["ftp_connection_mode"] = ftp_connection_mode
+                if ftp_ssl_mode:
+                    updates["ftp_ssl_mode"] = ftp_ssl_mode
 
                 # SFTP protocol fields (flat)
                 if sftp_host:
@@ -960,6 +964,36 @@ if manage_trading_partner_action:
                     updates["as2_synchronous_mdn"] = as2_synchronous_mdn
                 if as2_fail_on_negative_mdn:
                     updates["as2_fail_on_negative_mdn"] = as2_fail_on_negative_mdn
+
+                # MLLP protocol fields (flat)
+                if mllp_host:
+                    updates["mllp_host"] = mllp_host
+                if mllp_port:
+                    updates["mllp_port"] = mllp_port
+                if mllp_use_ssl:
+                    updates["mllp_use_ssl"] = mllp_use_ssl
+                if mllp_persistent:
+                    updates["mllp_persistent"] = mllp_persistent
+                if mllp_send_timeout:
+                    updates["mllp_send_timeout"] = mllp_send_timeout
+                if mllp_receive_timeout:
+                    updates["mllp_receive_timeout"] = mllp_receive_timeout
+                if mllp_max_connections:
+                    updates["mllp_max_connections"] = mllp_max_connections
+
+                # OFTP protocol fields (flat)
+                if oftp_host:
+                    updates["oftp_host"] = oftp_host
+                if oftp_port:
+                    updates["oftp_port"] = oftp_port
+                if oftp_tls:
+                    updates["oftp_tls"] = oftp_tls
+                if oftp_ssid_code:
+                    updates["oftp_ssid_code"] = oftp_ssid_code
+                if oftp_ssid_password:
+                    updates["oftp_ssid_password"] = oftp_ssid_password
+                if oftp_compress:
+                    updates["oftp_compress"] = oftp_compress
 
                 # Organization linking
                 if organization_id:

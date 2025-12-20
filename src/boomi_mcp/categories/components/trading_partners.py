@@ -755,21 +755,106 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                         comm_dict["AS2CommunicationOptions"] = as2_opts
 
                 if http_params:
+                    # Merge with existing HTTP values for partial updates
+                    if 'http_url' not in http_params:
+                        existing_comm = getattr(existing_tp, 'partner_communication', None)
+                        if existing_comm:
+                            existing_http = getattr(existing_comm, 'http_communication_options', None)
+                            if existing_http:
+                                existing_settings = getattr(existing_http, 'http_settings', None)
+                                if existing_settings:
+                                    existing_url = getattr(existing_settings, 'url', None)
+                                    if existing_url:
+                                        http_params['http_url'] = existing_url
+                                    if 'http_authentication_type' not in http_params:
+                                        existing_auth = getattr(existing_settings, 'authentication_type', None)
+                                        if existing_auth:
+                                            http_params['http_authentication_type'] = existing_auth
                     http_opts = build_http_communication_options(**http_params)
                     if http_opts:
                         comm_dict["HTTPCommunicationOptions"] = http_opts
 
                 if sftp_params:
+                    # Merge with existing SFTP values for partial updates
+                    if 'sftp_host' not in sftp_params:
+                        existing_comm = getattr(existing_tp, 'partner_communication', None)
+                        if existing_comm:
+                            existing_sftp = getattr(existing_comm, 'sftp_communication_options', None)
+                            if existing_sftp:
+                                existing_settings = getattr(existing_sftp, 'sftp_settings', None)
+                                if existing_settings:
+                                    existing_host = getattr(existing_settings, 'host', None)
+                                    if existing_host:
+                                        sftp_params['sftp_host'] = existing_host
+                                    if 'sftp_port' not in sftp_params:
+                                        existing_port = getattr(existing_settings, 'port', None)
+                                        if existing_port:
+                                            sftp_params['sftp_port'] = existing_port
+                                    if 'sftp_username' not in sftp_params:
+                                        existing_user = getattr(existing_settings, 'user', None)
+                                        if existing_user:
+                                            sftp_params['sftp_username'] = existing_user
                     sftp_opts = build_sftp_communication_options(**sftp_params)
                     if sftp_opts:
                         comm_dict["SFTPCommunicationOptions"] = sftp_opts
 
                 if ftp_params:
+                    # Merge with existing FTP values for partial updates
+                    existing_comm = getattr(existing_tp, 'partner_communication', None)
+                    if existing_comm:
+                        existing_ftp = getattr(existing_comm, 'ftp_communication_options', None)
+                        if existing_ftp:
+                            existing_settings = getattr(existing_ftp, 'ftp_settings', None)
+                            if existing_settings:
+                                if 'ftp_host' not in ftp_params:
+                                    existing_host = getattr(existing_settings, 'host', None)
+                                    if existing_host:
+                                        ftp_params['ftp_host'] = existing_host
+                                if 'ftp_port' not in ftp_params:
+                                    existing_port = getattr(existing_settings, 'port', None)
+                                    if existing_port:
+                                        ftp_params['ftp_port'] = existing_port
+                                if 'ftp_username' not in ftp_params:
+                                    existing_user = getattr(existing_settings, 'user', None)
+                                    if existing_user:
+                                        ftp_params['ftp_username'] = existing_user
+                                if 'ftp_password' not in ftp_params:
+                                    existing_pass = getattr(existing_settings, 'password', None)
+                                    if existing_pass:
+                                        ftp_params['ftp_password'] = existing_pass
+                                if 'ftp_connection_mode' not in ftp_params:
+                                    existing_mode = getattr(existing_settings, 'connection_mode', None)
+                                    if existing_mode:
+                                        ftp_params['ftp_connection_mode'] = existing_mode
+                                # Preserve SSL mode from existing SSL options
+                                if 'ftp_ssl_mode' not in ftp_params:
+                                    existing_ssl = getattr(existing_settings, 'ftpssl_options', None)
+                                    if existing_ssl:
+                                        existing_ssl_mode = getattr(existing_ssl, 'sslmode', None)
+                                        if existing_ssl_mode:
+                                            ftp_params['ftp_ssl_mode'] = existing_ssl_mode
                     ftp_opts = build_ftp_communication_options(**ftp_params)
                     if ftp_opts:
                         comm_dict["FTPCommunicationOptions"] = ftp_opts
 
                 if disk_params:
+                    # Merge with existing Disk values for partial updates
+                    existing_comm = getattr(existing_tp, 'partner_communication', None)
+                    if existing_comm:
+                        existing_disk = getattr(existing_comm, 'disk_communication_options', None)
+                        if existing_disk:
+                            if 'disk_get_directory' not in disk_params:
+                                existing_get = getattr(existing_disk, 'disk_get_options', None)
+                                if existing_get:
+                                    existing_dir = getattr(existing_get, 'get_directory', None)
+                                    if existing_dir:
+                                        disk_params['disk_get_directory'] = existing_dir
+                            if 'disk_send_directory' not in disk_params:
+                                existing_send = getattr(existing_disk, 'disk_send_options', None)
+                                if existing_send:
+                                    existing_dir = getattr(existing_send, 'send_directory', None)
+                                    if existing_dir:
+                                        disk_params['disk_send_directory'] = existing_dir
                     disk_opts = build_disk_communication_options(**disk_params)
                     if disk_opts:
                         comm_dict["DiskCommunicationOptions"] = disk_opts
@@ -777,6 +862,33 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                 # MLLP protocol
                 mllp_params = {k: v for k, v in updates.items() if k.startswith('mllp_')}
                 if mllp_params:
+                    # Merge with existing MLLP values for partial updates
+                    existing_comm = getattr(existing_tp, 'partner_communication', None)
+                    if existing_comm:
+                        existing_mllp = getattr(existing_comm, 'mllp_communication_options', None)
+                        if existing_mllp:
+                            existing_settings = getattr(existing_mllp, 'mllp_send_settings', None)
+                            if existing_settings:
+                                if 'mllp_host' not in mllp_params:
+                                    existing_host = getattr(existing_settings, 'host', None)
+                                    if existing_host:
+                                        mllp_params['mllp_host'] = existing_host
+                                if 'mllp_port' not in mllp_params:
+                                    existing_port = getattr(existing_settings, 'port', None)
+                                    if existing_port:
+                                        mllp_params['mllp_port'] = existing_port
+                                if 'mllp_persistent' not in mllp_params:
+                                    existing_persistent = getattr(existing_settings, 'persistent', None)
+                                    if existing_persistent is not None:
+                                        mllp_params['mllp_persistent'] = existing_persistent
+                                if 'mllp_send_timeout' not in mllp_params:
+                                    existing_timeout = getattr(existing_settings, 'send_timeout', None)
+                                    if existing_timeout:
+                                        mllp_params['mllp_send_timeout'] = existing_timeout
+                                if 'mllp_receive_timeout' not in mllp_params:
+                                    existing_timeout = getattr(existing_settings, 'receive_timeout', None)
+                                    if existing_timeout:
+                                        mllp_params['mllp_receive_timeout'] = existing_timeout
                     mllp_opts = build_mllp_communication_options(**mllp_params)
                     if mllp_opts:
                         comm_dict["MLLPCommunicationOptions"] = mllp_opts
@@ -784,6 +896,32 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                 # OFTP protocol
                 oftp_params = {k: v for k, v in updates.items() if k.startswith('oftp_')}
                 if oftp_params:
+                    # Merge with existing OFTP values for partial updates
+                    existing_comm = getattr(existing_tp, 'partner_communication', None)
+                    if existing_comm:
+                        existing_oftp = getattr(existing_comm, 'oftp_communication_options', None)
+                        if existing_oftp:
+                            existing_settings = getattr(existing_oftp, 'oftp_connection_settings', None)
+                            if existing_settings:
+                                if 'oftp_host' not in oftp_params:
+                                    existing_host = getattr(existing_settings, 'host', None)
+                                    if existing_host:
+                                        oftp_params['oftp_host'] = existing_host
+                                if 'oftp_port' not in oftp_params:
+                                    existing_port = getattr(existing_settings, 'port', None)
+                                    if existing_port:
+                                        oftp_params['oftp_port'] = existing_port
+                                if 'oftp_tls' not in oftp_params:
+                                    existing_tls = getattr(existing_settings, 'tls', None)
+                                    if existing_tls is not None:
+                                        oftp_params['oftp_tls'] = existing_tls
+                                # Get partner info for ssid_code
+                                partner_info = getattr(existing_settings, 'my_partner_info', None)
+                                if partner_info:
+                                    if 'oftp_ssid_code' not in oftp_params:
+                                        existing_code = getattr(partner_info, 'ssidcode', None)
+                                        if existing_code:
+                                            oftp_params['oftp_ssid_code'] = existing_code
                     oftp_opts = build_oftp_communication_options(**oftp_params)
                     if oftp_opts:
                         comm_dict["OFTPCommunicationOptions"] = oftp_opts
