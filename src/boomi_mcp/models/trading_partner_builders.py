@@ -149,9 +149,10 @@ def build_ftp_communication_options(**kwargs):
     }
 
     # Add SSL options if not NONE
-    if ssl_mode and ssl_mode.upper() != 'NONE':
+    # SDK expects lowercase: 'none', 'explicit', 'implicit'
+    if ssl_mode and ssl_mode.lower() != 'none':
         ftp_settings['FTPSSLOptions'] = {
-            'sslmode': ssl_mode.upper()
+            'sslmode': ssl_mode.lower()
         }
 
     result = {'FTPSettings': ftp_settings}
@@ -484,6 +485,10 @@ def build_mllp_communication_options(**kwargs):
     if max_connections:
         mllp_settings['maxConnections'] = int(max_connections)
 
+    # Max retry must be between 1-5 per Boomi API
+    max_retry = kwargs.get('mllp_max_retry')
+    mllp_settings['maxRetry'] = int(max_retry) if max_retry else 1
+
     # Standard MLLP delimiters (hex 0B for start, hex 1C hex 0D for end)
     mllp_settings['startBlock'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0B'}
     mllp_settings['endBlock'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '1C'}
@@ -524,7 +529,7 @@ def build_oftp_communication_options(**kwargs):
     if tls is not None:
         connection_settings['tls'] = str(tls).lower() == 'true'
 
-    # Build my partner info (ODETTE partner settings)
+    # Build my partner info (ODETTE partner settings) - REQUIRED by SDK
     my_partner_info = {}
     if ssid_code:
         my_partner_info['ssidcode'] = ssid_code
@@ -533,8 +538,8 @@ def build_oftp_communication_options(**kwargs):
     if compress is not None:
         my_partner_info['ssidcmpr'] = str(compress).lower() == 'true'
 
-    if my_partner_info:
-        connection_settings['myPartnerInfo'] = my_partner_info
+    # Always include myPartnerInfo as it's required by the SDK model
+    connection_settings['myPartnerInfo'] = my_partner_info if my_partner_info else {}
 
     return {'OFTPConnectionSettings': connection_settings}
 

@@ -263,9 +263,17 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
                     ftp_info["host"] = getattr(settings, 'host', None)
                     ftp_info["port"] = getattr(settings, 'port', None)
                     ftp_info["user"] = getattr(settings, 'user', None)
+                    ftp_info["connection_mode"] = getattr(settings, 'connection_mode', None)
+                    # Extract FTP SSL options
+                    ftpssl_opts = getattr(settings, 'ftpssl_options', None)
+                    if ftpssl_opts:
+                        ftp_info["ssl_mode"] = getattr(ftpssl_opts, 'sslmode', None)
+                        ftp_info["use_client_authentication"] = getattr(ftpssl_opts, 'use_client_authentication', None)
                 get_opts = getattr(ftp_opts, 'ftp_get_options', None)
                 if get_opts:
                     ftp_info["remote_directory"] = getattr(get_opts, 'remote_directory', None)
+                # Filter out None values
+                ftp_info = {k: v for k, v in ftp_info.items() if v is not None}
                 communication_protocols.append(ftp_info)
 
             # SFTP protocol
@@ -277,9 +285,23 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
                     sftp_info["host"] = getattr(settings, 'host', None)
                     sftp_info["port"] = getattr(settings, 'port', None)
                     sftp_info["user"] = getattr(settings, 'user', None)
+                    # Extract SFTP SSH options
+                    sftpssh_opts = getattr(settings, 'sftpssh_options', None)
+                    if sftpssh_opts:
+                        sftp_info["ssh_key_auth"] = getattr(sftpssh_opts, 'sshkeyauth', None)
+                        sftp_info["known_host_entry"] = getattr(sftpssh_opts, 'known_host_entry', None)
+                        sftp_info["ssh_key_path"] = getattr(sftpssh_opts, 'sshkeypath', None)
+                    # Extract SFTP proxy settings
+                    proxy_settings = getattr(settings, 'sftp_proxy_settings', None)
+                    if proxy_settings:
+                        sftp_info["proxy_host"] = getattr(proxy_settings, 'host', None)
+                        sftp_info["proxy_port"] = getattr(proxy_settings, 'port', None)
+                        sftp_info["proxy_type"] = getattr(proxy_settings, 'type_', None)
                 get_opts = getattr(sftp_opts, 'sftp_get_options', None)
                 if get_opts:
                     sftp_info["remote_directory"] = getattr(get_opts, 'remote_directory', None)
+                # Filter out None values
+                sftp_info = {k: v for k, v in sftp_info.items() if v is not None}
                 communication_protocols.append(sftp_info)
 
             # HTTP protocol
@@ -289,8 +311,27 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
                 settings = getattr(http_opts, 'http_settings', None)
                 if settings:
                     http_info["url"] = getattr(settings, 'url', None)
+                    http_info["authentication_type"] = getattr(settings, 'authentication_type', None)
                     http_info["connect_timeout"] = getattr(settings, 'connect_timeout', None)
                     http_info["read_timeout"] = getattr(settings, 'read_timeout', None)
+                    # Extract HTTP auth settings
+                    http_auth = getattr(settings, 'http_auth_settings', None)
+                    if http_auth:
+                        http_info["username"] = getattr(http_auth, 'user', None)
+                    # Extract HTTP SSL options
+                    httpssl_opts = getattr(settings, 'httpssl_options', None)
+                    if httpssl_opts:
+                        http_info["client_auth"] = getattr(httpssl_opts, 'clientauth', None)
+                        http_info["trust_server_cert"] = getattr(httpssl_opts, 'trust_server_cert', None)
+                # Extract HTTP send options
+                send_opts = getattr(http_opts, 'http_send_options', None)
+                if send_opts:
+                    http_info["method_type"] = getattr(send_opts, 'method_type', None)
+                    http_info["data_content_type"] = getattr(send_opts, 'data_content_type', None)
+                    http_info["follow_redirects"] = getattr(send_opts, 'follow_redirects', None)
+                    http_info["return_errors"] = getattr(send_opts, 'return_errors', None)
+                # Filter out None values
+                http_info = {k: v for k, v in http_info.items() if v is not None}
                 communication_protocols.append(http_info)
 
             # AS2 protocol
@@ -339,11 +380,51 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
 
             # MLLP protocol
             if getattr(comm, 'mllp_communication_options', None):
-                communication_protocols.append({"protocol": "mllp"})
+                mllp_opts = comm.mllp_communication_options
+                mllp_info = {"protocol": "mllp"}
+                settings = getattr(mllp_opts, 'mllp_send_settings', None)
+                if settings:
+                    mllp_info["host"] = getattr(settings, 'host', None)
+                    mllp_info["port"] = getattr(settings, 'port', None)
+                    mllp_info["persistent"] = getattr(settings, 'persistent', None)
+                    mllp_info["receive_timeout"] = getattr(settings, 'receive_timeout', None)
+                    mllp_info["send_timeout"] = getattr(settings, 'send_timeout', None)
+                    mllp_info["max_connections"] = getattr(settings, 'max_connections', None)
+                    mllp_info["inactivity_timeout"] = getattr(settings, 'inactivity_timeout', None)
+                    mllp_info["max_retry"] = getattr(settings, 'max_retry', None)
+                    # Extract MLLP SSL options
+                    mllpssl_opts = getattr(settings, 'mllpssl_options', None)
+                    if mllpssl_opts:
+                        mllp_info["use_ssl"] = getattr(mllpssl_opts, 'use_ssl', None)
+                        mllp_info["use_client_ssl"] = getattr(mllpssl_opts, 'use_client_ssl', None)
+                        mllp_info["client_ssl_alias"] = getattr(mllpssl_opts, 'client_ssl_alias', None)
+                        mllp_info["ssl_alias"] = getattr(mllpssl_opts, 'ssl_alias', None)
+                # Filter out None values
+                mllp_info = {k: v for k, v in mllp_info.items() if v is not None}
+                communication_protocols.append(mllp_info)
 
             # OFTP protocol
             if getattr(comm, 'oftp_communication_options', None):
-                communication_protocols.append({"protocol": "oftp"})
+                oftp_opts = comm.oftp_communication_options
+                oftp_info = {"protocol": "oftp"}
+                conn_settings = getattr(oftp_opts, 'oftp_connection_settings', None)
+                if conn_settings:
+                    oftp_info["host"] = getattr(conn_settings, 'host', None)
+                    oftp_info["port"] = getattr(conn_settings, 'port', None)
+                    oftp_info["tls"] = getattr(conn_settings, 'tls', None)
+                    oftp_info["ssidauth"] = getattr(conn_settings, 'ssidauth', None)
+                    oftp_info["sfidciph"] = getattr(conn_settings, 'sfidciph', None)
+                    oftp_info["use_gateway"] = getattr(conn_settings, 'use_gateway', None)
+                    oftp_info["use_client_ssl"] = getattr(conn_settings, 'use_client_ssl', None)
+                    oftp_info["client_ssl_alias"] = getattr(conn_settings, 'client_ssl_alias', None)
+                    # Extract partner info
+                    partner_info = getattr(conn_settings, 'my_partner_info', None)
+                    if partner_info:
+                        oftp_info["ssid_code"] = getattr(partner_info, 'ssidcode', None)
+                        oftp_info["compress"] = getattr(partner_info, 'ssidcmpr', None)
+                # Filter out None values
+                oftp_info = {k: v for k, v in oftp_info.items() if v is not None}
+                communication_protocols.append(oftp_info)
 
         return {
             "_success": True,
@@ -571,7 +652,7 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
         # Check if protocol updates were specified (these will REPLACE existing communications)
         # Support both nested format (*_settings) and flat format (*_host, *_url, etc.)
         from boomi_mcp.models.trading_partner_builders import PartnerCommunicationDict
-        flat_protocol_prefixes = ["ftp_", "sftp_", "http_", "as2_", "disk_"]
+        flat_protocol_prefixes = ["ftp_", "sftp_", "http_", "as2_", "disk_", "mllp_", "oftp_"]
         has_flat_protocol_updates = any(
             any(key.startswith(prefix) for prefix in flat_protocol_prefixes)
             for key in updates
@@ -628,7 +709,9 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                 build_http_communication_options,
                 build_sftp_communication_options,
                 build_ftp_communication_options,
-                build_disk_communication_options
+                build_disk_communication_options,
+                build_mllp_communication_options,
+                build_oftp_communication_options
             )
 
             comm_dict = {}
@@ -690,6 +773,20 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                     disk_opts = build_disk_communication_options(**disk_params)
                     if disk_opts:
                         comm_dict["DiskCommunicationOptions"] = disk_opts
+
+                # MLLP protocol
+                mllp_params = {k: v for k, v in updates.items() if k.startswith('mllp_')}
+                if mllp_params:
+                    mllp_opts = build_mllp_communication_options(**mllp_params)
+                    if mllp_opts:
+                        comm_dict["MLLPCommunicationOptions"] = mllp_opts
+
+                # OFTP protocol
+                oftp_params = {k: v for k, v in updates.items() if k.startswith('oftp_')}
+                if oftp_params:
+                    oftp_opts = build_oftp_communication_options(**oftp_params)
+                    if oftp_opts:
+                        comm_dict["OFTPCommunicationOptions"] = oftp_opts
 
             # Handle nested format (legacy support)
             elif has_nested_protocol_updates:
