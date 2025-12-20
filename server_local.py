@@ -922,10 +922,44 @@ if manage_trading_partner_action:
                     updates["as2_identifier"] = as2_identifier
                 if as2_partner_identifier:
                     updates["as2_partner_identifier"] = as2_partner_identifier
+                if as2_authentication_type:
+                    updates["as2_authentication_type"] = as2_authentication_type
+                if as2_verify_hostname:
+                    updates["as2_verify_hostname"] = as2_verify_hostname
                 if as2_username:
                     updates["as2_username"] = as2_username
                 if as2_password:
                     updates["as2_password"] = as2_password
+                if as2_client_ssl_alias:
+                    updates["as2_client_ssl_alias"] = as2_client_ssl_alias
+                if as2_encrypt_alias:
+                    updates["as2_encrypt_alias"] = as2_encrypt_alias
+                if as2_sign_alias:
+                    updates["as2_sign_alias"] = as2_sign_alias
+                if as2_mdn_alias:
+                    updates["as2_mdn_alias"] = as2_mdn_alias
+                if as2_signed:
+                    updates["as2_signed"] = as2_signed
+                if as2_encrypted:
+                    updates["as2_encrypted"] = as2_encrypted
+                if as2_compressed:
+                    updates["as2_compressed"] = as2_compressed
+                if as2_encryption_algorithm:
+                    updates["as2_encryption_algorithm"] = as2_encryption_algorithm
+                if as2_signing_digest_alg:
+                    updates["as2_signing_digest_alg"] = as2_signing_digest_alg
+                if as2_data_content_type:
+                    updates["as2_data_content_type"] = as2_data_content_type
+                if as2_request_mdn:
+                    updates["as2_request_mdn"] = as2_request_mdn
+                if as2_mdn_signed:
+                    updates["as2_mdn_signed"] = as2_mdn_signed
+                if as2_mdn_digest_alg:
+                    updates["as2_mdn_digest_alg"] = as2_mdn_digest_alg
+                if as2_synchronous_mdn:
+                    updates["as2_synchronous_mdn"] = as2_synchronous_mdn
+                if as2_fail_on_negative_mdn:
+                    updates["as2_fail_on_negative_mdn"] = as2_fail_on_negative_mdn
 
                 # Organization linking
                 if organization_id:

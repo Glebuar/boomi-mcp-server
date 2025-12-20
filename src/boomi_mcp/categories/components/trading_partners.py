@@ -643,6 +643,30 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                 disk_params = {k: v for k, v in updates.items() if k.startswith('disk_')}
 
                 if as2_params:
+                    # For updates, merge with existing AS2 values if as2_url not provided
+                    if 'as2_url' not in as2_params:
+                        # Try to get existing AS2 URL from the trading partner
+                        existing_comm = getattr(existing_tp, 'partner_communication', None)
+                        if existing_comm:
+                            existing_as2 = getattr(existing_comm, 'as2_communication_options', None)
+                            if existing_as2:
+                                existing_send_settings = getattr(existing_as2, 'as2_send_settings', None)
+                                if existing_send_settings:
+                                    existing_url = getattr(existing_send_settings, 'url', None)
+                                    if existing_url:
+                                        as2_params['as2_url'] = existing_url
+                                    existing_auth = getattr(existing_send_settings, 'authentication_type', None)
+                                    if existing_auth and 'as2_authentication_type' not in as2_params:
+                                        as2_params['as2_authentication_type'] = existing_auth
+                                # Also get existing partner ID if not provided
+                                existing_send_opts = getattr(existing_as2, 'as2_send_options', None)
+                                if existing_send_opts:
+                                    existing_partner_info = getattr(existing_send_opts, 'as2_partner_info', None)
+                                    if existing_partner_info and 'as2_partner_identifier' not in as2_params:
+                                        existing_partner_id = getattr(existing_partner_info, 'as2_id', None)
+                                        if existing_partner_id:
+                                            as2_params['as2_partner_identifier'] = existing_partner_id
+
                     as2_opts = build_as2_communication_options(**as2_params)
                     if as2_opts:
                         comm_dict["AS2CommunicationOptions"] = as2_opts
