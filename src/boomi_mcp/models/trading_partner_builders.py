@@ -472,10 +472,10 @@ def build_mllp_communication_options(**kwargs):
     send_timeout = kwargs.get('mllp_send_timeout')
     max_connections = kwargs.get('mllp_max_connections')
 
-    if use_ssl is not None:
-        mllp_settings['MLLPSSLOptions'] = {
-            'useSSL': str(use_ssl).lower() == 'true'
-        }
+    # MLLPSSLOptions is required by SDK - always include it
+    mllp_settings['MLLPSSLOptions'] = {
+        'useSSL': str(use_ssl).lower() == 'true' if use_ssl else False
+    }
     if persistent is not None:
         mllp_settings['persistent'] = str(persistent).lower() == 'true'
     if receive_timeout:
