@@ -470,7 +470,6 @@ if manage_trading_partner_action:
         sftp_ssh_key_path: str = None,
         sftp_ssh_key_password: str = None,
         sftp_dh_key_max_1024: str = None,
-        sftp_transfer_type: str = None,
         sftp_get_action: str = None,
         sftp_send_action: str = None,
         sftp_max_file_count: str = None,
@@ -820,8 +819,6 @@ if manage_trading_partner_action:
                     request_data["sftp_ssh_key_password"] = sftp_ssh_key_password
                 if sftp_dh_key_max_1024:
                     request_data["sftp_dh_key_max_1024"] = sftp_dh_key_max_1024
-                if sftp_transfer_type:
-                    request_data["sftp_transfer_type"] = sftp_transfer_type
                 if sftp_get_action:
                     request_data["sftp_get_action"] = sftp_get_action
                 if sftp_send_action:

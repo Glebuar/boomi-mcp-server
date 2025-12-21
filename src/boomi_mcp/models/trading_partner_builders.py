@@ -228,7 +228,6 @@ def build_sftp_communication_options(**kwargs):
         sftp_ssh_key_path: Path to SSH private key file
         sftp_ssh_key_password: Password for encrypted SSH private key
         sftp_dh_key_max_1024: Limit DH key size to 1024 bits for legacy servers (true/false)
-        sftp_transfer_type: Transfer type - ascii or binary (default: binary)
         sftp_get_action: Get action - actionget, actiongetdelete, actiongetmove
         sftp_send_action: Send action - actionputrename, actionputappend, actionputerror, actionputoverwrite
         sftp_max_file_count: Maximum files to retrieve per poll
@@ -257,7 +256,6 @@ def build_sftp_communication_options(**kwargs):
     ssh_key_path = kwargs.get('sftp_ssh_key_path')
     ssh_key_password = kwargs.get('sftp_ssh_key_password')
     dh_key_max_1024 = kwargs.get('sftp_dh_key_max_1024')
-    transfer_type = kwargs.get('sftp_transfer_type')
     get_action = kwargs.get('sftp_get_action')
     send_action = kwargs.get('sftp_send_action')
     max_file_count = kwargs.get('sftp_max_file_count')
@@ -318,8 +316,6 @@ def build_sftp_communication_options(**kwargs):
     get_options = {}
     if remote_directory:
         get_options['remoteDirectory'] = remote_directory
-    if transfer_type:
-        get_options['transferType'] = transfer_type.lower()
     if get_action:
         get_options['ftpAction'] = get_action.lower()
     if max_file_count:
@@ -339,8 +335,6 @@ def build_sftp_communication_options(**kwargs):
     send_options = {}
     if remote_directory:
         send_options['remoteDirectory'] = remote_directory
-    if transfer_type:
-        send_options['transferType'] = transfer_type.lower()
     if send_action:
         send_options['ftpAction'] = send_action.lower()
     if move_to_directory:

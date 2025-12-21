@@ -30,7 +30,7 @@ None - FTP protocol has complete coverage. (`use_client_authentication` is auto-
 
 ## SFTP Protocol ✅ COMPLETE
 
-### All Parameters Supported (22 total)
+### All Parameters Supported (21 total)
 - `sftp_host` - SFTP server hostname
 - `sftp_port` - SFTP server port (default: 22)
 - `sftp_username` - SFTP username
@@ -41,7 +41,6 @@ None - FTP protocol has complete coverage. (`use_client_authentication` is auto-
 - `sftp_ssh_key_path` - Path to SSH private key file *(added)*
 - `sftp_ssh_key_password` - Password for encrypted SSH private key *(added)*
 - `sftp_dh_key_max_1024` - Limit DH key size to 1024 bits for legacy servers *(added)*
-- `sftp_transfer_type` - Transfer type: ascii, binary *(added)*
 - `sftp_get_action` - Get action: actionget, actiongetdelete, actiongetmove *(added)*
 - `sftp_send_action` - Send action: actionputrename, actionputappend, actionputerror, actionputoverwrite *(added)*
 - `sftp_max_file_count` - Maximum files to retrieve per poll *(added)*
@@ -58,6 +57,8 @@ None - FTP protocol has complete coverage. (`use_client_authentication` is auto-
 ### Missing Parameters
 
 None - SFTP protocol has complete coverage.
+
+**Note:** `transferType` (ascii/binary) is NOT applicable to SFTP. SFTP uses SSH which is binary-only. The ASCII/binary transfer mode is an FTP-specific concept.
 
 ---
 
@@ -216,13 +217,13 @@ None - SFTP protocol has complete coverage.
 | Protocol | Supported | Missing | Status |
 |----------|-----------|---------|--------|
 | FTP | 14 | 0 | ✅ Complete |
-| SFTP | 22 | 0 | ✅ Complete |
+| SFTP | 21 | 0 | ✅ Complete |
 | HTTP | 12 | 12 | Partial |
 | AS2 | 21 | 13 | Partial |
 | MLLP | 7 | 6 | Partial |
 | OFTP | 6 | 9 | Partial |
 | DISK | 4 | 5 | Partial |
-| **Total** | **86** | **45** | |
+| **Total** | **85** | **45** | |
 
 ---
 
