@@ -454,6 +454,19 @@ if manage_trading_partner_action:
         as2_mdn_digest_alg: str = None,
         as2_synchronous_mdn: str = None,
         as2_fail_on_negative_mdn: str = None,
+        as2_subject: str = None,
+        as2_multiple_attachments: str = None,
+        as2_max_document_count: int = None,
+        as2_attachment_option: str = None,
+        as2_attachment_cache: str = None,
+        as2_mdn_external_url: str = None,
+        as2_mdn_use_external_url: str = None,
+        as2_mdn_use_ssl: str = None,
+        as2_mdn_client_ssl_cert: str = None,
+        as2_mdn_ssl_cert: str = None,
+        as2_reject_duplicates: str = None,
+        as2_duplicate_check_count: int = None,
+        as2_legacy_smime: str = None,
         # New standard-specific fields
         edifact_interchange_id: str = None,
         edifact_interchange_id_qual: str = None,
@@ -604,6 +617,19 @@ if manage_trading_partner_action:
             as2_mdn_digest_alg: MDN digest algorithm - SHA1, SHA256, SHA384, SHA512
             as2_synchronous_mdn: Synchronous MDN - "true" or "false"
             as2_fail_on_negative_mdn: Fail on negative MDN - "true" or "false"
+            as2_subject: AS2 message subject header
+            as2_multiple_attachments: Enable multiple attachments - "true" or "false"
+            as2_max_document_count: Maximum documents per message
+            as2_attachment_option: Attachment handling - BATCH, DOCUMENT_CACHE
+            as2_attachment_cache: Attachment cache component ID
+            as2_mdn_external_url: External URL for async MDN delivery
+            as2_mdn_use_external_url: Use external URL for MDN - "true" or "false"
+            as2_mdn_use_ssl: Use SSL for MDN delivery - "true" or "false"
+            as2_mdn_client_ssl_cert: Client SSL certificate alias for MDN
+            as2_mdn_ssl_cert: Server SSL certificate alias for MDN
+            as2_reject_duplicates: Reject duplicate messages - "true" or "false"
+            as2_duplicate_check_count: Number of messages to check for duplicates
+            as2_legacy_smime: Enable legacy S/MIME compatibility - "true" or "false"
 
         Returns:
             Action result with success status and data/error
@@ -759,6 +785,32 @@ if manage_trading_partner_action:
                     request_data["as2_mdn_signed"] = as2_mdn_signed
                 if as2_synchronous_mdn:
                     request_data["as2_synchronous_mdn"] = as2_synchronous_mdn
+                if as2_subject:
+                    request_data["as2_subject"] = as2_subject
+                if as2_multiple_attachments:
+                    request_data["as2_multiple_attachments"] = as2_multiple_attachments
+                if as2_max_document_count:
+                    request_data["as2_max_document_count"] = as2_max_document_count
+                if as2_attachment_option:
+                    request_data["as2_attachment_option"] = as2_attachment_option
+                if as2_attachment_cache:
+                    request_data["as2_attachment_cache"] = as2_attachment_cache
+                if as2_mdn_external_url:
+                    request_data["as2_mdn_external_url"] = as2_mdn_external_url
+                if as2_mdn_use_external_url:
+                    request_data["as2_mdn_use_external_url"] = as2_mdn_use_external_url
+                if as2_mdn_use_ssl:
+                    request_data["as2_mdn_use_ssl"] = as2_mdn_use_ssl
+                if as2_mdn_client_ssl_cert:
+                    request_data["as2_mdn_client_ssl_cert"] = as2_mdn_client_ssl_cert
+                if as2_mdn_ssl_cert:
+                    request_data["as2_mdn_ssl_cert"] = as2_mdn_ssl_cert
+                if as2_reject_duplicates:
+                    request_data["as2_reject_duplicates"] = as2_reject_duplicates
+                if as2_duplicate_check_count:
+                    request_data["as2_duplicate_check_count"] = as2_duplicate_check_count
+                if as2_legacy_smime:
+                    request_data["as2_legacy_smime"] = as2_legacy_smime
 
                 # Pass EDIFACT fields flat
                 if edifact_interchange_id:
@@ -1092,6 +1144,32 @@ if manage_trading_partner_action:
                     updates["as2_synchronous_mdn"] = as2_synchronous_mdn
                 if as2_fail_on_negative_mdn:
                     updates["as2_fail_on_negative_mdn"] = as2_fail_on_negative_mdn
+                if as2_subject:
+                    updates["as2_subject"] = as2_subject
+                if as2_multiple_attachments:
+                    updates["as2_multiple_attachments"] = as2_multiple_attachments
+                if as2_max_document_count:
+                    updates["as2_max_document_count"] = as2_max_document_count
+                if as2_attachment_option:
+                    updates["as2_attachment_option"] = as2_attachment_option
+                if as2_attachment_cache:
+                    updates["as2_attachment_cache"] = as2_attachment_cache
+                if as2_mdn_external_url:
+                    updates["as2_mdn_external_url"] = as2_mdn_external_url
+                if as2_mdn_use_external_url:
+                    updates["as2_mdn_use_external_url"] = as2_mdn_use_external_url
+                if as2_mdn_use_ssl:
+                    updates["as2_mdn_use_ssl"] = as2_mdn_use_ssl
+                if as2_mdn_client_ssl_cert:
+                    updates["as2_mdn_client_ssl_cert"] = as2_mdn_client_ssl_cert
+                if as2_mdn_ssl_cert:
+                    updates["as2_mdn_ssl_cert"] = as2_mdn_ssl_cert
+                if as2_reject_duplicates:
+                    updates["as2_reject_duplicates"] = as2_reject_duplicates
+                if as2_duplicate_check_count:
+                    updates["as2_duplicate_check_count"] = as2_duplicate_check_count
+                if as2_legacy_smime:
+                    updates["as2_legacy_smime"] = as2_legacy_smime
 
                 # MLLP protocol fields (flat)
                 if mllp_host:

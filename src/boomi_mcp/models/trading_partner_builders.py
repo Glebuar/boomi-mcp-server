@@ -515,11 +515,23 @@ def build_as2_communication_options(**kwargs):
         as2_encryption_algorithm: Encryption algorithm - tripledes, rc2, aes128, aes192, aes256
         as2_signing_digest_alg: Signing digest algorithm - SHA1, SHA256, SHA384, SHA512
         as2_data_content_type: Content type for AS2 message
+        as2_subject: AS2 message subject header
+        as2_multiple_attachments: Enable multiple attachments (true/false)
+        as2_max_document_count: Maximum documents per message
+        as2_attachment_option: Attachment handling - BATCH, DOCUMENT_CACHE
+        as2_attachment_cache: Attachment cache component ID
         as2_request_mdn: Request MDN (true/false)
         as2_mdn_signed: Signed MDN (true/false)
         as2_mdn_digest_alg: MDN digest algorithm - SHA1, SHA256, SHA384, SHA512
         as2_synchronous_mdn: Synchronous MDN (true/false, default: true)
-        as2_fail_on_negative_mdn: Fail on negative MDN (true/false)
+        as2_mdn_external_url: External URL for async MDN delivery
+        as2_mdn_use_external_url: Use external URL for MDN (true/false)
+        as2_mdn_use_ssl: Use SSL for MDN delivery (true/false)
+        as2_mdn_client_ssl_cert: Client SSL certificate alias for MDN
+        as2_mdn_ssl_cert: Server SSL certificate alias for MDN
+        as2_reject_duplicates: Reject duplicate messages (true/false)
+        as2_duplicate_check_count: Number of messages to check for duplicates
+        as2_legacy_smime: Enable legacy S/MIME compatibility (true/false)
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -540,17 +552,29 @@ def build_as2_communication_options(**kwargs):
     encryption_alg = kwargs.get('as2_encryption_algorithm')
     signing_alg = kwargs.get('as2_signing_digest_alg')
     content_type = kwargs.get('as2_data_content_type')
+    subject = kwargs.get('as2_subject')
+    multiple_attachments = kwargs.get('as2_multiple_attachments')
+    max_document_count = kwargs.get('as2_max_document_count')
+    attachment_option = kwargs.get('as2_attachment_option')
+    attachment_cache = kwargs.get('as2_attachment_cache')
 
     # MDN options
     request_mdn = kwargs.get('as2_request_mdn')
     mdn_signed = kwargs.get('as2_mdn_signed')
     mdn_digest_alg = kwargs.get('as2_mdn_digest_alg')
     sync_mdn = kwargs.get('as2_synchronous_mdn')
-    fail_on_negative = kwargs.get('as2_fail_on_negative_mdn')
+    mdn_external_url = kwargs.get('as2_mdn_external_url')
+    mdn_use_external_url = kwargs.get('as2_mdn_use_external_url')
+    mdn_use_ssl = kwargs.get('as2_mdn_use_ssl')
+    mdn_client_ssl_cert = kwargs.get('as2_mdn_client_ssl_cert')
+    mdn_ssl_cert = kwargs.get('as2_mdn_ssl_cert')
 
     # Partner info
     as2_identifier = kwargs.get('as2_identifier')
     partner_identifier = kwargs.get('as2_partner_identifier')
+    reject_duplicates = kwargs.get('as2_reject_duplicates')
+    duplicate_check_count = kwargs.get('as2_duplicate_check_count')
+    legacy_smime = kwargs.get('as2_legacy_smime')
 
     # Build AS2 send settings
     send_settings = {
@@ -591,6 +615,16 @@ def build_as2_communication_options(**kwargs):
         message_options['signingDigestAlg'] = signing_alg.upper()
     if content_type:
         message_options['dataContentType'] = content_type
+    if subject:
+        message_options['subject'] = subject
+    if multiple_attachments is not None:
+        message_options['multipleAttachments'] = str(multiple_attachments).lower() == 'true'
+    if max_document_count:
+        message_options['maxDocumentCount'] = int(max_document_count)
+    if attachment_option:
+        message_options['attachmentOption'] = attachment_option.upper()  # BATCH or DOCUMENT_CACHE
+    if attachment_cache:
+        message_options['attachmentCache'] = attachment_cache
 
     # Build AS2 MDN options (note: use JSON key casing like requestMDN, not requestMdn)
     mdn_options = {}
@@ -602,12 +636,29 @@ def build_as2_communication_options(**kwargs):
         mdn_options['mdnDigestAlg'] = mdn_digest_alg.upper()
     if sync_mdn is not None:
         mdn_options['synchronous'] = 'sync' if str(sync_mdn).lower() == 'true' else 'async'
-    # Note: failOnNegativeMdn field does not exist in AS2MDNOptions model
+    if mdn_external_url:
+        mdn_options['externalURL'] = mdn_external_url
+    if mdn_use_external_url is not None:
+        mdn_options['useExternalURL'] = str(mdn_use_external_url).lower() == 'true'
+    if mdn_use_ssl is not None:
+        mdn_options['useSSL'] = str(mdn_use_ssl).lower() == 'true'
+    if mdn_client_ssl_cert:
+        # Certificate alias format
+        mdn_options['mdnClientSSLCert'] = {'alias': mdn_client_ssl_cert}
+    if mdn_ssl_cert:
+        # Certificate alias format
+        mdn_options['mdnSSLCert'] = {'alias': mdn_ssl_cert}
 
     # Build AS2 partner info
     partner_info = {}
     if partner_identifier:
         partner_info['as2Id'] = partner_identifier
+    if reject_duplicates is not None:
+        partner_info['rejectDuplicateMessages'] = str(reject_duplicates).lower() == 'true'
+    if duplicate_check_count:
+        partner_info['messagesToCheckForDuplicates'] = int(duplicate_check_count)
+    if legacy_smime is not None:
+        partner_info['enabledLegacySMIME'] = str(legacy_smime).lower() == 'true'
 
     # Build AS2SendOptions
     # IMPORTANT: AS2MDNOptions and AS2MessageOptions are REQUIRED by the API

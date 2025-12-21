@@ -96,9 +96,9 @@ None - HTTP protocol has complete coverage.
 
 ---
 
-## AS2 Protocol
+## AS2 Protocol ✅ COMPLETE
 
-### Currently Supported
+### All Parameters Supported (34 total)
 - `as2_url` - AS2 endpoint URL
 - `as2_identifier` - Local AS2 identifier
 - `as2_partner_identifier` - Partner AS2 identifier
@@ -120,24 +120,23 @@ None - HTTP protocol has complete coverage.
 - `as2_mdn_signed` - Signed MDN
 - `as2_mdn_digest_alg` - MDN digest algorithm
 - `as2_synchronous_mdn` - Synchronous MDN
+- `as2_subject` - AS2 message subject header *(added)*
+- `as2_multiple_attachments` - Enable multiple attachments *(added)*
+- `as2_max_document_count` - Max documents per message *(added)*
+- `as2_attachment_option` - Attachment handling: BATCH, DOCUMENT_CACHE *(added)*
+- `as2_attachment_cache` - Attachment cache component ID *(added)*
+- `as2_mdn_external_url` - External URL for async MDN delivery *(added)*
+- `as2_mdn_use_external_url` - Use external URL for MDN *(added)*
+- `as2_mdn_use_ssl` - Use SSL for MDN delivery *(added)*
+- `as2_mdn_client_ssl_cert` - Client SSL certificate for MDN *(added)*
+- `as2_mdn_ssl_cert` - Server SSL certificate for MDN *(added)*
+- `as2_reject_duplicates` - Reject duplicate messages *(added)*
+- `as2_duplicate_check_count` - Number of messages to check for duplicates *(added)*
+- `as2_legacy_smime` - Enable legacy S/MIME compatibility *(added)*
 
 ### Missing Parameters
 
-| Parameter | Type | Description | SDK Field |
-|-----------|------|-------------|-----------|
-| `as2_mdn_external_url` | string | External URL for async MDN delivery | AS2MDNOptions.externalURL |
-| `as2_mdn_use_external_url` | bool | Use external URL for MDN | AS2MDNOptions.useExternalURL |
-| `as2_mdn_use_ssl` | bool | Use SSL for MDN delivery | AS2MDNOptions.useSSL |
-| `as2_mdn_client_ssl_cert` | string | Client SSL cert for MDN | AS2MDNOptions.mdnClientSSLCert |
-| `as2_mdn_ssl_cert` | string | Server SSL cert for MDN | AS2MDNOptions.mdnSSLCert |
-| `as2_subject` | string | AS2 message subject header | AS2MessageOptions.subject |
-| `as2_multiple_attachments` | bool | Enable multiple attachments | AS2MessageOptions.multipleAttachments |
-| `as2_max_document_count` | int | Max documents per message | AS2MessageOptions.maxDocumentCount |
-| `as2_attachment_option` | enum | Attachment handling: `BATCH`, `DOCUMENT_CACHE` | AS2MessageOptions.attachmentOption |
-| `as2_attachment_cache` | string | Attachment cache component ID | AS2MessageOptions.attachmentCache |
-| `as2_reject_duplicates` | bool | Reject duplicate messages | As2PartnerInfo.rejectDuplicateMessages |
-| `as2_duplicate_check_count` | int | Number of messages to check for duplicates | As2PartnerInfo.messagesToCheckForDuplicates |
-| `as2_legacy_smime` | bool | Enable legacy S/MIME compatibility | As2PartnerInfo.enabledLegacySMIME |
+None - AS2 protocol has complete coverage.
 
 ---
 
@@ -218,11 +217,11 @@ None - HTTP protocol has complete coverage.
 | FTP | 14 | 0 | ✅ Complete |
 | SFTP | 21 | 0 | ✅ Complete |
 | HTTP | 24 | 0 | ✅ Complete |
-| AS2 | 21 | 13 | Partial |
+| AS2 | 34 | 0 | ✅ Complete |
 | MLLP | 7 | 6 | Partial |
 | OFTP | 6 | 9 | Partial |
 | DISK | 4 | 5 | Partial |
-| **Total** | **97** | **33** | |
+| **Total** | **110** | **20** | |
 
 ---
 
@@ -240,11 +239,11 @@ None - HTTP protocol has complete coverage.
 7. `mllp_inactivity_timeout` - Connection management
 8. ~~`sftp_proxy_*` - Corporate proxy support~~ *(done)*
 9. SSL alias parameters (all protocols) - Certificate management
-10. `as2_mdn_external_url` - Async MDN support
+10. ~~`as2_mdn_external_url` - Async MDN support~~ *(done)*
 
 ### Low Priority (advanced/rare use)
 - ~~Transfer type settings~~ *(FTP done)*
 - ~~File action settings (move/delete after transfer)~~ *(FTP done)*
 - Profile mappings (HTTP)
-- Advanced AS2 attachment settings
+- ~~Advanced AS2 attachment settings~~ *(done)*
 - OFTP advanced settings
