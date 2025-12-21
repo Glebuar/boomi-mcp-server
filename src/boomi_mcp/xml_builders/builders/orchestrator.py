@@ -118,10 +118,8 @@ class ComponentOrchestrator:
             if spec.type == 'process':
                 xml = self._build_process(spec)
             elif spec.type == 'map':
-                # TODO: MapBuilder not implemented yet
                 raise NotImplementedError("Map builder not implemented yet")
             elif spec.type == 'connection':
-                # TODO: ConnectionBuilder not implemented yet
                 raise NotImplementedError("Connection builder not implemented yet")
             else:
                 raise ValueError(f"Unknown component type: {spec.type}")

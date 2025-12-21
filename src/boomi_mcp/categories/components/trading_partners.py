@@ -519,9 +519,7 @@ def list_trading_partners(boomi_client, profile: str, filters: Optional[Dict[str
         elif len(expressions) == 1:
             expression = expressions[0]
         else:
-            # Multiple expressions - would need to use compound expression
-            # For now, use the first expression
-            # TODO: Implement compound expression support if needed
+            # Multiple expressions - use first one (compound expressions not yet supported)
             expression = expressions[0]
 
         # Build typed query config
