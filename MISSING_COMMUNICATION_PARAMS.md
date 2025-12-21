@@ -140,9 +140,9 @@ None - AS2 protocol has complete coverage.
 
 ---
 
-## MLLP Protocol
+## MLLP Protocol ✅ COMPLETE
 
-### Currently Supported
+### All Parameters Supported (13 total)
 - `mllp_host` - MLLP server hostname
 - `mllp_port` - MLLP server port
 - `mllp_use_ssl` - Enable SSL/TLS
@@ -150,17 +150,16 @@ None - AS2 protocol has complete coverage.
 - `mllp_receive_timeout` - Receive timeout in ms
 - `mllp_send_timeout` - Send timeout in ms
 - `mllp_max_connections` - Maximum connections
+- `mllp_inactivity_timeout` - Inactivity timeout in seconds *(added)*
+- `mllp_max_retry` - Maximum retry attempts (1-5) *(added)*
+- `mllp_halt_timeout` - Halt on timeout *(added)*
+- `mllp_use_client_ssl` - Enable client SSL authentication *(added)*
+- `mllp_client_ssl_alias` - Client SSL certificate alias *(added)*
+- `mllp_ssl_alias` - Server SSL certificate alias *(added)*
 
 ### Missing Parameters
 
-| Parameter | Type | Description | SDK Field |
-|-----------|------|-------------|-----------|
-| `mllp_inactivity_timeout` | int | Inactivity timeout in seconds (default: 60) | MLLPSendSettings.inactivityTimeout |
-| `mllp_max_retry` | int | Maximum retry attempts (default: 0) | MLLPSendSettings.maxRetry |
-| `mllp_halt_timeout` | bool | Halt on timeout (default: false) | MLLPSendSettings.haltTimeout |
-| `mllp_use_client_ssl` | bool | Enable client SSL authentication | MLLPSSLOptions.useClientSSL |
-| `mllp_client_ssl_alias` | string | Client SSL certificate alias | MLLPSSLOptions.clientSSLAlias |
-| `mllp_ssl_alias` | string | Server SSL certificate alias | MLLPSSLOptions.sslAlias |
+None - MLLP protocol has complete coverage.
 
 ---
 
@@ -218,10 +217,10 @@ None - AS2 protocol has complete coverage.
 | SFTP | 21 | 0 | ✅ Complete |
 | HTTP | 24 | 0 | ✅ Complete |
 | AS2 | 34 | 0 | ✅ Complete |
-| MLLP | 7 | 6 | Partial |
+| MLLP | 13 | 0 | ✅ Complete |
 | OFTP | 6 | 9 | Partial |
 | DISK | 4 | 5 | Partial |
-| **Total** | **110** | **20** | |
+| **Total** | **116** | **14** | |
 
 ---
 
@@ -235,8 +234,8 @@ None - AS2 protocol has complete coverage.
 3. ~~`sftp_ssh_key_password` - Needed for encrypted SSH keys~~ *(done)*
 4. `disk_create_directory` - Convenient for auto-creating paths
 5. `disk_delete_after_read` - Common requirement for file processing
-6. `mllp_max_retry` - Important for reliability
-7. `mllp_inactivity_timeout` - Connection management
+6. ~~`mllp_max_retry` - Important for reliability~~ *(done)*
+7. ~~`mllp_inactivity_timeout` - Connection management~~ *(done)*
 8. ~~`sftp_proxy_*` - Corporate proxy support~~ *(done)*
 9. SSL alias parameters (all protocols) - Certificate management
 10. ~~`as2_mdn_external_url` - Async MDN support~~ *(done)*

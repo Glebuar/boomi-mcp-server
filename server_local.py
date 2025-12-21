@@ -514,6 +514,12 @@ if manage_trading_partner_action:
         mllp_receive_timeout: str = None,
         mllp_send_timeout: str = None,
         mllp_max_connections: str = None,
+        mllp_inactivity_timeout: int = None,
+        mllp_max_retry: int = None,
+        mllp_halt_timeout: str = None,
+        mllp_use_client_ssl: str = None,
+        mllp_client_ssl_alias: str = None,
+        mllp_ssl_alias: str = None,
         oftp_port: str = None,
         oftp_ssid_code: str = None,
         oftp_ssid_password: str = None,
@@ -975,6 +981,18 @@ if manage_trading_partner_action:
                     request_data["mllp_send_timeout"] = mllp_send_timeout
                 if mllp_max_connections:
                     request_data["mllp_max_connections"] = mllp_max_connections
+                if mllp_inactivity_timeout:
+                    request_data["mllp_inactivity_timeout"] = mllp_inactivity_timeout
+                if mllp_max_retry:
+                    request_data["mllp_max_retry"] = mllp_max_retry
+                if mllp_halt_timeout:
+                    request_data["mllp_halt_timeout"] = mllp_halt_timeout
+                if mllp_use_client_ssl:
+                    request_data["mllp_use_client_ssl"] = mllp_use_client_ssl
+                if mllp_client_ssl_alias:
+                    request_data["mllp_client_ssl_alias"] = mllp_client_ssl_alias
+                if mllp_ssl_alias:
+                    request_data["mllp_ssl_alias"] = mllp_ssl_alias
 
                 # Pass OFTP fields flat
                 if oftp_host:
@@ -1186,6 +1204,18 @@ if manage_trading_partner_action:
                     updates["mllp_receive_timeout"] = mllp_receive_timeout
                 if mllp_max_connections:
                     updates["mllp_max_connections"] = mllp_max_connections
+                if mllp_inactivity_timeout:
+                    updates["mllp_inactivity_timeout"] = mllp_inactivity_timeout
+                if mllp_max_retry:
+                    updates["mllp_max_retry"] = mllp_max_retry
+                if mllp_halt_timeout:
+                    updates["mllp_halt_timeout"] = mllp_halt_timeout
+                if mllp_use_client_ssl:
+                    updates["mllp_use_client_ssl"] = mllp_use_client_ssl
+                if mllp_client_ssl_alias:
+                    updates["mllp_client_ssl_alias"] = mllp_client_ssl_alias
+                if mllp_ssl_alias:
+                    updates["mllp_ssl_alias"] = mllp_ssl_alias
 
                 # OFTP protocol fields (flat)
                 if oftp_host:

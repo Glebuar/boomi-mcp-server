@@ -91,7 +91,7 @@ def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, A
         import sys
         import os
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
-        from src.boomi_mcp.models.trading_partner_builders import build_trading_partner_model
+        from boomi_mcp.models.trading_partner_builders import build_trading_partner_model
 
         # Validate required fields
         if not request_data.get("component_name"):
@@ -630,7 +630,7 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
         import sys
         import os
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
-        from src.boomi_mcp.models.trading_partner_builders import build_contact_info
+        from boomi_mcp.models.trading_partner_builders import build_contact_info
         from boomi.models import ContactInfo
 
         # Step 1: Get the existing trading partner using JSON-based API
@@ -722,6 +722,16 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                 # Use the SDK's _map() which properly filters to minimal structure
                 preserved = existing_comm._map()
                 if preserved:
+                    # Fix BigInteger format returned by API (e.g., ['BigInteger', 2575] -> 2575)
+                    def fix_biginteger_format(obj):
+                        if isinstance(obj, dict):
+                            return {k: fix_biginteger_format(v) for k, v in obj.items()}
+                        elif isinstance(obj, list):
+                            if len(obj) == 2 and obj[0] == 'BigInteger':
+                                return obj[1]
+                            return [fix_biginteger_format(item) for item in obj]
+                        return obj
+                    preserved = fix_biginteger_format(preserved)
                     comm_dict.update(preserved)
 
             # Handle flat parameters (preferred format from server.py)
@@ -1021,6 +1031,25 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
         # Organization linking
         if "organization_id" in updates:
             existing_tp.organization_id = updates["organization_id"]
+
+        # Fix BigInteger format in existing partner_communication (e.g., MLLP port)
+        # This is needed even when there are no protocol updates
+        if not has_protocol_updates:
+            existing_comm = getattr(existing_tp, 'partner_communication', None)
+            if existing_comm and hasattr(existing_comm, '_map'):
+                preserved = existing_comm._map()
+                if preserved:
+                    def fix_biginteger_format(obj):
+                        if isinstance(obj, dict):
+                            return {k: fix_biginteger_format(v) for k, v in obj.items()}
+                        elif isinstance(obj, list):
+                            if len(obj) == 2 and obj[0] == 'BigInteger':
+                                return obj[1]
+                            return [fix_biginteger_format(item) for item in obj]
+                        return obj
+                    preserved = fix_biginteger_format(preserved)
+                    from boomi_mcp.models.trading_partner_builders import PartnerCommunicationDict
+                    existing_tp.partner_communication = PartnerCommunicationDict(preserved)
 
         # Step 3: Update the trading partner using JSON-based API
         result = boomi_client.trading_partner_component.update_trading_partner_component(

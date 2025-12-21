@@ -690,6 +690,12 @@ def build_mllp_communication_options(**kwargs):
         mllp_receive_timeout: Receive timeout in milliseconds
         mllp_send_timeout: Send timeout in milliseconds
         mllp_max_connections: Maximum number of connections
+        mllp_inactivity_timeout: Inactivity timeout in seconds (default: 60)
+        mllp_max_retry: Maximum retry attempts (1-5)
+        mllp_halt_timeout: Halt on timeout (true/false)
+        mllp_use_client_ssl: Enable client SSL authentication (true/false)
+        mllp_client_ssl_alias: Client SSL certificate alias
+        mllp_ssl_alias: Server SSL certificate alias
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -711,11 +717,26 @@ def build_mllp_communication_options(**kwargs):
     receive_timeout = kwargs.get('mllp_receive_timeout')
     send_timeout = kwargs.get('mllp_send_timeout')
     max_connections = kwargs.get('mllp_max_connections')
+    inactivity_timeout = kwargs.get('mllp_inactivity_timeout')
+    max_retry = kwargs.get('mllp_max_retry')
+    halt_timeout = kwargs.get('mllp_halt_timeout')
+    use_client_ssl = kwargs.get('mllp_use_client_ssl')
+    client_ssl_alias = kwargs.get('mllp_client_ssl_alias')
+    ssl_alias = kwargs.get('mllp_ssl_alias')
 
-    # MLLPSSLOptions is required by SDK - always include it
-    mllp_settings['MLLPSSLOptions'] = {
+    # Build MLLPSSLOptions
+    ssl_options = {
         'useSSL': str(use_ssl).lower() == 'true' if use_ssl else False
     }
+    if use_client_ssl is not None:
+        ssl_options['useClientSSL'] = str(use_client_ssl).lower() == 'true'
+    if client_ssl_alias:
+        ssl_options['clientSSLAlias'] = client_ssl_alias
+    if ssl_alias:
+        ssl_options['sslAlias'] = ssl_alias
+
+    mllp_settings['MLLPSSLOptions'] = ssl_options
+
     if persistent is not None:
         mllp_settings['persistent'] = str(persistent).lower() == 'true'
     if receive_timeout:
@@ -724,10 +745,14 @@ def build_mllp_communication_options(**kwargs):
         mllp_settings['sendTimeout'] = int(send_timeout)
     if max_connections:
         mllp_settings['maxConnections'] = int(max_connections)
+    if inactivity_timeout:
+        mllp_settings['inactivityTimeout'] = int(inactivity_timeout)
+    if halt_timeout is not None:
+        mllp_settings['haltTimeout'] = str(halt_timeout).lower() == 'true'
 
     # Max retry must be between 1-5 per Boomi API
-    max_retry = kwargs.get('mllp_max_retry')
-    mllp_settings['maxRetry'] = int(max_retry) if max_retry else 1
+    if max_retry:
+        mllp_settings['maxRetry'] = int(max_retry)
 
     # Standard MLLP delimiters (hex 0B for start, hex 1C hex 0D for end)
     mllp_settings['startBlock'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0B'}
