@@ -361,10 +361,22 @@ def build_http_communication_options(**kwargs):
         http_read_timeout: Read timeout in milliseconds
         http_client_auth: Enable client SSL authentication (true/false)
         http_trust_server_cert: Trust server certificate (true/false)
+        http_client_ssl_alias: Client SSL certificate alias
+        http_trusted_cert_alias: Trusted server certificate alias
+        http_cookie_scope: Cookie handling - IGNORED, GLOBAL, CONNECTOR_SHAPE
         http_method_type: HTTP method - GET, POST, PUT, DELETE, PATCH (default: POST)
         http_data_content_type: Content type for request data
         http_follow_redirects: Follow redirects (true/false)
         http_return_errors: Return errors in response (true/false)
+        http_return_responses: Return response body (true/false)
+        http_request_profile: Request profile component ID
+        http_request_profile_type: Request profile type - NONE, XML, JSON
+        http_response_profile: Response profile component ID
+        http_response_profile_type: Response profile type - NONE, XML, JSON
+        http_oauth_token_url: OAuth2 token endpoint URL
+        http_oauth_client_id: OAuth2 client ID
+        http_oauth_client_secret: OAuth2 client secret
+        http_oauth_scope: OAuth2 scope
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -372,6 +384,7 @@ def build_http_communication_options(**kwargs):
     if not url:
         return None
 
+    # Extract all parameters
     auth_type = kwargs.get('http_authentication_type', 'NONE')
     username = kwargs.get('http_username')
     password = kwargs.get('http_password')
@@ -379,10 +392,22 @@ def build_http_communication_options(**kwargs):
     read_timeout = kwargs.get('http_read_timeout')
     client_auth = kwargs.get('http_client_auth')
     trust_server_cert = kwargs.get('http_trust_server_cert')
+    client_ssl_alias = kwargs.get('http_client_ssl_alias')
+    trusted_cert_alias = kwargs.get('http_trusted_cert_alias')
+    cookie_scope = kwargs.get('http_cookie_scope')
     method_type = kwargs.get('http_method_type')
     content_type = kwargs.get('http_data_content_type')
     follow_redirects = kwargs.get('http_follow_redirects')
     return_errors = kwargs.get('http_return_errors')
+    return_responses = kwargs.get('http_return_responses')
+    request_profile = kwargs.get('http_request_profile')
+    request_profile_type = kwargs.get('http_request_profile_type')
+    response_profile = kwargs.get('http_response_profile')
+    response_profile_type = kwargs.get('http_response_profile_type')
+    oauth_token_url = kwargs.get('http_oauth_token_url')
+    oauth_client_id = kwargs.get('http_oauth_client_id')
+    oauth_client_secret = kwargs.get('http_oauth_client_secret')
+    oauth_scope = kwargs.get('http_oauth_scope')
 
     # Build HTTP settings
     http_settings = {
@@ -396,6 +421,10 @@ def build_http_communication_options(**kwargs):
     if read_timeout:
         http_settings['readTimeout'] = int(read_timeout)
 
+    # Add cookie scope if specified
+    if cookie_scope:
+        http_settings['cookieScope'] = cookie_scope.upper()
+
     # Add BASIC auth credentials if auth type is BASIC
     if auth_type and auth_type.upper() == 'BASIC' and (username or password):
         http_settings['HTTPAuthSettings'] = {
@@ -403,12 +432,37 @@ def build_http_communication_options(**kwargs):
             'password': password or ''
         }
 
+    # Add OAuth2 settings if auth type is OAUTH2
+    if auth_type and auth_type.upper() == 'OAUTH2':
+        oauth2_settings = {}
+        if oauth_token_url:
+            oauth2_settings['accessTokenEndpoint'] = {
+                'url': oauth_token_url,
+                'sslOptions': {}
+            }
+        if oauth_client_id or oauth_client_secret:
+            oauth2_settings['credentials'] = {}
+            if oauth_client_id:
+                oauth2_settings['credentials']['clientId'] = oauth_client_id
+            if oauth_client_secret:
+                oauth2_settings['credentials']['clientSecret'] = oauth_client_secret
+        if oauth_scope:
+            oauth2_settings['scope'] = oauth_scope
+        # Default to client_credentials grant type
+        oauth2_settings['grantType'] = 'client_credentials'
+        if oauth2_settings:
+            http_settings['HTTPOAuth2Settings'] = oauth2_settings
+
     # Add SSL options if specified
     ssl_options = {}
     if client_auth is not None:
         ssl_options['clientauth'] = str(client_auth).lower() == 'true'
     if trust_server_cert is not None:
         ssl_options['trustServerCert'] = str(trust_server_cert).lower() == 'true'
+    if client_ssl_alias:
+        ssl_options['clientsslalias'] = client_ssl_alias
+    if trusted_cert_alias:
+        ssl_options['trustedcertalias'] = trusted_cert_alias
 
     if ssl_options:
         http_settings['HTTPSSLOptions'] = ssl_options
@@ -425,6 +479,16 @@ def build_http_communication_options(**kwargs):
         send_options['followRedirects'] = str(follow_redirects).lower() == 'true'
     if return_errors is not None:
         send_options['returnErrors'] = str(return_errors).lower() == 'true'
+    if return_responses is not None:
+        send_options['returnResponses'] = str(return_responses).lower() == 'true'
+    if request_profile:
+        send_options['requestProfile'] = request_profile
+    if request_profile_type:
+        send_options['requestProfileType'] = request_profile_type.upper()
+    if response_profile:
+        send_options['responseProfile'] = response_profile
+    if response_profile_type:
+        send_options['responseProfileType'] = response_profile_type.upper()
 
     if send_options:
         send_options['useDefaultOptions'] = False

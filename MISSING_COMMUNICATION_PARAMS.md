@@ -62,9 +62,9 @@ None - SFTP protocol has complete coverage.
 
 ---
 
-## HTTP Protocol
+## HTTP Protocol ✅ COMPLETE
 
-### Currently Supported
+### All Parameters Supported (24 total)
 - `http_url` - HTTP endpoint URL
 - `http_username` - Username for BASIC auth
 - `http_password` - Password for BASIC auth
@@ -77,23 +77,22 @@ None - SFTP protocol has complete coverage.
 - `http_data_content_type` - Content type for request
 - `http_follow_redirects` - Follow redirects
 - `http_return_errors` - Return errors in response
+- `http_return_responses` - Return response body *(added)*
+- `http_cookie_scope` - Cookie handling: IGNORED, GLOBAL, CONNECTOR_SHAPE *(added)*
+- `http_client_ssl_alias` - Client SSL certificate alias *(added)*
+- `http_trusted_cert_alias` - Trusted server certificate alias *(added)*
+- `http_request_profile` - Request profile component ID *(added)*
+- `http_request_profile_type` - Request profile type: NONE, XML, JSON *(added)*
+- `http_response_profile` - Response profile component ID *(added)*
+- `http_response_profile_type` - Response profile type: NONE, XML, JSON *(added)*
+- `http_oauth_token_url` - OAuth2 token endpoint URL *(added)*
+- `http_oauth_client_id` - OAuth2 client ID *(added)*
+- `http_oauth_client_secret` - OAuth2 client secret *(added)*
+- `http_oauth_scope` - OAuth2 scope *(added)*
 
 ### Missing Parameters
 
-| Parameter | Type | Description | SDK Field |
-|-----------|------|-------------|-----------|
-| `http_cookie_scope` | enum | Cookie handling: `IGNORED`, `GLOBAL`, `CONNECTOR_SHAPE` | HTTPSettings.cookieScope |
-| `http_client_ssl_alias` | string | Client SSL certificate alias | HTTPSSLOptions.clientsslalias |
-| `http_trusted_cert_alias` | string | Trusted server certificate alias | HTTPSSLOptions.trustedcertalias |
-| `http_request_profile` | string | Request profile component ID | HTTPSendOptions.requestProfile |
-| `http_request_profile_type` | enum | Request profile type: `NONE`, `XML`, `JSON` | HTTPSendOptions.requestProfileType |
-| `http_response_profile` | string | Response profile component ID | HTTPSendOptions.responseProfile |
-| `http_response_profile_type` | enum | Response profile type: `NONE`, `XML`, `JSON` | HTTPSendOptions.responseProfileType |
-| `http_return_responses` | bool | Return response body | HTTPSendOptions.returnResponses |
-| `http_oauth_token_url` | string | OAuth2 token endpoint URL | HTTPOAuth2Settings.tokenUrl |
-| `http_oauth_client_id` | string | OAuth2 client ID | HTTPOAuth2Settings.clientId |
-| `http_oauth_client_secret` | string | OAuth2 client secret | HTTPOAuth2Settings.clientSecret |
-| `http_oauth_scope` | string | OAuth2 scope | HTTPOAuth2Settings.scope |
+None - HTTP protocol has complete coverage.
 
 ---
 
@@ -218,12 +217,12 @@ None - SFTP protocol has complete coverage.
 |----------|-----------|---------|--------|
 | FTP | 14 | 0 | ✅ Complete |
 | SFTP | 21 | 0 | ✅ Complete |
-| HTTP | 12 | 12 | Partial |
+| HTTP | 24 | 0 | ✅ Complete |
 | AS2 | 21 | 13 | Partial |
 | MLLP | 7 | 6 | Partial |
 | OFTP | 6 | 9 | Partial |
 | DISK | 4 | 5 | Partial |
-| **Total** | **85** | **45** | |
+| **Total** | **97** | **33** | |
 
 ---
 

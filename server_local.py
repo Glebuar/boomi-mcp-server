@@ -424,6 +424,18 @@ if manage_trading_partner_action:
         http_data_content_type: str = None,
         http_follow_redirects: str = None,
         http_return_errors: str = None,
+        http_return_responses: str = None,
+        http_cookie_scope: str = None,
+        http_client_ssl_alias: str = None,
+        http_trusted_cert_alias: str = None,
+        http_request_profile: str = None,
+        http_request_profile_type: str = None,
+        http_response_profile: str = None,
+        http_response_profile_type: str = None,
+        http_oauth_token_url: str = None,
+        http_oauth_client_id: str = None,
+        http_oauth_client_secret: str = None,
+        http_oauth_scope: str = None,
         as2_authentication_type: str = None,
         as2_verify_hostname: str = None,
         as2_client_ssl_alias: str = None,
@@ -562,6 +574,18 @@ if manage_trading_partner_action:
             http_data_content_type: HTTP content type
             http_follow_redirects: Follow redirects - "true" or "false"
             http_return_errors: Return errors in response - "true" or "false"
+            http_return_responses: Return response body - "true" or "false"
+            http_cookie_scope: Cookie handling - IGNORED, GLOBAL, CONNECTOR_SHAPE
+            http_client_ssl_alias: Client SSL certificate alias
+            http_trusted_cert_alias: Trusted server certificate alias
+            http_request_profile: Request profile component ID
+            http_request_profile_type: Request profile type - NONE, XML, JSON
+            http_response_profile: Response profile component ID
+            http_response_profile_type: Response profile type - NONE, XML, JSON
+            http_oauth_token_url: OAuth2 token endpoint URL
+            http_oauth_client_id: OAuth2 client ID
+            http_oauth_client_secret: OAuth2 client secret
+            http_oauth_scope: OAuth2 scope
             as2_authentication_type: AS2 authentication type - NONE, BASIC
             as2_verify_hostname: Verify SSL hostname - "true" or "false"
             as2_client_ssl_alias: Client SSL certificate alias
@@ -859,6 +883,30 @@ if manage_trading_partner_action:
                     request_data["http_follow_redirects"] = http_follow_redirects
                 if http_return_errors:
                     request_data["http_return_errors"] = http_return_errors
+                if http_return_responses:
+                    request_data["http_return_responses"] = http_return_responses
+                if http_cookie_scope:
+                    request_data["http_cookie_scope"] = http_cookie_scope
+                if http_client_ssl_alias:
+                    request_data["http_client_ssl_alias"] = http_client_ssl_alias
+                if http_trusted_cert_alias:
+                    request_data["http_trusted_cert_alias"] = http_trusted_cert_alias
+                if http_request_profile:
+                    request_data["http_request_profile"] = http_request_profile
+                if http_request_profile_type:
+                    request_data["http_request_profile_type"] = http_request_profile_type
+                if http_response_profile:
+                    request_data["http_response_profile"] = http_response_profile
+                if http_response_profile_type:
+                    request_data["http_response_profile_type"] = http_response_profile_type
+                if http_oauth_token_url:
+                    request_data["http_oauth_token_url"] = http_oauth_token_url
+                if http_oauth_client_id:
+                    request_data["http_oauth_client_id"] = http_oauth_client_id
+                if http_oauth_client_secret:
+                    request_data["http_oauth_client_secret"] = http_oauth_client_secret
+                if http_oauth_scope:
+                    request_data["http_oauth_scope"] = http_oauth_scope
 
                 # Pass MLLP fields flat
                 if mllp_host:
