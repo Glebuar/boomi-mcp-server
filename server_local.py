@@ -387,6 +387,12 @@ if manage_trading_partner_action:
         disk_directory: str = None,
         disk_get_directory: str = None,
         disk_send_directory: str = None,
+        disk_file_filter: str = None,
+        disk_filter_match_type: str = None,
+        disk_delete_after_read: str = None,
+        disk_max_file_count: str = None,
+        disk_create_directory: str = None,
+        disk_write_option: str = None,
         ftp_host: str = None,
         ftp_port: str = None,
         ftp_username: str = None,
@@ -424,6 +430,18 @@ if manage_trading_partner_action:
         http_data_content_type: str = None,
         http_follow_redirects: str = None,
         http_return_errors: str = None,
+        http_return_responses: str = None,
+        http_cookie_scope: str = None,
+        http_client_ssl_alias: str = None,
+        http_trusted_cert_alias: str = None,
+        http_request_profile: str = None,
+        http_request_profile_type: str = None,
+        http_response_profile: str = None,
+        http_response_profile_type: str = None,
+        http_oauth_token_url: str = None,
+        http_oauth_client_id: str = None,
+        http_oauth_client_secret: str = None,
+        http_oauth_scope: str = None,
         as2_authentication_type: str = None,
         as2_verify_hostname: str = None,
         as2_client_ssl_alias: str = None,
@@ -442,6 +460,19 @@ if manage_trading_partner_action:
         as2_mdn_digest_alg: str = None,
         as2_synchronous_mdn: str = None,
         as2_fail_on_negative_mdn: str = None,
+        as2_subject: str = None,
+        as2_multiple_attachments: str = None,
+        as2_max_document_count: int = None,
+        as2_attachment_option: str = None,
+        as2_attachment_cache: str = None,
+        as2_mdn_external_url: str = None,
+        as2_mdn_use_external_url: str = None,
+        as2_mdn_use_ssl: str = None,
+        as2_mdn_client_ssl_cert: str = None,
+        as2_mdn_ssl_cert: str = None,
+        as2_reject_duplicates: str = None,
+        as2_duplicate_check_count: int = None,
+        as2_legacy_smime: str = None,
         # New standard-specific fields
         edifact_interchange_id: str = None,
         edifact_interchange_id_qual: str = None,
@@ -467,6 +498,21 @@ if manage_trading_partner_action:
         # New protocol-specific fields (FTP params moved to main FTP section above)
         sftp_ssh_key_auth: str = None,
         sftp_known_host_entry: str = None,
+        sftp_ssh_key_path: str = None,
+        sftp_ssh_key_password: str = None,
+        sftp_dh_key_max_1024: str = None,
+        sftp_get_action: str = None,
+        sftp_send_action: str = None,
+        sftp_max_file_count: str = None,
+        sftp_file_to_move: str = None,
+        sftp_move_to_directory: str = None,
+        sftp_move_force_override: str = None,
+        sftp_proxy_enabled: str = None,
+        sftp_proxy_host: str = None,
+        sftp_proxy_port: str = None,
+        sftp_proxy_user: str = None,
+        sftp_proxy_password: str = None,
+        sftp_proxy_type: str = None,
         mllp_host: str = None,
         mllp_port: str = None,
         mllp_use_ssl: str = None,
@@ -474,10 +520,23 @@ if manage_trading_partner_action:
         mllp_receive_timeout: str = None,
         mllp_send_timeout: str = None,
         mllp_max_connections: str = None,
+        mllp_inactivity_timeout: int = None,
+        mllp_max_retry: int = None,
+        mllp_halt_timeout: str = None,
+        mllp_use_client_ssl: str = None,
+        mllp_client_ssl_alias: str = None,
+        mllp_ssl_alias: str = None,
         oftp_port: str = None,
         oftp_ssid_code: str = None,
         oftp_ssid_password: str = None,
         oftp_compress: str = None,
+        oftp_ssid_auth: str = None,
+        oftp_sfid_cipher: int = None,
+        oftp_use_gateway: str = None,
+        oftp_use_client_ssl: str = None,
+        oftp_client_ssl_alias: str = None,
+        oftp_sfid_sign: str = None,
+        oftp_sfid_encrypt: str = None,
         # Organization linking
         organization_id: str = None
     ):
@@ -525,6 +584,12 @@ if manage_trading_partner_action:
             disk_directory: Main directory for Disk protocol
             disk_get_directory: Get/Receive directory for Disk protocol
             disk_send_directory: Send directory for Disk protocol
+            disk_file_filter: File filter pattern (default: *)
+            disk_filter_match_type: Filter type - wildcard or regex (default: wildcard)
+            disk_delete_after_read: Delete files after reading - "true" or "false"
+            disk_max_file_count: Maximum files to retrieve per poll
+            disk_create_directory: Create directory if not exists - "true" or "false"
+            disk_write_option: Write option - unique, over, append, abort (default: unique)
             ftp_host: FTP server hostname/IP
             ftp_port: FTP server port
             ftp_username: FTP username
@@ -537,6 +602,13 @@ if manage_trading_partner_action:
             as2_partner_identifier: Partner AS2 identifier
             oftp_host: OFTP server hostname/IP
             oftp_tls: Enable TLS for OFTP - "true" or "false"
+            oftp_ssid_auth: Enable SSID authentication - "true" or "false"
+            oftp_sfid_cipher: SFID cipher strength (0=none, 1=3DES, 2=AES-128, 3=AES-192, 4=AES-256)
+            oftp_use_gateway: Use OFTP gateway - "true" or "false"
+            oftp_use_client_ssl: Use client SSL certificate - "true" or "false"
+            oftp_client_ssl_alias: Client SSL certificate alias
+            oftp_sfid_sign: Sign files - "true" or "false"
+            oftp_sfid_encrypt: Encrypt files - "true" or "false"
             http_authentication_type: HTTP authentication type - NONE, BASIC, OAUTH2
             http_connect_timeout: HTTP connection timeout in ms
             http_read_timeout: HTTP read timeout in ms
@@ -547,6 +619,18 @@ if manage_trading_partner_action:
             http_data_content_type: HTTP content type
             http_follow_redirects: Follow redirects - "true" or "false"
             http_return_errors: Return errors in response - "true" or "false"
+            http_return_responses: Return response body - "true" or "false"
+            http_cookie_scope: Cookie handling - IGNORED, GLOBAL, CONNECTOR_SHAPE
+            http_client_ssl_alias: Client SSL certificate alias
+            http_trusted_cert_alias: Trusted server certificate alias
+            http_request_profile: Request profile component ID
+            http_request_profile_type: Request profile type - NONE, XML, JSON
+            http_response_profile: Response profile component ID
+            http_response_profile_type: Response profile type - NONE, XML, JSON
+            http_oauth_token_url: OAuth2 token endpoint URL
+            http_oauth_client_id: OAuth2 client ID
+            http_oauth_client_secret: OAuth2 client secret
+            http_oauth_scope: OAuth2 scope
             as2_authentication_type: AS2 authentication type - NONE, BASIC
             as2_verify_hostname: Verify SSL hostname - "true" or "false"
             as2_client_ssl_alias: Client SSL certificate alias
@@ -565,6 +649,19 @@ if manage_trading_partner_action:
             as2_mdn_digest_alg: MDN digest algorithm - SHA1, SHA256, SHA384, SHA512
             as2_synchronous_mdn: Synchronous MDN - "true" or "false"
             as2_fail_on_negative_mdn: Fail on negative MDN - "true" or "false"
+            as2_subject: AS2 message subject header
+            as2_multiple_attachments: Enable multiple attachments - "true" or "false"
+            as2_max_document_count: Maximum documents per message
+            as2_attachment_option: Attachment handling - BATCH, DOCUMENT_CACHE
+            as2_attachment_cache: Attachment cache component ID
+            as2_mdn_external_url: External URL for async MDN delivery
+            as2_mdn_use_external_url: Use external URL for MDN - "true" or "false"
+            as2_mdn_use_ssl: Use SSL for MDN delivery - "true" or "false"
+            as2_mdn_client_ssl_cert: Client SSL certificate alias for MDN
+            as2_mdn_ssl_cert: Server SSL certificate alias for MDN
+            as2_reject_duplicates: Reject duplicate messages - "true" or "false"
+            as2_duplicate_check_count: Number of messages to check for duplicates
+            as2_legacy_smime: Enable legacy S/MIME compatibility - "true" or "false"
 
         Returns:
             Action result with success status and data/error
@@ -656,6 +753,18 @@ if manage_trading_partner_action:
                     request_data["disk_get_directory"] = disk_get_directory
                 if disk_send_directory:
                     request_data["disk_send_directory"] = disk_send_directory
+                if disk_file_filter:
+                    request_data["disk_file_filter"] = disk_file_filter
+                if disk_filter_match_type:
+                    request_data["disk_filter_match_type"] = disk_filter_match_type
+                if disk_delete_after_read:
+                    request_data["disk_delete_after_read"] = disk_delete_after_read
+                if disk_max_file_count:
+                    request_data["disk_max_file_count"] = disk_max_file_count
+                if disk_create_directory:
+                    request_data["disk_create_directory"] = disk_create_directory
+                if disk_write_option:
+                    request_data["disk_write_option"] = disk_write_option
 
                 # Pass FTP fields flat
                 if ftp_host:
@@ -720,6 +829,32 @@ if manage_trading_partner_action:
                     request_data["as2_mdn_signed"] = as2_mdn_signed
                 if as2_synchronous_mdn:
                     request_data["as2_synchronous_mdn"] = as2_synchronous_mdn
+                if as2_subject:
+                    request_data["as2_subject"] = as2_subject
+                if as2_multiple_attachments:
+                    request_data["as2_multiple_attachments"] = as2_multiple_attachments
+                if as2_max_document_count:
+                    request_data["as2_max_document_count"] = as2_max_document_count
+                if as2_attachment_option:
+                    request_data["as2_attachment_option"] = as2_attachment_option
+                if as2_attachment_cache:
+                    request_data["as2_attachment_cache"] = as2_attachment_cache
+                if as2_mdn_external_url:
+                    request_data["as2_mdn_external_url"] = as2_mdn_external_url
+                if as2_mdn_use_external_url:
+                    request_data["as2_mdn_use_external_url"] = as2_mdn_use_external_url
+                if as2_mdn_use_ssl:
+                    request_data["as2_mdn_use_ssl"] = as2_mdn_use_ssl
+                if as2_mdn_client_ssl_cert:
+                    request_data["as2_mdn_client_ssl_cert"] = as2_mdn_client_ssl_cert
+                if as2_mdn_ssl_cert:
+                    request_data["as2_mdn_ssl_cert"] = as2_mdn_ssl_cert
+                if as2_reject_duplicates:
+                    request_data["as2_reject_duplicates"] = as2_reject_duplicates
+                if as2_duplicate_check_count:
+                    request_data["as2_duplicate_check_count"] = as2_duplicate_check_count
+                if as2_legacy_smime:
+                    request_data["as2_legacy_smime"] = as2_legacy_smime
 
                 # Pass EDIFACT fields flat
                 if edifact_interchange_id:
@@ -798,6 +933,36 @@ if manage_trading_partner_action:
                     request_data["sftp_ssh_key_auth"] = sftp_ssh_key_auth
                 if sftp_known_host_entry:
                     request_data["sftp_known_host_entry"] = sftp_known_host_entry
+                if sftp_ssh_key_path:
+                    request_data["sftp_ssh_key_path"] = sftp_ssh_key_path
+                if sftp_ssh_key_password:
+                    request_data["sftp_ssh_key_password"] = sftp_ssh_key_password
+                if sftp_dh_key_max_1024:
+                    request_data["sftp_dh_key_max_1024"] = sftp_dh_key_max_1024
+                if sftp_get_action:
+                    request_data["sftp_get_action"] = sftp_get_action
+                if sftp_send_action:
+                    request_data["sftp_send_action"] = sftp_send_action
+                if sftp_max_file_count:
+                    request_data["sftp_max_file_count"] = sftp_max_file_count
+                if sftp_file_to_move:
+                    request_data["sftp_file_to_move"] = sftp_file_to_move
+                if sftp_move_to_directory:
+                    request_data["sftp_move_to_directory"] = sftp_move_to_directory
+                if sftp_move_force_override:
+                    request_data["sftp_move_force_override"] = sftp_move_force_override
+                if sftp_proxy_enabled:
+                    request_data["sftp_proxy_enabled"] = sftp_proxy_enabled
+                if sftp_proxy_host:
+                    request_data["sftp_proxy_host"] = sftp_proxy_host
+                if sftp_proxy_port:
+                    request_data["sftp_proxy_port"] = sftp_proxy_port
+                if sftp_proxy_user:
+                    request_data["sftp_proxy_user"] = sftp_proxy_user
+                if sftp_proxy_password:
+                    request_data["sftp_proxy_password"] = sftp_proxy_password
+                if sftp_proxy_type:
+                    request_data["sftp_proxy_type"] = sftp_proxy_type
 
                 # Pass HTTP additional fields flat
                 if http_authentication_type:
@@ -814,6 +979,30 @@ if manage_trading_partner_action:
                     request_data["http_follow_redirects"] = http_follow_redirects
                 if http_return_errors:
                     request_data["http_return_errors"] = http_return_errors
+                if http_return_responses:
+                    request_data["http_return_responses"] = http_return_responses
+                if http_cookie_scope:
+                    request_data["http_cookie_scope"] = http_cookie_scope
+                if http_client_ssl_alias:
+                    request_data["http_client_ssl_alias"] = http_client_ssl_alias
+                if http_trusted_cert_alias:
+                    request_data["http_trusted_cert_alias"] = http_trusted_cert_alias
+                if http_request_profile:
+                    request_data["http_request_profile"] = http_request_profile
+                if http_request_profile_type:
+                    request_data["http_request_profile_type"] = http_request_profile_type
+                if http_response_profile:
+                    request_data["http_response_profile"] = http_response_profile
+                if http_response_profile_type:
+                    request_data["http_response_profile_type"] = http_response_profile_type
+                if http_oauth_token_url:
+                    request_data["http_oauth_token_url"] = http_oauth_token_url
+                if http_oauth_client_id:
+                    request_data["http_oauth_client_id"] = http_oauth_client_id
+                if http_oauth_client_secret:
+                    request_data["http_oauth_client_secret"] = http_oauth_client_secret
+                if http_oauth_scope:
+                    request_data["http_oauth_scope"] = http_oauth_scope
 
                 # Pass MLLP fields flat
                 if mllp_host:
@@ -830,6 +1019,18 @@ if manage_trading_partner_action:
                     request_data["mllp_send_timeout"] = mllp_send_timeout
                 if mllp_max_connections:
                     request_data["mllp_max_connections"] = mllp_max_connections
+                if mllp_inactivity_timeout:
+                    request_data["mllp_inactivity_timeout"] = mllp_inactivity_timeout
+                if mllp_max_retry:
+                    request_data["mllp_max_retry"] = mllp_max_retry
+                if mllp_halt_timeout:
+                    request_data["mllp_halt_timeout"] = mllp_halt_timeout
+                if mllp_use_client_ssl:
+                    request_data["mllp_use_client_ssl"] = mllp_use_client_ssl
+                if mllp_client_ssl_alias:
+                    request_data["mllp_client_ssl_alias"] = mllp_client_ssl_alias
+                if mllp_ssl_alias:
+                    request_data["mllp_ssl_alias"] = mllp_ssl_alias
 
                 # Pass OFTP fields flat
                 if oftp_host:
@@ -844,6 +1045,20 @@ if manage_trading_partner_action:
                     request_data["oftp_ssid_password"] = oftp_ssid_password
                 if oftp_compress:
                     request_data["oftp_compress"] = oftp_compress
+                if oftp_ssid_auth:
+                    request_data["oftp_ssid_auth"] = oftp_ssid_auth
+                if oftp_sfid_cipher:
+                    request_data["oftp_sfid_cipher"] = oftp_sfid_cipher
+                if oftp_use_gateway:
+                    request_data["oftp_use_gateway"] = oftp_use_gateway
+                if oftp_use_client_ssl:
+                    request_data["oftp_use_client_ssl"] = oftp_use_client_ssl
+                if oftp_client_ssl_alias:
+                    request_data["oftp_client_ssl_alias"] = oftp_client_ssl_alias
+                if oftp_sfid_sign:
+                    request_data["oftp_sfid_sign"] = oftp_sfid_sign
+                if oftp_sfid_encrypt:
+                    request_data["oftp_sfid_encrypt"] = oftp_sfid_encrypt
 
                 # Organization linking
                 if organization_id:
@@ -897,6 +1112,18 @@ if manage_trading_partner_action:
                     updates["disk_get_directory"] = disk_get_directory
                 if disk_send_directory:
                     updates["disk_send_directory"] = disk_send_directory
+                if disk_file_filter:
+                    updates["disk_file_filter"] = disk_file_filter
+                if disk_filter_match_type:
+                    updates["disk_filter_match_type"] = disk_filter_match_type
+                if disk_delete_after_read:
+                    updates["disk_delete_after_read"] = disk_delete_after_read
+                if disk_max_file_count:
+                    updates["disk_max_file_count"] = disk_max_file_count
+                if disk_create_directory:
+                    updates["disk_create_directory"] = disk_create_directory
+                if disk_write_option:
+                    updates["disk_write_option"] = disk_write_option
 
                 # FTP protocol fields (flat)
                 if ftp_host:
@@ -999,6 +1226,32 @@ if manage_trading_partner_action:
                     updates["as2_synchronous_mdn"] = as2_synchronous_mdn
                 if as2_fail_on_negative_mdn:
                     updates["as2_fail_on_negative_mdn"] = as2_fail_on_negative_mdn
+                if as2_subject:
+                    updates["as2_subject"] = as2_subject
+                if as2_multiple_attachments:
+                    updates["as2_multiple_attachments"] = as2_multiple_attachments
+                if as2_max_document_count:
+                    updates["as2_max_document_count"] = as2_max_document_count
+                if as2_attachment_option:
+                    updates["as2_attachment_option"] = as2_attachment_option
+                if as2_attachment_cache:
+                    updates["as2_attachment_cache"] = as2_attachment_cache
+                if as2_mdn_external_url:
+                    updates["as2_mdn_external_url"] = as2_mdn_external_url
+                if as2_mdn_use_external_url:
+                    updates["as2_mdn_use_external_url"] = as2_mdn_use_external_url
+                if as2_mdn_use_ssl:
+                    updates["as2_mdn_use_ssl"] = as2_mdn_use_ssl
+                if as2_mdn_client_ssl_cert:
+                    updates["as2_mdn_client_ssl_cert"] = as2_mdn_client_ssl_cert
+                if as2_mdn_ssl_cert:
+                    updates["as2_mdn_ssl_cert"] = as2_mdn_ssl_cert
+                if as2_reject_duplicates:
+                    updates["as2_reject_duplicates"] = as2_reject_duplicates
+                if as2_duplicate_check_count:
+                    updates["as2_duplicate_check_count"] = as2_duplicate_check_count
+                if as2_legacy_smime:
+                    updates["as2_legacy_smime"] = as2_legacy_smime
 
                 # MLLP protocol fields (flat)
                 if mllp_host:
@@ -1015,6 +1268,18 @@ if manage_trading_partner_action:
                     updates["mllp_receive_timeout"] = mllp_receive_timeout
                 if mllp_max_connections:
                     updates["mllp_max_connections"] = mllp_max_connections
+                if mllp_inactivity_timeout:
+                    updates["mllp_inactivity_timeout"] = mllp_inactivity_timeout
+                if mllp_max_retry:
+                    updates["mllp_max_retry"] = mllp_max_retry
+                if mllp_halt_timeout:
+                    updates["mllp_halt_timeout"] = mllp_halt_timeout
+                if mllp_use_client_ssl:
+                    updates["mllp_use_client_ssl"] = mllp_use_client_ssl
+                if mllp_client_ssl_alias:
+                    updates["mllp_client_ssl_alias"] = mllp_client_ssl_alias
+                if mllp_ssl_alias:
+                    updates["mllp_ssl_alias"] = mllp_ssl_alias
 
                 # OFTP protocol fields (flat)
                 if oftp_host:
@@ -1029,6 +1294,20 @@ if manage_trading_partner_action:
                     updates["oftp_ssid_password"] = oftp_ssid_password
                 if oftp_compress:
                     updates["oftp_compress"] = oftp_compress
+                if oftp_ssid_auth:
+                    updates["oftp_ssid_auth"] = oftp_ssid_auth
+                if oftp_sfid_cipher:
+                    updates["oftp_sfid_cipher"] = oftp_sfid_cipher
+                if oftp_use_gateway:
+                    updates["oftp_use_gateway"] = oftp_use_gateway
+                if oftp_use_client_ssl:
+                    updates["oftp_use_client_ssl"] = oftp_use_client_ssl
+                if oftp_client_ssl_alias:
+                    updates["oftp_client_ssl_alias"] = oftp_client_ssl_alias
+                if oftp_sfid_sign:
+                    updates["oftp_sfid_sign"] = oftp_sfid_sign
+                if oftp_sfid_encrypt:
+                    updates["oftp_sfid_encrypt"] = oftp_sfid_encrypt
 
                 # Organization linking
                 if organization_id:

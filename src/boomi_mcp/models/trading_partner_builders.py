@@ -88,28 +88,52 @@ def build_disk_communication_options(**kwargs):
         disk_get_directory: Directory to read files from
         disk_send_directory: Directory to write files to
         disk_file_filter: File filter pattern (default: *)
+        disk_filter_match_type: Filter type - wildcard or regex (default: wildcard)
+        disk_delete_after_read: Delete files after reading (true/false)
+        disk_max_file_count: Maximum files to retrieve per poll
+        disk_create_directory: Create directory if not exists (true/false)
+        disk_write_option: Write option - unique, over, append, abort (default: unique)
 
     Returns dict (not SDK model) - for consistency with other builders
     """
     get_dir = kwargs.get('disk_get_directory')
     send_dir = kwargs.get('disk_send_directory')
     file_filter = kwargs.get('disk_file_filter', '*')
+    filter_match_type = kwargs.get('disk_filter_match_type')
+    delete_after_read = kwargs.get('disk_delete_after_read')
+    max_file_count = kwargs.get('disk_max_file_count')
+    create_directory = kwargs.get('disk_create_directory')
+    write_option = kwargs.get('disk_write_option')
 
     if not get_dir and not send_dir:
         return None
 
-    result = {}
+    result = {'@type': 'DiskCommunicationOptions'}
 
     if get_dir:
-        result['DiskGetOptions'] = {
+        get_options = {
+            '@type': 'DiskGetOptions',
             'fileFilter': file_filter,
             'getDirectory': get_dir
         }
+        if filter_match_type:
+            get_options['filterMatchType'] = filter_match_type
+        if delete_after_read is not None:
+            get_options['deleteAfterRead'] = str(delete_after_read).lower() == 'true'
+        if max_file_count is not None:
+            get_options['maxFileCount'] = int(max_file_count)
+        result['DiskGetOptions'] = get_options
 
     if send_dir:
-        result['DiskSendOptions'] = {
+        send_options = {
+            '@type': 'DiskSendOptions',
             'sendDirectory': send_dir
         }
+        if create_directory is not None:
+            send_options['createDirectory'] = str(create_directory).lower() == 'true'
+        if write_option:
+            send_options['writeOption'] = write_option
+        result['DiskSendOptions'] = send_options
 
     return result
 
@@ -225,6 +249,21 @@ def build_sftp_communication_options(**kwargs):
         sftp_remote_directory: Remote directory path
         sftp_ssh_key_auth: Enable SSH key authentication (true/false)
         sftp_known_host_entry: Known hosts entry for server verification
+        sftp_ssh_key_path: Path to SSH private key file
+        sftp_ssh_key_password: Password for encrypted SSH private key
+        sftp_dh_key_max_1024: Limit DH key size to 1024 bits for legacy servers (true/false)
+        sftp_get_action: Get action - actionget, actiongetdelete, actiongetmove
+        sftp_send_action: Send action - actionputrename, actionputappend, actionputerror, actionputoverwrite
+        sftp_max_file_count: Maximum files to retrieve per poll
+        sftp_file_to_move: Directory to move files after get (when action is actiongetmove)
+        sftp_move_to_directory: Directory to move files after operation
+        sftp_move_force_override: Force overwrite when moving files (true/false)
+        sftp_proxy_enabled: Enable proxy connection (true/false)
+        sftp_proxy_host: Proxy server hostname
+        sftp_proxy_port: Proxy server port
+        sftp_proxy_user: Proxy username
+        sftp_proxy_password: Proxy password
+        sftp_proxy_type: Proxy type - ATOM, HTTP, SOCKS4, SOCKS5
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -238,6 +277,21 @@ def build_sftp_communication_options(**kwargs):
     remote_directory = kwargs.get('sftp_remote_directory')
     ssh_key_auth = kwargs.get('sftp_ssh_key_auth')
     known_host_entry = kwargs.get('sftp_known_host_entry')
+    ssh_key_path = kwargs.get('sftp_ssh_key_path')
+    ssh_key_password = kwargs.get('sftp_ssh_key_password')
+    dh_key_max_1024 = kwargs.get('sftp_dh_key_max_1024')
+    get_action = kwargs.get('sftp_get_action')
+    send_action = kwargs.get('sftp_send_action')
+    max_file_count = kwargs.get('sftp_max_file_count')
+    file_to_move = kwargs.get('sftp_file_to_move')
+    move_to_directory = kwargs.get('sftp_move_to_directory')
+    move_force_override = kwargs.get('sftp_move_force_override')
+    proxy_enabled = kwargs.get('sftp_proxy_enabled')
+    proxy_host = kwargs.get('sftp_proxy_host')
+    proxy_port = kwargs.get('sftp_proxy_port')
+    proxy_user = kwargs.get('sftp_proxy_user')
+    proxy_password = kwargs.get('sftp_proxy_password')
+    proxy_type = kwargs.get('sftp_proxy_type')
 
     # Build SFTP settings
     sftp_settings = {
@@ -253,22 +307,68 @@ def build_sftp_communication_options(**kwargs):
         ssh_options['sshkeyauth'] = str(ssh_key_auth).lower() == 'true'
     if known_host_entry:
         ssh_options['knownHostEntry'] = known_host_entry
+    if ssh_key_path:
+        ssh_options['sshkeypath'] = ssh_key_path
+    if ssh_key_password:
+        ssh_options['sshkeypassword'] = ssh_key_password
+    if dh_key_max_1024 is not None:
+        ssh_options['dhKeySizeMax1024'] = str(dh_key_max_1024).lower() == 'true'
 
     if ssh_options:
         sftp_settings['SFTPSSHOptions'] = ssh_options
 
+    # Add proxy settings if specified
+    if proxy_enabled is not None or proxy_host:
+        proxy_settings = {}
+        if proxy_enabled is not None:
+            proxy_settings['proxyEnabled'] = str(proxy_enabled).lower() == 'true'
+        if proxy_host:
+            proxy_settings['host'] = proxy_host
+        if proxy_port:
+            proxy_settings['port'] = int(proxy_port)
+        if proxy_user:
+            proxy_settings['user'] = proxy_user
+        if proxy_password:
+            proxy_settings['password'] = proxy_password
+        if proxy_type:
+            proxy_settings['type'] = proxy_type.upper()
+        sftp_settings['SFTPProxySettings'] = proxy_settings
+
     result = {'SFTPSettings': sftp_settings}
 
-    # Add get/send options with remote directory if specified
+    # Build get options
+    get_options = {}
     if remote_directory:
-        result['SFTPGetOptions'] = {
-            'remoteDirectory': remote_directory,
-            'useDefaultGetOptions': False
-        }
-        result['SFTPSendOptions'] = {
-            'remoteDirectory': remote_directory,
-            'useDefaultSendOptions': False
-        }
+        get_options['remoteDirectory'] = remote_directory
+    if get_action:
+        get_options['ftpAction'] = get_action.lower()
+    if max_file_count:
+        get_options['maxFileCount'] = int(max_file_count)
+    if file_to_move:
+        get_options['fileToMove'] = file_to_move
+    if move_to_directory:
+        get_options['moveToDirectory'] = move_to_directory
+    if move_force_override is not None:
+        get_options['moveToForceOverride'] = str(move_force_override).lower() == 'true'
+
+    if get_options:
+        get_options['useDefaultGetOptions'] = False
+        result['SFTPGetOptions'] = get_options
+
+    # Build send options
+    send_options = {}
+    if remote_directory:
+        send_options['remoteDirectory'] = remote_directory
+    if send_action:
+        send_options['ftpAction'] = send_action.lower()
+    if move_to_directory:
+        send_options['moveToDirectory'] = move_to_directory
+    if move_force_override is not None:
+        send_options['moveToForceOverride'] = str(move_force_override).lower() == 'true'
+
+    if send_options:
+        send_options['useDefaultSendOptions'] = False
+        result['SFTPSendOptions'] = send_options
 
     return result
 
@@ -285,10 +385,22 @@ def build_http_communication_options(**kwargs):
         http_read_timeout: Read timeout in milliseconds
         http_client_auth: Enable client SSL authentication (true/false)
         http_trust_server_cert: Trust server certificate (true/false)
+        http_client_ssl_alias: Client SSL certificate alias
+        http_trusted_cert_alias: Trusted server certificate alias
+        http_cookie_scope: Cookie handling - IGNORED, GLOBAL, CONNECTOR_SHAPE
         http_method_type: HTTP method - GET, POST, PUT, DELETE, PATCH (default: POST)
         http_data_content_type: Content type for request data
         http_follow_redirects: Follow redirects (true/false)
         http_return_errors: Return errors in response (true/false)
+        http_return_responses: Return response body (true/false)
+        http_request_profile: Request profile component ID
+        http_request_profile_type: Request profile type - NONE, XML, JSON
+        http_response_profile: Response profile component ID
+        http_response_profile_type: Response profile type - NONE, XML, JSON
+        http_oauth_token_url: OAuth2 token endpoint URL
+        http_oauth_client_id: OAuth2 client ID
+        http_oauth_client_secret: OAuth2 client secret
+        http_oauth_scope: OAuth2 scope
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -296,6 +408,7 @@ def build_http_communication_options(**kwargs):
     if not url:
         return None
 
+    # Extract all parameters
     auth_type = kwargs.get('http_authentication_type', 'NONE')
     username = kwargs.get('http_username')
     password = kwargs.get('http_password')
@@ -303,10 +416,22 @@ def build_http_communication_options(**kwargs):
     read_timeout = kwargs.get('http_read_timeout')
     client_auth = kwargs.get('http_client_auth')
     trust_server_cert = kwargs.get('http_trust_server_cert')
+    client_ssl_alias = kwargs.get('http_client_ssl_alias')
+    trusted_cert_alias = kwargs.get('http_trusted_cert_alias')
+    cookie_scope = kwargs.get('http_cookie_scope')
     method_type = kwargs.get('http_method_type')
     content_type = kwargs.get('http_data_content_type')
     follow_redirects = kwargs.get('http_follow_redirects')
     return_errors = kwargs.get('http_return_errors')
+    return_responses = kwargs.get('http_return_responses')
+    request_profile = kwargs.get('http_request_profile')
+    request_profile_type = kwargs.get('http_request_profile_type')
+    response_profile = kwargs.get('http_response_profile')
+    response_profile_type = kwargs.get('http_response_profile_type')
+    oauth_token_url = kwargs.get('http_oauth_token_url')
+    oauth_client_id = kwargs.get('http_oauth_client_id')
+    oauth_client_secret = kwargs.get('http_oauth_client_secret')
+    oauth_scope = kwargs.get('http_oauth_scope')
 
     # Build HTTP settings
     http_settings = {
@@ -320,6 +445,10 @@ def build_http_communication_options(**kwargs):
     if read_timeout:
         http_settings['readTimeout'] = int(read_timeout)
 
+    # Add cookie scope if specified
+    if cookie_scope:
+        http_settings['cookieScope'] = cookie_scope.upper()
+
     # Add BASIC auth credentials if auth type is BASIC
     if auth_type and auth_type.upper() == 'BASIC' and (username or password):
         http_settings['HTTPAuthSettings'] = {
@@ -327,12 +456,37 @@ def build_http_communication_options(**kwargs):
             'password': password or ''
         }
 
+    # Add OAuth2 settings if auth type is OAUTH2
+    if auth_type and auth_type.upper() == 'OAUTH2':
+        oauth2_settings = {}
+        if oauth_token_url:
+            oauth2_settings['accessTokenEndpoint'] = {
+                'url': oauth_token_url,
+                'sslOptions': {}
+            }
+        if oauth_client_id or oauth_client_secret:
+            oauth2_settings['credentials'] = {}
+            if oauth_client_id:
+                oauth2_settings['credentials']['clientId'] = oauth_client_id
+            if oauth_client_secret:
+                oauth2_settings['credentials']['clientSecret'] = oauth_client_secret
+        if oauth_scope:
+            oauth2_settings['scope'] = oauth_scope
+        # Default to client_credentials grant type
+        oauth2_settings['grantType'] = 'client_credentials'
+        if oauth2_settings:
+            http_settings['HTTPOAuth2Settings'] = oauth2_settings
+
     # Add SSL options if specified
     ssl_options = {}
     if client_auth is not None:
         ssl_options['clientauth'] = str(client_auth).lower() == 'true'
     if trust_server_cert is not None:
         ssl_options['trustServerCert'] = str(trust_server_cert).lower() == 'true'
+    if client_ssl_alias:
+        ssl_options['clientsslalias'] = client_ssl_alias
+    if trusted_cert_alias:
+        ssl_options['trustedcertalias'] = trusted_cert_alias
 
     if ssl_options:
         http_settings['HTTPSSLOptions'] = ssl_options
@@ -349,6 +503,16 @@ def build_http_communication_options(**kwargs):
         send_options['followRedirects'] = str(follow_redirects).lower() == 'true'
     if return_errors is not None:
         send_options['returnErrors'] = str(return_errors).lower() == 'true'
+    if return_responses is not None:
+        send_options['returnResponses'] = str(return_responses).lower() == 'true'
+    if request_profile:
+        send_options['requestProfile'] = request_profile
+    if request_profile_type:
+        send_options['requestProfileType'] = request_profile_type.upper()
+    if response_profile:
+        send_options['responseProfile'] = response_profile
+    if response_profile_type:
+        send_options['responseProfileType'] = response_profile_type.upper()
 
     if send_options:
         send_options['useDefaultOptions'] = False
@@ -375,11 +539,23 @@ def build_as2_communication_options(**kwargs):
         as2_encryption_algorithm: Encryption algorithm - tripledes, rc2, aes128, aes192, aes256
         as2_signing_digest_alg: Signing digest algorithm - SHA1, SHA256, SHA384, SHA512
         as2_data_content_type: Content type for AS2 message
+        as2_subject: AS2 message subject header
+        as2_multiple_attachments: Enable multiple attachments (true/false)
+        as2_max_document_count: Maximum documents per message
+        as2_attachment_option: Attachment handling - BATCH, DOCUMENT_CACHE
+        as2_attachment_cache: Attachment cache component ID
         as2_request_mdn: Request MDN (true/false)
         as2_mdn_signed: Signed MDN (true/false)
         as2_mdn_digest_alg: MDN digest algorithm - SHA1, SHA256, SHA384, SHA512
         as2_synchronous_mdn: Synchronous MDN (true/false, default: true)
-        as2_fail_on_negative_mdn: Fail on negative MDN (true/false)
+        as2_mdn_external_url: External URL for async MDN delivery
+        as2_mdn_use_external_url: Use external URL for MDN (true/false)
+        as2_mdn_use_ssl: Use SSL for MDN delivery (true/false)
+        as2_mdn_client_ssl_cert: Client SSL certificate alias for MDN
+        as2_mdn_ssl_cert: Server SSL certificate alias for MDN
+        as2_reject_duplicates: Reject duplicate messages (true/false)
+        as2_duplicate_check_count: Number of messages to check for duplicates
+        as2_legacy_smime: Enable legacy S/MIME compatibility (true/false)
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -400,17 +576,29 @@ def build_as2_communication_options(**kwargs):
     encryption_alg = kwargs.get('as2_encryption_algorithm')
     signing_alg = kwargs.get('as2_signing_digest_alg')
     content_type = kwargs.get('as2_data_content_type')
+    subject = kwargs.get('as2_subject')
+    multiple_attachments = kwargs.get('as2_multiple_attachments')
+    max_document_count = kwargs.get('as2_max_document_count')
+    attachment_option = kwargs.get('as2_attachment_option')
+    attachment_cache = kwargs.get('as2_attachment_cache')
 
     # MDN options
     request_mdn = kwargs.get('as2_request_mdn')
     mdn_signed = kwargs.get('as2_mdn_signed')
     mdn_digest_alg = kwargs.get('as2_mdn_digest_alg')
     sync_mdn = kwargs.get('as2_synchronous_mdn')
-    fail_on_negative = kwargs.get('as2_fail_on_negative_mdn')
+    mdn_external_url = kwargs.get('as2_mdn_external_url')
+    mdn_use_external_url = kwargs.get('as2_mdn_use_external_url')
+    mdn_use_ssl = kwargs.get('as2_mdn_use_ssl')
+    mdn_client_ssl_cert = kwargs.get('as2_mdn_client_ssl_cert')
+    mdn_ssl_cert = kwargs.get('as2_mdn_ssl_cert')
 
     # Partner info
     as2_identifier = kwargs.get('as2_identifier')
     partner_identifier = kwargs.get('as2_partner_identifier')
+    reject_duplicates = kwargs.get('as2_reject_duplicates')
+    duplicate_check_count = kwargs.get('as2_duplicate_check_count')
+    legacy_smime = kwargs.get('as2_legacy_smime')
 
     # Build AS2 send settings
     send_settings = {
@@ -451,6 +639,16 @@ def build_as2_communication_options(**kwargs):
         message_options['signingDigestAlg'] = signing_alg.upper()
     if content_type:
         message_options['dataContentType'] = content_type
+    if subject:
+        message_options['subject'] = subject
+    if multiple_attachments is not None:
+        message_options['multipleAttachments'] = str(multiple_attachments).lower() == 'true'
+    if max_document_count:
+        message_options['maxDocumentCount'] = int(max_document_count)
+    if attachment_option:
+        message_options['attachmentOption'] = attachment_option.upper()  # BATCH or DOCUMENT_CACHE
+    if attachment_cache:
+        message_options['attachmentCache'] = attachment_cache
 
     # Build AS2 MDN options (note: use JSON key casing like requestMDN, not requestMdn)
     mdn_options = {}
@@ -462,12 +660,29 @@ def build_as2_communication_options(**kwargs):
         mdn_options['mdnDigestAlg'] = mdn_digest_alg.upper()
     if sync_mdn is not None:
         mdn_options['synchronous'] = 'sync' if str(sync_mdn).lower() == 'true' else 'async'
-    # Note: failOnNegativeMdn field does not exist in AS2MDNOptions model
+    if mdn_external_url:
+        mdn_options['externalURL'] = mdn_external_url
+    if mdn_use_external_url is not None:
+        mdn_options['useExternalURL'] = str(mdn_use_external_url).lower() == 'true'
+    if mdn_use_ssl is not None:
+        mdn_options['useSSL'] = str(mdn_use_ssl).lower() == 'true'
+    if mdn_client_ssl_cert:
+        # Certificate alias format
+        mdn_options['mdnClientSSLCert'] = {'alias': mdn_client_ssl_cert}
+    if mdn_ssl_cert:
+        # Certificate alias format
+        mdn_options['mdnSSLCert'] = {'alias': mdn_ssl_cert}
 
     # Build AS2 partner info
     partner_info = {}
     if partner_identifier:
         partner_info['as2Id'] = partner_identifier
+    if reject_duplicates is not None:
+        partner_info['rejectDuplicateMessages'] = str(reject_duplicates).lower() == 'true'
+    if duplicate_check_count:
+        partner_info['messagesToCheckForDuplicates'] = int(duplicate_check_count)
+    if legacy_smime is not None:
+        partner_info['enabledLegacySMIME'] = str(legacy_smime).lower() == 'true'
 
     # Build AS2SendOptions
     # IMPORTANT: AS2MDNOptions and AS2MessageOptions are REQUIRED by the API
@@ -499,6 +714,12 @@ def build_mllp_communication_options(**kwargs):
         mllp_receive_timeout: Receive timeout in milliseconds
         mllp_send_timeout: Send timeout in milliseconds
         mllp_max_connections: Maximum number of connections
+        mllp_inactivity_timeout: Inactivity timeout in seconds (default: 60)
+        mllp_max_retry: Maximum retry attempts (1-5)
+        mllp_halt_timeout: Halt on timeout (true/false)
+        mllp_use_client_ssl: Enable client SSL authentication (true/false)
+        mllp_client_ssl_alias: Client SSL certificate alias
+        mllp_ssl_alias: Server SSL certificate alias
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -508,8 +729,9 @@ def build_mllp_communication_options(**kwargs):
     if not host or not port:
         return None
 
-    # Build MLLP send settings
+    # Build MLLP send settings with @type for API compatibility
     mllp_settings = {
+        '@type': 'MLLPSendSettings',
         'host': host,
         'port': int(port)
     }
@@ -520,11 +742,27 @@ def build_mllp_communication_options(**kwargs):
     receive_timeout = kwargs.get('mllp_receive_timeout')
     send_timeout = kwargs.get('mllp_send_timeout')
     max_connections = kwargs.get('mllp_max_connections')
+    inactivity_timeout = kwargs.get('mllp_inactivity_timeout')
+    max_retry = kwargs.get('mllp_max_retry')
+    halt_timeout = kwargs.get('mllp_halt_timeout')
+    use_client_ssl = kwargs.get('mllp_use_client_ssl')
+    client_ssl_alias = kwargs.get('mllp_client_ssl_alias')
+    ssl_alias = kwargs.get('mllp_ssl_alias')
 
-    # MLLPSSLOptions is required by SDK - always include it
-    mllp_settings['MLLPSSLOptions'] = {
+    # Build MLLPSSLOptions with @type
+    ssl_options = {
+        '@type': 'MLLPSSLOptions',
         'useSSL': str(use_ssl).lower() == 'true' if use_ssl else False
     }
+    if use_client_ssl is not None:
+        ssl_options['useClientSSL'] = str(use_client_ssl).lower() == 'true'
+    if client_ssl_alias:
+        ssl_options['clientSSLAlias'] = client_ssl_alias
+    if ssl_alias:
+        ssl_options['sslAlias'] = ssl_alias
+
+    mllp_settings['MLLPSSLOptions'] = ssl_options
+
     if persistent is not None:
         mllp_settings['persistent'] = str(persistent).lower() == 'true'
     if receive_timeout:
@@ -533,17 +771,21 @@ def build_mllp_communication_options(**kwargs):
         mllp_settings['sendTimeout'] = int(send_timeout)
     if max_connections:
         mllp_settings['maxConnections'] = int(max_connections)
+    if inactivity_timeout:
+        mllp_settings['inactivityTimeout'] = int(inactivity_timeout)
+    if halt_timeout is not None:
+        mllp_settings['haltTimeout'] = str(halt_timeout).lower() == 'true'
 
     # Max retry must be between 1-5 per Boomi API
-    max_retry = kwargs.get('mllp_max_retry')
-    mllp_settings['maxRetry'] = int(max_retry) if max_retry else 1
+    if max_retry:
+        mllp_settings['maxRetry'] = int(max_retry)
 
-    # Standard MLLP delimiters (hex 0B for start, hex 1C hex 0D for end)
-    mllp_settings['startBlock'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0B'}
-    mllp_settings['endBlock'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '1C'}
-    mllp_settings['endData'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0D'}
+    # Standard MLLP delimiters (hex 0B for start, hex 1C hex 0D for end) with @type
+    mllp_settings['startBlock'] = {'@type': 'EdiDelimiter', 'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0B'}
+    mllp_settings['endBlock'] = {'@type': 'EdiDelimiter', 'delimiterValue': 'bytecharacter', 'delimiterSpecial': '1C'}
+    mllp_settings['endData'] = {'@type': 'EdiDelimiter', 'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0D'}
 
-    return {'MLLPSendSettings': mllp_settings}
+    return {'@type': 'MLLPCommunicationOptions', 'MLLPSendSettings': mllp_settings}
 
 
 def build_oftp_communication_options(**kwargs):
@@ -556,6 +798,13 @@ def build_oftp_communication_options(**kwargs):
         oftp_ssid_code: ODETTE Session ID code
         oftp_ssid_password: ODETTE Session ID password
         oftp_compress: Enable compression (true/false)
+        oftp_ssid_auth: Enable SSID authentication (true/false)
+        oftp_sfid_cipher: SFID cipher strength (0=none, 1=3DES, 2=AES-128, 3=AES-192, 4=AES-256)
+        oftp_use_gateway: Use OFTP gateway (true/false)
+        oftp_use_client_ssl: Use client SSL certificate (true/false)
+        oftp_client_ssl_alias: Client SSL certificate alias
+        oftp_sfid_sign: Sign files (true/false)
+        oftp_sfid_encrypt: Encrypt files (true/false)
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -568,29 +817,55 @@ def build_oftp_communication_options(**kwargs):
     ssid_code = kwargs.get('oftp_ssid_code')
     ssid_password = kwargs.get('oftp_ssid_password')
     compress = kwargs.get('oftp_compress')
+    ssid_auth = kwargs.get('oftp_ssid_auth')
+    sfid_cipher = kwargs.get('oftp_sfid_cipher')
+    use_gateway = kwargs.get('oftp_use_gateway')
+    use_client_ssl = kwargs.get('oftp_use_client_ssl')
+    client_ssl_alias = kwargs.get('oftp_client_ssl_alias')
+    sfid_sign = kwargs.get('oftp_sfid_sign')
+    sfid_encrypt = kwargs.get('oftp_sfid_encrypt')
 
-    # Build OFTP connection settings
-    connection_settings = {
-        'host': host,
-        'port': port
-    }
-
-    if tls is not None:
-        connection_settings['tls'] = str(tls).lower() == 'true'
-
-    # Build my partner info (ODETTE partner settings) - REQUIRED by SDK
-    my_partner_info = {}
+    # Build my partner info (ODETTE partner settings)
+    my_partner_info = {'@type': 'OFTPPartnerInfo'}
     if ssid_code:
         my_partner_info['ssidcode'] = ssid_code
     if ssid_password:
         my_partner_info['ssidpswd'] = ssid_password
     if compress is not None:
         my_partner_info['ssidcmpr'] = str(compress).lower() == 'true'
+    if sfid_sign is not None:
+        my_partner_info['sfidsign'] = str(sfid_sign).lower() == 'true'
+    if sfid_encrypt is not None:
+        my_partner_info['sfidsec-encrypt'] = str(sfid_encrypt).lower() == 'true'
 
-    # Always include myPartnerInfo as it's required by the SDK model
-    connection_settings['myPartnerInfo'] = my_partner_info if my_partner_info else {}
+    # Build defaultOFTPConnectionSettings - Boomi stores values here
+    default_settings = {
+        '@type': 'DefaultOFTPConnectionSettings',
+        'host': host,
+        'port': port,
+        'myPartnerInfo': my_partner_info
+    }
 
-    return {'OFTPConnectionSettings': connection_settings}
+    if tls is not None:
+        default_settings['tls'] = str(tls).lower() == 'true'
+    if ssid_auth is not None:
+        default_settings['ssidauth'] = str(ssid_auth).lower() == 'true'
+    if sfid_cipher is not None:
+        default_settings['sfidciph'] = int(sfid_cipher)
+    if use_gateway is not None:
+        default_settings['useGateway'] = str(use_gateway).lower() == 'true'
+    if use_client_ssl is not None:
+        default_settings['useClientSSL'] = str(use_client_ssl).lower() == 'true'
+    if client_ssl_alias:
+        default_settings['clientSSLAlias'] = client_ssl_alias
+
+    # Build OFTP connection settings with nested default settings
+    connection_settings = {
+        '@type': 'OFTPConnectionSettings',
+        'defaultOFTPConnectionSettings': default_settings
+    }
+
+    return {'@type': 'OFTPCommunicationOptions', 'OFTPConnectionSettings': connection_settings}
 
 
 class PartnerCommunicationDict(dict):

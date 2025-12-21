@@ -184,7 +184,6 @@ except Exception as e:
     sys.exit(1)
 
 # Create FastMCP server with auth
-# TODO: Add branding (icons, site) when FastMCP 2.14.0+ is released
 mcp = FastMCP(
     name="Boomi MCP Server",
     auth=auth

@@ -91,7 +91,7 @@ def create_trading_partner(boomi_client, profile: str, request_data: Dict[str, A
         import sys
         import os
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
-        from src.boomi_mcp.models.trading_partner_builders import build_trading_partner_model
+        from boomi_mcp.models.trading_partner_builders import build_trading_partner_model
 
         # Validate required fields
         if not request_data.get("component_name"):
@@ -409,16 +409,19 @@ def get_trading_partner(boomi_client, profile: str, component_id: str) -> Dict[s
                 oftp_info = {"protocol": "oftp"}
                 conn_settings = getattr(oftp_opts, 'oftp_connection_settings', None)
                 if conn_settings:
-                    oftp_info["host"] = getattr(conn_settings, 'host', None)
-                    oftp_info["port"] = getattr(conn_settings, 'port', None)
-                    oftp_info["tls"] = getattr(conn_settings, 'tls', None)
-                    oftp_info["ssidauth"] = getattr(conn_settings, 'ssidauth', None)
-                    oftp_info["sfidciph"] = getattr(conn_settings, 'sfidciph', None)
-                    oftp_info["use_gateway"] = getattr(conn_settings, 'use_gateway', None)
-                    oftp_info["use_client_ssl"] = getattr(conn_settings, 'use_client_ssl', None)
-                    oftp_info["client_ssl_alias"] = getattr(conn_settings, 'client_ssl_alias', None)
-                    # Extract partner info
-                    partner_info = getattr(conn_settings, 'my_partner_info', None)
+                    # Check both direct attrs and default_oftp_connection_settings
+                    default_settings = getattr(conn_settings, 'default_oftp_connection_settings', None)
+                    # Try direct attributes first, fall back to default settings
+                    oftp_info["host"] = getattr(conn_settings, 'host', None) or (getattr(default_settings, 'host', None) if default_settings else None)
+                    oftp_info["port"] = getattr(conn_settings, 'port', None) or (getattr(default_settings, 'port', None) if default_settings else None)
+                    oftp_info["tls"] = getattr(conn_settings, 'tls', None) if hasattr(conn_settings, 'tls') else (getattr(default_settings, 'tls', None) if default_settings else None)
+                    oftp_info["ssid_auth"] = getattr(conn_settings, 'ssidauth', None) if hasattr(conn_settings, 'ssidauth') else (getattr(default_settings, 'ssidauth', None) if default_settings else None)
+                    oftp_info["sfid_cipher"] = getattr(conn_settings, 'sfidciph', None) if hasattr(conn_settings, 'sfidciph') else (getattr(default_settings, 'sfidciph', None) if default_settings else None)
+                    oftp_info["use_gateway"] = getattr(conn_settings, 'use_gateway', None) if hasattr(conn_settings, 'use_gateway') else (getattr(default_settings, 'use_gateway', None) if default_settings else None)
+                    oftp_info["use_client_ssl"] = getattr(conn_settings, 'use_client_ssl', None) if hasattr(conn_settings, 'use_client_ssl') else (getattr(default_settings, 'use_client_ssl', None) if default_settings else None)
+                    oftp_info["client_ssl_alias"] = getattr(conn_settings, 'client_ssl_alias', None) or (getattr(default_settings, 'client_ssl_alias', None) if default_settings else None)
+                    # Extract partner info from both locations
+                    partner_info = getattr(conn_settings, 'my_partner_info', None) or (getattr(default_settings, 'my_partner_info', None) if default_settings else None)
                     if partner_info:
                         oftp_info["ssid_code"] = getattr(partner_info, 'ssidcode', None)
                         oftp_info["compress"] = getattr(partner_info, 'ssidcmpr', None)
@@ -516,9 +519,7 @@ def list_trading_partners(boomi_client, profile: str, filters: Optional[Dict[str
         elif len(expressions) == 1:
             expression = expressions[0]
         else:
-            # Multiple expressions - would need to use compound expression
-            # For now, use the first expression
-            # TODO: Implement compound expression support if needed
+            # Multiple expressions - use first one (compound expressions not yet supported)
             expression = expressions[0]
 
         # Build typed query config
@@ -630,7 +631,7 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
         import sys
         import os
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
-        from src.boomi_mcp.models.trading_partner_builders import build_contact_info
+        from boomi_mcp.models.trading_partner_builders import build_contact_info
         from boomi.models import ContactInfo
 
         # Step 1: Get the existing trading partner using JSON-based API
@@ -722,6 +723,16 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                 # Use the SDK's _map() which properly filters to minimal structure
                 preserved = existing_comm._map()
                 if preserved:
+                    # Fix BigInteger format returned by API (e.g., ['BigInteger', 2575] -> 2575)
+                    def fix_biginteger_format(obj):
+                        if isinstance(obj, dict):
+                            return {k: fix_biginteger_format(v) for k, v in obj.items()}
+                        elif isinstance(obj, list):
+                            if len(obj) == 2 and obj[0] == 'BigInteger':
+                                return obj[1]
+                            return [fix_biginteger_format(item) for item in obj]
+                        return obj
+                    preserved = fix_biginteger_format(preserved)
                     comm_dict.update(preserved)
 
             # Handle flat parameters (preferred format from server.py)
@@ -911,26 +922,64 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
                         existing_oftp = getattr(existing_comm, 'oftp_communication_options', None)
                         if existing_oftp:
                             existing_settings = getattr(existing_oftp, 'oftp_connection_settings', None)
-                            if existing_settings:
+                            # OFTP values are in default_oftp_connection_settings
+                            default_settings = getattr(existing_settings, 'default_oftp_connection_settings', None) if existing_settings else None
+                            if default_settings:
                                 if 'oftp_host' not in oftp_params:
-                                    existing_host = getattr(existing_settings, 'host', None)
+                                    existing_host = getattr(default_settings, 'host', None)
                                     if existing_host:
                                         oftp_params['oftp_host'] = existing_host
                                 if 'oftp_port' not in oftp_params:
-                                    existing_port = getattr(existing_settings, 'port', None)
+                                    existing_port = getattr(default_settings, 'port', None)
                                     if existing_port:
                                         oftp_params['oftp_port'] = existing_port
                                 if 'oftp_tls' not in oftp_params:
-                                    existing_tls = getattr(existing_settings, 'tls', None)
+                                    existing_tls = getattr(default_settings, 'tls', None)
                                     if existing_tls is not None:
                                         oftp_params['oftp_tls'] = existing_tls
-                                # Get partner info for ssid_code
-                                partner_info = getattr(existing_settings, 'my_partner_info', None)
+                                if 'oftp_ssid_auth' not in oftp_params:
+                                    existing_auth = getattr(default_settings, 'ssidauth', None)
+                                    if existing_auth is not None:
+                                        oftp_params['oftp_ssid_auth'] = existing_auth
+                                if 'oftp_sfid_cipher' not in oftp_params:
+                                    existing_cipher = getattr(default_settings, 'sfidciph', None)
+                                    if existing_cipher is not None:
+                                        oftp_params['oftp_sfid_cipher'] = existing_cipher
+                                if 'oftp_use_gateway' not in oftp_params:
+                                    existing_gateway = getattr(default_settings, 'use_gateway', None)
+                                    if existing_gateway is not None:
+                                        oftp_params['oftp_use_gateway'] = existing_gateway
+                                if 'oftp_use_client_ssl' not in oftp_params:
+                                    existing_client_ssl = getattr(default_settings, 'use_client_ssl', None)
+                                    if existing_client_ssl is not None:
+                                        oftp_params['oftp_use_client_ssl'] = existing_client_ssl
+                                if 'oftp_client_ssl_alias' not in oftp_params:
+                                    existing_alias = getattr(default_settings, 'client_ssl_alias', None)
+                                    if existing_alias:
+                                        oftp_params['oftp_client_ssl_alias'] = existing_alias
+                                # Get partner info from default_settings
+                                partner_info = getattr(default_settings, 'my_partner_info', None)
                                 if partner_info:
                                     if 'oftp_ssid_code' not in oftp_params:
                                         existing_code = getattr(partner_info, 'ssidcode', None)
                                         if existing_code:
                                             oftp_params['oftp_ssid_code'] = existing_code
+                                    if 'oftp_ssid_password' not in oftp_params:
+                                        existing_pwd = getattr(partner_info, 'ssidpswd', None)
+                                        if existing_pwd:
+                                            oftp_params['oftp_ssid_password'] = existing_pwd
+                                    if 'oftp_compress' not in oftp_params:
+                                        existing_compress = getattr(partner_info, 'ssidcmpr', None)
+                                        if existing_compress is not None:
+                                            oftp_params['oftp_compress'] = existing_compress
+                                    if 'oftp_sfid_sign' not in oftp_params:
+                                        existing_sign = getattr(partner_info, 'sfidsign', None)
+                                        if existing_sign is not None:
+                                            oftp_params['oftp_sfid_sign'] = existing_sign
+                                    if 'oftp_sfid_encrypt' not in oftp_params:
+                                        existing_encrypt = getattr(partner_info, 'sfidsec-encrypt', None)
+                                        if existing_encrypt is not None:
+                                            oftp_params['oftp_sfid_encrypt'] = existing_encrypt
                     oftp_opts = build_oftp_communication_options(**oftp_params)
                     if oftp_opts:
                         comm_dict["OFTPCommunicationOptions"] = oftp_opts
@@ -1021,6 +1070,25 @@ def update_trading_partner(boomi_client, profile: str, component_id: str, update
         # Organization linking
         if "organization_id" in updates:
             existing_tp.organization_id = updates["organization_id"]
+
+        # Fix BigInteger format in existing partner_communication (e.g., MLLP port)
+        # This is needed even when there are no protocol updates
+        if not has_protocol_updates:
+            existing_comm = getattr(existing_tp, 'partner_communication', None)
+            if existing_comm and hasattr(existing_comm, '_map'):
+                preserved = existing_comm._map()
+                if preserved:
+                    def fix_biginteger_format(obj):
+                        if isinstance(obj, dict):
+                            return {k: fix_biginteger_format(v) for k, v in obj.items()}
+                        elif isinstance(obj, list):
+                            if len(obj) == 2 and obj[0] == 'BigInteger':
+                                return obj[1]
+                            return [fix_biginteger_format(item) for item in obj]
+                        return obj
+                    preserved = fix_biginteger_format(preserved)
+                    from boomi_mcp.models.trading_partner_builders import PartnerCommunicationDict
+                    existing_tp.partner_communication = PartnerCommunicationDict(preserved)
 
         # Step 3: Update the trading partner using JSON-based API
         result = boomi_client.trading_partner_component.update_trading_partner_component(
