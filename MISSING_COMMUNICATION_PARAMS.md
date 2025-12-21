@@ -28,9 +28,9 @@ None - FTP protocol has complete coverage. (`use_client_authentication` is auto-
 
 ---
 
-## SFTP Protocol
+## SFTP Protocol ✅ COMPLETE
 
-### Currently Supported
+### All Parameters Supported (22 total)
 - `sftp_host` - SFTP server hostname
 - `sftp_port` - SFTP server port (default: 22)
 - `sftp_username` - SFTP username
@@ -38,26 +38,26 @@ None - FTP protocol has complete coverage. (`use_client_authentication` is auto-
 - `sftp_remote_directory` - Remote directory path
 - `sftp_ssh_key_auth` - Enable SSH key authentication (true/false)
 - `sftp_known_host_entry` - Known hosts entry for server verification
+- `sftp_ssh_key_path` - Path to SSH private key file *(added)*
+- `sftp_ssh_key_password` - Password for encrypted SSH private key *(added)*
+- `sftp_dh_key_max_1024` - Limit DH key size to 1024 bits for legacy servers *(added)*
+- `sftp_transfer_type` - Transfer type: ascii, binary *(added)*
+- `sftp_get_action` - Get action: actionget, actiongetdelete, actiongetmove *(added)*
+- `sftp_send_action` - Send action: actionputrename, actionputappend, actionputerror, actionputoverwrite *(added)*
+- `sftp_max_file_count` - Maximum files to retrieve per poll *(added)*
+- `sftp_file_to_move` - Directory to move files after get *(added)*
+- `sftp_move_to_directory` - Directory to move files after operation *(added)*
+- `sftp_move_force_override` - Force overwrite when moving files *(added)*
+- `sftp_proxy_enabled` - Enable proxy connection *(added)*
+- `sftp_proxy_host` - Proxy server hostname *(added)*
+- `sftp_proxy_port` - Proxy server port *(added)*
+- `sftp_proxy_user` - Proxy username *(added)*
+- `sftp_proxy_password` - Proxy password *(added)*
+- `sftp_proxy_type` - Proxy type: ATOM, HTTP, SOCKS4, SOCKS5 *(added)*
 
 ### Missing Parameters
 
-| Parameter | Type | Description | SDK Field |
-|-----------|------|-------------|-----------|
-| `sftp_ssh_key_path` | string | Path to SSH private key file | SFTPSSHOptions.sshkeypath |
-| `sftp_ssh_key_password` | string | Password for encrypted SSH private key | SFTPSSHOptions.sshkeypassword |
-| `sftp_dh_key_max_1024` | bool | Limit DH key size to 1024 bits (legacy servers) | SFTPSSHOptions.dhKeySizeMax1024 |
-| `sftp_get_action` | enum | Get action: `actionget`, `actiongetdelete`, `actiongetmove` | SFTPGetOptions.ftpAction |
-| `sftp_send_action` | enum | Send action: `actionputrename`, `actionputappend`, `actionputerror`, `actionputoverwrite` | SFTPSendOptions.ftpAction |
-| `sftp_max_file_count` | int | Maximum files to retrieve per poll | SFTPGetOptions.maxFileCount |
-| `sftp_file_to_move` | string | Directory to move files after get | SFTPGetOptions.fileToMove |
-| `sftp_move_to_directory` | string | Directory to move files after operation | SFTPGetOptions.moveToDirectory, SFTPSendOptions.moveToDirectory |
-| `sftp_move_force_override` | bool | Force overwrite when moving files | SFTPGetOptions.moveToForceOverride, SFTPSendOptions.moveToForceOverride |
-| `sftp_proxy_enabled` | bool | Enable proxy connection | SFTPProxySettings.proxyEnabled |
-| `sftp_proxy_host` | string | Proxy server hostname | SFTPProxySettings.host |
-| `sftp_proxy_port` | int | Proxy server port | SFTPProxySettings.port |
-| `sftp_proxy_user` | string | Proxy username | SFTPProxySettings.user |
-| `sftp_proxy_password` | string | Proxy password | SFTPProxySettings.password |
-| `sftp_proxy_type` | enum | Proxy type: `ATOM`, `HTTP`, `SOCKS4`, `SOCKS5` | SFTPProxySettings.type |
+None - SFTP protocol has complete coverage.
 
 ---
 
@@ -216,29 +216,29 @@ None - FTP protocol has complete coverage. (`use_client_authentication` is auto-
 | Protocol | Supported | Missing | Status |
 |----------|-----------|---------|--------|
 | FTP | 14 | 0 | ✅ Complete |
-| SFTP | 7 | 15 | Partial |
+| SFTP | 22 | 0 | ✅ Complete |
 | HTTP | 12 | 12 | Partial |
 | AS2 | 21 | 13 | Partial |
 | MLLP | 7 | 6 | Partial |
 | OFTP | 6 | 9 | Partial |
 | DISK | 4 | 5 | Partial |
-| **Total** | **71** | **60** | |
+| **Total** | **86** | **45** | |
 
 ---
 
 ## Priority Summary
 
 ### High Priority (commonly needed)
-1. `sftp_ssh_key_path` - Required for SSH key authentication
+1. ~~`sftp_ssh_key_path` - Required for SSH key authentication~~ *(done)*
 2. `disk_write_option` - Critical for controlling file write behavior
 
 ### Medium Priority (useful features)
-3. `sftp_ssh_key_password` - Needed for encrypted SSH keys
+3. ~~`sftp_ssh_key_password` - Needed for encrypted SSH keys~~ *(done)*
 4. `disk_create_directory` - Convenient for auto-creating paths
 5. `disk_delete_after_read` - Common requirement for file processing
 6. `mllp_max_retry` - Important for reliability
 7. `mllp_inactivity_timeout` - Connection management
-8. `sftp_proxy_*` - Corporate proxy support
+8. ~~`sftp_proxy_*` - Corporate proxy support~~ *(done)*
 9. SSL alias parameters (all protocols) - Certificate management
 10. `as2_mdn_external_url` - Async MDN support
 

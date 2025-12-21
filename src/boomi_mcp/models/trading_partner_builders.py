@@ -225,6 +225,22 @@ def build_sftp_communication_options(**kwargs):
         sftp_remote_directory: Remote directory path
         sftp_ssh_key_auth: Enable SSH key authentication (true/false)
         sftp_known_host_entry: Known hosts entry for server verification
+        sftp_ssh_key_path: Path to SSH private key file
+        sftp_ssh_key_password: Password for encrypted SSH private key
+        sftp_dh_key_max_1024: Limit DH key size to 1024 bits for legacy servers (true/false)
+        sftp_transfer_type: Transfer type - ascii or binary (default: binary)
+        sftp_get_action: Get action - actionget, actiongetdelete, actiongetmove
+        sftp_send_action: Send action - actionputrename, actionputappend, actionputerror, actionputoverwrite
+        sftp_max_file_count: Maximum files to retrieve per poll
+        sftp_file_to_move: Directory to move files after get (when action is actiongetmove)
+        sftp_move_to_directory: Directory to move files after operation
+        sftp_move_force_override: Force overwrite when moving files (true/false)
+        sftp_proxy_enabled: Enable proxy connection (true/false)
+        sftp_proxy_host: Proxy server hostname
+        sftp_proxy_port: Proxy server port
+        sftp_proxy_user: Proxy username
+        sftp_proxy_password: Proxy password
+        sftp_proxy_type: Proxy type - ATOM, HTTP, SOCKS4, SOCKS5
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -238,6 +254,22 @@ def build_sftp_communication_options(**kwargs):
     remote_directory = kwargs.get('sftp_remote_directory')
     ssh_key_auth = kwargs.get('sftp_ssh_key_auth')
     known_host_entry = kwargs.get('sftp_known_host_entry')
+    ssh_key_path = kwargs.get('sftp_ssh_key_path')
+    ssh_key_password = kwargs.get('sftp_ssh_key_password')
+    dh_key_max_1024 = kwargs.get('sftp_dh_key_max_1024')
+    transfer_type = kwargs.get('sftp_transfer_type')
+    get_action = kwargs.get('sftp_get_action')
+    send_action = kwargs.get('sftp_send_action')
+    max_file_count = kwargs.get('sftp_max_file_count')
+    file_to_move = kwargs.get('sftp_file_to_move')
+    move_to_directory = kwargs.get('sftp_move_to_directory')
+    move_force_override = kwargs.get('sftp_move_force_override')
+    proxy_enabled = kwargs.get('sftp_proxy_enabled')
+    proxy_host = kwargs.get('sftp_proxy_host')
+    proxy_port = kwargs.get('sftp_proxy_port')
+    proxy_user = kwargs.get('sftp_proxy_user')
+    proxy_password = kwargs.get('sftp_proxy_password')
+    proxy_type = kwargs.get('sftp_proxy_type')
 
     # Build SFTP settings
     sftp_settings = {
@@ -253,22 +285,72 @@ def build_sftp_communication_options(**kwargs):
         ssh_options['sshkeyauth'] = str(ssh_key_auth).lower() == 'true'
     if known_host_entry:
         ssh_options['knownHostEntry'] = known_host_entry
+    if ssh_key_path:
+        ssh_options['sshkeypath'] = ssh_key_path
+    if ssh_key_password:
+        ssh_options['sshkeypassword'] = ssh_key_password
+    if dh_key_max_1024 is not None:
+        ssh_options['dhKeySizeMax1024'] = str(dh_key_max_1024).lower() == 'true'
 
     if ssh_options:
         sftp_settings['SFTPSSHOptions'] = ssh_options
 
+    # Add proxy settings if specified
+    if proxy_enabled is not None or proxy_host:
+        proxy_settings = {}
+        if proxy_enabled is not None:
+            proxy_settings['proxyEnabled'] = str(proxy_enabled).lower() == 'true'
+        if proxy_host:
+            proxy_settings['host'] = proxy_host
+        if proxy_port:
+            proxy_settings['port'] = int(proxy_port)
+        if proxy_user:
+            proxy_settings['user'] = proxy_user
+        if proxy_password:
+            proxy_settings['password'] = proxy_password
+        if proxy_type:
+            proxy_settings['type'] = proxy_type.upper()
+        sftp_settings['SFTPProxySettings'] = proxy_settings
+
     result = {'SFTPSettings': sftp_settings}
 
-    # Add get/send options with remote directory if specified
+    # Build get options
+    get_options = {}
     if remote_directory:
-        result['SFTPGetOptions'] = {
-            'remoteDirectory': remote_directory,
-            'useDefaultGetOptions': False
-        }
-        result['SFTPSendOptions'] = {
-            'remoteDirectory': remote_directory,
-            'useDefaultSendOptions': False
-        }
+        get_options['remoteDirectory'] = remote_directory
+    if transfer_type:
+        get_options['transferType'] = transfer_type.lower()
+    if get_action:
+        get_options['ftpAction'] = get_action.lower()
+    if max_file_count:
+        get_options['maxFileCount'] = int(max_file_count)
+    if file_to_move:
+        get_options['fileToMove'] = file_to_move
+    if move_to_directory:
+        get_options['moveToDirectory'] = move_to_directory
+    if move_force_override is not None:
+        get_options['moveToForceOverride'] = str(move_force_override).lower() == 'true'
+
+    if get_options:
+        get_options['useDefaultGetOptions'] = False
+        result['SFTPGetOptions'] = get_options
+
+    # Build send options
+    send_options = {}
+    if remote_directory:
+        send_options['remoteDirectory'] = remote_directory
+    if transfer_type:
+        send_options['transferType'] = transfer_type.lower()
+    if send_action:
+        send_options['ftpAction'] = send_action.lower()
+    if move_to_directory:
+        send_options['moveToDirectory'] = move_to_directory
+    if move_force_override is not None:
+        send_options['moveToForceOverride'] = str(move_force_override).lower() == 'true'
+
+    if send_options:
+        send_options['useDefaultSendOptions'] = False
+        result['SFTPSendOptions'] = send_options
 
     return result
 

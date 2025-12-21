@@ -467,6 +467,22 @@ if manage_trading_partner_action:
         # New protocol-specific fields (FTP params moved to main FTP section above)
         sftp_ssh_key_auth: str = None,
         sftp_known_host_entry: str = None,
+        sftp_ssh_key_path: str = None,
+        sftp_ssh_key_password: str = None,
+        sftp_dh_key_max_1024: str = None,
+        sftp_transfer_type: str = None,
+        sftp_get_action: str = None,
+        sftp_send_action: str = None,
+        sftp_max_file_count: str = None,
+        sftp_file_to_move: str = None,
+        sftp_move_to_directory: str = None,
+        sftp_move_force_override: str = None,
+        sftp_proxy_enabled: str = None,
+        sftp_proxy_host: str = None,
+        sftp_proxy_port: str = None,
+        sftp_proxy_user: str = None,
+        sftp_proxy_password: str = None,
+        sftp_proxy_type: str = None,
         mllp_host: str = None,
         mllp_port: str = None,
         mllp_use_ssl: str = None,
@@ -798,6 +814,38 @@ if manage_trading_partner_action:
                     request_data["sftp_ssh_key_auth"] = sftp_ssh_key_auth
                 if sftp_known_host_entry:
                     request_data["sftp_known_host_entry"] = sftp_known_host_entry
+                if sftp_ssh_key_path:
+                    request_data["sftp_ssh_key_path"] = sftp_ssh_key_path
+                if sftp_ssh_key_password:
+                    request_data["sftp_ssh_key_password"] = sftp_ssh_key_password
+                if sftp_dh_key_max_1024:
+                    request_data["sftp_dh_key_max_1024"] = sftp_dh_key_max_1024
+                if sftp_transfer_type:
+                    request_data["sftp_transfer_type"] = sftp_transfer_type
+                if sftp_get_action:
+                    request_data["sftp_get_action"] = sftp_get_action
+                if sftp_send_action:
+                    request_data["sftp_send_action"] = sftp_send_action
+                if sftp_max_file_count:
+                    request_data["sftp_max_file_count"] = sftp_max_file_count
+                if sftp_file_to_move:
+                    request_data["sftp_file_to_move"] = sftp_file_to_move
+                if sftp_move_to_directory:
+                    request_data["sftp_move_to_directory"] = sftp_move_to_directory
+                if sftp_move_force_override:
+                    request_data["sftp_move_force_override"] = sftp_move_force_override
+                if sftp_proxy_enabled:
+                    request_data["sftp_proxy_enabled"] = sftp_proxy_enabled
+                if sftp_proxy_host:
+                    request_data["sftp_proxy_host"] = sftp_proxy_host
+                if sftp_proxy_port:
+                    request_data["sftp_proxy_port"] = sftp_proxy_port
+                if sftp_proxy_user:
+                    request_data["sftp_proxy_user"] = sftp_proxy_user
+                if sftp_proxy_password:
+                    request_data["sftp_proxy_password"] = sftp_proxy_password
+                if sftp_proxy_type:
+                    request_data["sftp_proxy_type"] = sftp_proxy_type
 
                 # Pass HTTP additional fields flat
                 if http_authentication_type:
