@@ -387,6 +387,12 @@ if manage_trading_partner_action:
         disk_directory: str = None,
         disk_get_directory: str = None,
         disk_send_directory: str = None,
+        disk_file_filter: str = None,
+        disk_filter_match_type: str = None,
+        disk_delete_after_read: str = None,
+        disk_max_file_count: str = None,
+        disk_create_directory: str = None,
+        disk_write_option: str = None,
         ftp_host: str = None,
         ftp_port: str = None,
         ftp_username: str = None,
@@ -524,6 +530,13 @@ if manage_trading_partner_action:
         oftp_ssid_code: str = None,
         oftp_ssid_password: str = None,
         oftp_compress: str = None,
+        oftp_ssid_auth: str = None,
+        oftp_sfid_cipher: int = None,
+        oftp_use_gateway: str = None,
+        oftp_use_client_ssl: str = None,
+        oftp_client_ssl_alias: str = None,
+        oftp_sfid_sign: str = None,
+        oftp_sfid_encrypt: str = None,
         # Organization linking
         organization_id: str = None
     ):
@@ -571,6 +584,12 @@ if manage_trading_partner_action:
             disk_directory: Main directory for Disk protocol
             disk_get_directory: Get/Receive directory for Disk protocol
             disk_send_directory: Send directory for Disk protocol
+            disk_file_filter: File filter pattern (default: *)
+            disk_filter_match_type: Filter type - wildcard or regex (default: wildcard)
+            disk_delete_after_read: Delete files after reading - "true" or "false"
+            disk_max_file_count: Maximum files to retrieve per poll
+            disk_create_directory: Create directory if not exists - "true" or "false"
+            disk_write_option: Write option - unique, over, append, abort (default: unique)
             ftp_host: FTP server hostname/IP
             ftp_port: FTP server port
             ftp_username: FTP username
@@ -583,6 +602,13 @@ if manage_trading_partner_action:
             as2_partner_identifier: Partner AS2 identifier
             oftp_host: OFTP server hostname/IP
             oftp_tls: Enable TLS for OFTP - "true" or "false"
+            oftp_ssid_auth: Enable SSID authentication - "true" or "false"
+            oftp_sfid_cipher: SFID cipher strength (0=none, 1=3DES, 2=AES-128, 3=AES-192, 4=AES-256)
+            oftp_use_gateway: Use OFTP gateway - "true" or "false"
+            oftp_use_client_ssl: Use client SSL certificate - "true" or "false"
+            oftp_client_ssl_alias: Client SSL certificate alias
+            oftp_sfid_sign: Sign files - "true" or "false"
+            oftp_sfid_encrypt: Encrypt files - "true" or "false"
             http_authentication_type: HTTP authentication type - NONE, BASIC, OAUTH2
             http_connect_timeout: HTTP connection timeout in ms
             http_read_timeout: HTTP read timeout in ms
@@ -727,6 +753,18 @@ if manage_trading_partner_action:
                     request_data["disk_get_directory"] = disk_get_directory
                 if disk_send_directory:
                     request_data["disk_send_directory"] = disk_send_directory
+                if disk_file_filter:
+                    request_data["disk_file_filter"] = disk_file_filter
+                if disk_filter_match_type:
+                    request_data["disk_filter_match_type"] = disk_filter_match_type
+                if disk_delete_after_read:
+                    request_data["disk_delete_after_read"] = disk_delete_after_read
+                if disk_max_file_count:
+                    request_data["disk_max_file_count"] = disk_max_file_count
+                if disk_create_directory:
+                    request_data["disk_create_directory"] = disk_create_directory
+                if disk_write_option:
+                    request_data["disk_write_option"] = disk_write_option
 
                 # Pass FTP fields flat
                 if ftp_host:
@@ -1007,6 +1045,20 @@ if manage_trading_partner_action:
                     request_data["oftp_ssid_password"] = oftp_ssid_password
                 if oftp_compress:
                     request_data["oftp_compress"] = oftp_compress
+                if oftp_ssid_auth:
+                    request_data["oftp_ssid_auth"] = oftp_ssid_auth
+                if oftp_sfid_cipher:
+                    request_data["oftp_sfid_cipher"] = oftp_sfid_cipher
+                if oftp_use_gateway:
+                    request_data["oftp_use_gateway"] = oftp_use_gateway
+                if oftp_use_client_ssl:
+                    request_data["oftp_use_client_ssl"] = oftp_use_client_ssl
+                if oftp_client_ssl_alias:
+                    request_data["oftp_client_ssl_alias"] = oftp_client_ssl_alias
+                if oftp_sfid_sign:
+                    request_data["oftp_sfid_sign"] = oftp_sfid_sign
+                if oftp_sfid_encrypt:
+                    request_data["oftp_sfid_encrypt"] = oftp_sfid_encrypt
 
                 # Organization linking
                 if organization_id:
@@ -1060,6 +1112,18 @@ if manage_trading_partner_action:
                     updates["disk_get_directory"] = disk_get_directory
                 if disk_send_directory:
                     updates["disk_send_directory"] = disk_send_directory
+                if disk_file_filter:
+                    updates["disk_file_filter"] = disk_file_filter
+                if disk_filter_match_type:
+                    updates["disk_filter_match_type"] = disk_filter_match_type
+                if disk_delete_after_read:
+                    updates["disk_delete_after_read"] = disk_delete_after_read
+                if disk_max_file_count:
+                    updates["disk_max_file_count"] = disk_max_file_count
+                if disk_create_directory:
+                    updates["disk_create_directory"] = disk_create_directory
+                if disk_write_option:
+                    updates["disk_write_option"] = disk_write_option
 
                 # FTP protocol fields (flat)
                 if ftp_host:
@@ -1230,6 +1294,20 @@ if manage_trading_partner_action:
                     updates["oftp_ssid_password"] = oftp_ssid_password
                 if oftp_compress:
                     updates["oftp_compress"] = oftp_compress
+                if oftp_ssid_auth:
+                    updates["oftp_ssid_auth"] = oftp_ssid_auth
+                if oftp_sfid_cipher:
+                    updates["oftp_sfid_cipher"] = oftp_sfid_cipher
+                if oftp_use_gateway:
+                    updates["oftp_use_gateway"] = oftp_use_gateway
+                if oftp_use_client_ssl:
+                    updates["oftp_use_client_ssl"] = oftp_use_client_ssl
+                if oftp_client_ssl_alias:
+                    updates["oftp_client_ssl_alias"] = oftp_client_ssl_alias
+                if oftp_sfid_sign:
+                    updates["oftp_sfid_sign"] = oftp_sfid_sign
+                if oftp_sfid_encrypt:
+                    updates["oftp_sfid_encrypt"] = oftp_sfid_encrypt
 
                 # Organization linking
                 if organization_id:

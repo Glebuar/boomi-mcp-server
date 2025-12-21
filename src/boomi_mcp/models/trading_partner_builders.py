@@ -88,28 +88,52 @@ def build_disk_communication_options(**kwargs):
         disk_get_directory: Directory to read files from
         disk_send_directory: Directory to write files to
         disk_file_filter: File filter pattern (default: *)
+        disk_filter_match_type: Filter type - wildcard or regex (default: wildcard)
+        disk_delete_after_read: Delete files after reading (true/false)
+        disk_max_file_count: Maximum files to retrieve per poll
+        disk_create_directory: Create directory if not exists (true/false)
+        disk_write_option: Write option - unique, over, append, abort (default: unique)
 
     Returns dict (not SDK model) - for consistency with other builders
     """
     get_dir = kwargs.get('disk_get_directory')
     send_dir = kwargs.get('disk_send_directory')
     file_filter = kwargs.get('disk_file_filter', '*')
+    filter_match_type = kwargs.get('disk_filter_match_type')
+    delete_after_read = kwargs.get('disk_delete_after_read')
+    max_file_count = kwargs.get('disk_max_file_count')
+    create_directory = kwargs.get('disk_create_directory')
+    write_option = kwargs.get('disk_write_option')
 
     if not get_dir and not send_dir:
         return None
 
-    result = {}
+    result = {'@type': 'DiskCommunicationOptions'}
 
     if get_dir:
-        result['DiskGetOptions'] = {
+        get_options = {
+            '@type': 'DiskGetOptions',
             'fileFilter': file_filter,
             'getDirectory': get_dir
         }
+        if filter_match_type:
+            get_options['filterMatchType'] = filter_match_type
+        if delete_after_read is not None:
+            get_options['deleteAfterRead'] = str(delete_after_read).lower() == 'true'
+        if max_file_count is not None:
+            get_options['maxFileCount'] = int(max_file_count)
+        result['DiskGetOptions'] = get_options
 
     if send_dir:
-        result['DiskSendOptions'] = {
+        send_options = {
+            '@type': 'DiskSendOptions',
             'sendDirectory': send_dir
         }
+        if create_directory is not None:
+            send_options['createDirectory'] = str(create_directory).lower() == 'true'
+        if write_option:
+            send_options['writeOption'] = write_option
+        result['DiskSendOptions'] = send_options
 
     return result
 
@@ -774,6 +798,13 @@ def build_oftp_communication_options(**kwargs):
         oftp_ssid_code: ODETTE Session ID code
         oftp_ssid_password: ODETTE Session ID password
         oftp_compress: Enable compression (true/false)
+        oftp_ssid_auth: Enable SSID authentication (true/false)
+        oftp_sfid_cipher: SFID cipher strength (0=none, 1=3DES, 2=AES-128, 3=AES-192, 4=AES-256)
+        oftp_use_gateway: Use OFTP gateway (true/false)
+        oftp_use_client_ssl: Use client SSL certificate (true/false)
+        oftp_client_ssl_alias: Client SSL certificate alias
+        oftp_sfid_sign: Sign files (true/false)
+        oftp_sfid_encrypt: Encrypt files (true/false)
 
     Returns dict (not SDK model) - API accepts minimal structure
     """
@@ -786,29 +817,55 @@ def build_oftp_communication_options(**kwargs):
     ssid_code = kwargs.get('oftp_ssid_code')
     ssid_password = kwargs.get('oftp_ssid_password')
     compress = kwargs.get('oftp_compress')
+    ssid_auth = kwargs.get('oftp_ssid_auth')
+    sfid_cipher = kwargs.get('oftp_sfid_cipher')
+    use_gateway = kwargs.get('oftp_use_gateway')
+    use_client_ssl = kwargs.get('oftp_use_client_ssl')
+    client_ssl_alias = kwargs.get('oftp_client_ssl_alias')
+    sfid_sign = kwargs.get('oftp_sfid_sign')
+    sfid_encrypt = kwargs.get('oftp_sfid_encrypt')
 
-    # Build OFTP connection settings
-    connection_settings = {
-        'host': host,
-        'port': port
-    }
-
-    if tls is not None:
-        connection_settings['tls'] = str(tls).lower() == 'true'
-
-    # Build my partner info (ODETTE partner settings) - REQUIRED by SDK
-    my_partner_info = {}
+    # Build my partner info (ODETTE partner settings)
+    my_partner_info = {'@type': 'OFTPPartnerInfo'}
     if ssid_code:
         my_partner_info['ssidcode'] = ssid_code
     if ssid_password:
         my_partner_info['ssidpswd'] = ssid_password
     if compress is not None:
         my_partner_info['ssidcmpr'] = str(compress).lower() == 'true'
+    if sfid_sign is not None:
+        my_partner_info['sfidsign'] = str(sfid_sign).lower() == 'true'
+    if sfid_encrypt is not None:
+        my_partner_info['sfidsec-encrypt'] = str(sfid_encrypt).lower() == 'true'
 
-    # Always include myPartnerInfo as it's required by the SDK model
-    connection_settings['myPartnerInfo'] = my_partner_info if my_partner_info else {}
+    # Build defaultOFTPConnectionSettings - Boomi stores values here
+    default_settings = {
+        '@type': 'DefaultOFTPConnectionSettings',
+        'host': host,
+        'port': port,
+        'myPartnerInfo': my_partner_info
+    }
 
-    return {'OFTPConnectionSettings': connection_settings}
+    if tls is not None:
+        default_settings['tls'] = str(tls).lower() == 'true'
+    if ssid_auth is not None:
+        default_settings['ssidauth'] = str(ssid_auth).lower() == 'true'
+    if sfid_cipher is not None:
+        default_settings['sfidciph'] = int(sfid_cipher)
+    if use_gateway is not None:
+        default_settings['useGateway'] = str(use_gateway).lower() == 'true'
+    if use_client_ssl is not None:
+        default_settings['useClientSSL'] = str(use_client_ssl).lower() == 'true'
+    if client_ssl_alias:
+        default_settings['clientSSLAlias'] = client_ssl_alias
+
+    # Build OFTP connection settings with nested default settings
+    connection_settings = {
+        '@type': 'OFTPConnectionSettings',
+        'defaultOFTPConnectionSettings': default_settings
+    }
+
+    return {'@type': 'OFTPCommunicationOptions', 'OFTPConnectionSettings': connection_settings}
 
 
 class PartnerCommunicationDict(dict):
