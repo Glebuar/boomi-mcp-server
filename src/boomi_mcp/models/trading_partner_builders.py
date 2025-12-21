@@ -705,8 +705,9 @@ def build_mllp_communication_options(**kwargs):
     if not host or not port:
         return None
 
-    # Build MLLP send settings
+    # Build MLLP send settings with @type for API compatibility
     mllp_settings = {
+        '@type': 'MLLPSendSettings',
         'host': host,
         'port': int(port)
     }
@@ -724,8 +725,9 @@ def build_mllp_communication_options(**kwargs):
     client_ssl_alias = kwargs.get('mllp_client_ssl_alias')
     ssl_alias = kwargs.get('mllp_ssl_alias')
 
-    # Build MLLPSSLOptions
+    # Build MLLPSSLOptions with @type
     ssl_options = {
+        '@type': 'MLLPSSLOptions',
         'useSSL': str(use_ssl).lower() == 'true' if use_ssl else False
     }
     if use_client_ssl is not None:
@@ -754,12 +756,12 @@ def build_mllp_communication_options(**kwargs):
     if max_retry:
         mllp_settings['maxRetry'] = int(max_retry)
 
-    # Standard MLLP delimiters (hex 0B for start, hex 1C hex 0D for end)
-    mllp_settings['startBlock'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0B'}
-    mllp_settings['endBlock'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '1C'}
-    mllp_settings['endData'] = {'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0D'}
+    # Standard MLLP delimiters (hex 0B for start, hex 1C hex 0D for end) with @type
+    mllp_settings['startBlock'] = {'@type': 'EdiDelimiter', 'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0B'}
+    mllp_settings['endBlock'] = {'@type': 'EdiDelimiter', 'delimiterValue': 'bytecharacter', 'delimiterSpecial': '1C'}
+    mllp_settings['endData'] = {'@type': 'EdiDelimiter', 'delimiterValue': 'bytecharacter', 'delimiterSpecial': '0D'}
 
-    return {'MLLPSendSettings': mllp_settings}
+    return {'@type': 'MLLPCommunicationOptions', 'MLLPSendSettings': mllp_settings}
 
 
 def build_oftp_communication_options(**kwargs):
