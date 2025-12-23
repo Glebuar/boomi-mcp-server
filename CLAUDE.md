@@ -14,6 +14,39 @@ This MCP server provides secure Boomi API access for Claude Code with:
 
 ---
 
+## ⚠️ Development Rules (READ FIRST)
+
+### Rule 1: NEVER Develop Directly in Main
+- All new features MUST be developed in dev branch first
+- Test locally using `server_local.py` before any merge
+- Main branch is for production-ready, tested code only
+
+### Rule 2: ALWAYS Update Both Server Files
+When modifying MCP tools, update in this order:
+1. `server_local.py` - implement and test locally
+2. `server.py` - copy the exact same changes (excluding auth code)
+3. Run sync verification before committing
+
+### Rule 3: Verify Before Every Commit
+```bash
+python scripts/verify_sync.py
+```
+This runs automatically via pre-commit hook.
+
+### What Gets Checked
+- Function signatures (all parameters)
+- CREATE section fields (request_data assignments)
+- UPDATE section fields (updates assignments)
+- All MCP tools: manage_trading_partner, manage_organization, manage_process
+
+### Setting Up Pre-commit Hook (One-time)
+The pre-commit hook is already in `.git/hooks/pre-commit`. If it's not working:
+```bash
+chmod +x .git/hooks/pre-commit
+```
+
+---
+
 ## Branch Workflow
 
 ### Main Branch
@@ -62,16 +95,52 @@ This MCP server provides secure Boomi API access for Claude Code with:
 ❌ **Wrong**: Update only `server_local.py`, test locally, assume it works in prod
 ✅ **Right**: Update both `server.py` AND `server_local.py` with identical tool signatures
 
-### Checklist Before Merging to Main
+### Automated Sync Verification
+
+Use the verification script to check all MCP tools at once:
 
 ```bash
-# Compare tool signatures between files
-grep "def manage_trading_partner" server.py server_local.py
-grep "def manage_process" server.py server_local.py
-grep "def manage_organization" server.py server_local.py
-
-# Ensure parameter lists match (ignoring OAuth-specific code)
+python scripts/verify_sync.py
 ```
+
+**Expected output when in sync:**
+```
+Checking manage_trading_partner...
+  Function params: 173 = 173 ✅
+  CREATE fields:   170 = 170 ✅
+  UPDATE fields:   167 = 167 ✅
+
+Checking manage_organization...
+  Function params: 16 = 16 ✅
+  CREATE fields:   13 = 13 ✅
+  UPDATE fields:   13 = 13 ✅
+
+Checking manage_process...
+  Function params: 5 = 5 ✅
+
+All checks passed! ✅
+```
+
+**If files are out of sync:**
+```
+Checking manage_trading_partner...
+  Function params: 173 = 173 ✅
+  CREATE fields:   170 vs 161 ❌
+    Missing in dev: as2_authentication_type, as2_verify_hostname, ...
+
+❌ Files are out of sync!
+```
+
+### Checklist Before Merging to Main
+
+1. Run sync verification:
+   ```bash
+   python scripts/verify_sync.py
+   ```
+
+2. If differences found, update the file with fewer fields
+
+3. Commit only when verification passes (pre-commit hook enforces this)
 
 ### Why This Matters
 
