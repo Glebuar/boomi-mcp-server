@@ -13,9 +13,10 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy dependency files
+# Copy dependency files and local FastMCP
 COPY requirements.txt requirements-cloud.txt ./
 COPY pyproject.toml ./
+COPY fastmcp ./fastmcp
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
