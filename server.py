@@ -639,10 +639,16 @@ if manage_trading_partner_action:
                                     Example: "ftp,http" or "as2,sftp"
                                     If not provided, creates partner with no communication configured
 
-            # Protocol-specific fields (Note: Full protocol support coming in future update)
+            # Protocol-specific fields
             disk_directory: Main directory for Disk protocol
             disk_get_directory: Get/Receive directory for Disk protocol
             disk_send_directory: Send directory for Disk protocol
+            disk_file_filter: File filter pattern (default: *)
+            disk_filter_match_type: Filter type - wildcard or regex (default: wildcard)
+            disk_delete_after_read: Delete files after reading - "true" or "false"
+            disk_max_file_count: Maximum files to retrieve per poll
+            disk_create_directory: Create directory if not exists - "true" or "false"
+            disk_write_option: Write option - unique, over, append, abort (default: unique)
             ftp_host: FTP server hostname/IP
             ftp_port: FTP server port
             ftp_username: FTP username
@@ -655,6 +661,13 @@ if manage_trading_partner_action:
             as2_partner_identifier: Partner AS2 identifier
             oftp_host: OFTP server hostname/IP
             oftp_tls: Enable TLS for OFTP - "true" or "false"
+            oftp_ssid_auth: Enable SSID authentication - "true" or "false"
+            oftp_sfid_cipher: SFID cipher strength (0=none, 1=3DES, 2=AES-128, 3=AES-192, 4=AES-256)
+            oftp_use_gateway: Use OFTP gateway - "true" or "false"
+            oftp_use_client_ssl: Use client SSL certificate - "true" or "false"
+            oftp_client_ssl_alias: Client SSL certificate alias
+            oftp_sfid_sign: Sign files - "true" or "false"
+            oftp_sfid_encrypt: Encrypt files - "true" or "false"
             http_authentication_type: HTTP authentication type - NONE, BASIC, OAUTH2
             http_connect_timeout: HTTP connection timeout in ms
             http_read_timeout: HTTP read timeout in ms
@@ -665,6 +678,18 @@ if manage_trading_partner_action:
             http_data_content_type: HTTP content type
             http_follow_redirects: Follow redirects - "true" or "false"
             http_return_errors: Return errors in response - "true" or "false"
+            http_return_responses: Return response body - "true" or "false"
+            http_cookie_scope: Cookie handling - IGNORED, GLOBAL, CONNECTOR_SHAPE
+            http_client_ssl_alias: Client SSL certificate alias
+            http_trusted_cert_alias: Trusted server certificate alias
+            http_request_profile: Request profile component ID
+            http_request_profile_type: Request profile type - NONE, XML, JSON
+            http_response_profile: Response profile component ID
+            http_response_profile_type: Response profile type - NONE, XML, JSON
+            http_oauth_token_url: OAuth2 token endpoint URL
+            http_oauth_client_id: OAuth2 client ID
+            http_oauth_client_secret: OAuth2 client secret
+            http_oauth_scope: OAuth2 scope
             as2_authentication_type: AS2 authentication type - NONE, BASIC
             as2_verify_hostname: Verify SSL hostname - "true" or "false"
             as2_client_ssl_alias: Client SSL certificate alias
@@ -683,6 +708,19 @@ if manage_trading_partner_action:
             as2_mdn_digest_alg: MDN digest algorithm - SHA1, SHA256, SHA384, SHA512
             as2_synchronous_mdn: Synchronous MDN - "true" or "false"
             as2_fail_on_negative_mdn: Fail on negative MDN - "true" or "false"
+            as2_subject: AS2 message subject header
+            as2_multiple_attachments: Enable multiple attachments - "true" or "false"
+            as2_max_document_count: Maximum documents per message
+            as2_attachment_option: Attachment handling - BATCH, DOCUMENT_CACHE
+            as2_attachment_cache: Attachment cache component ID
+            as2_mdn_external_url: External URL for async MDN delivery
+            as2_mdn_use_external_url: Use external URL for MDN - "true" or "false"
+            as2_mdn_use_ssl: Use SSL for MDN delivery - "true" or "false"
+            as2_mdn_client_ssl_cert: Client SSL certificate alias for MDN
+            as2_mdn_ssl_cert: Server SSL certificate alias for MDN
+            as2_reject_duplicates: Reject duplicate messages - "true" or "false"
+            as2_duplicate_check_count: Number of messages to check for duplicates
+            as2_legacy_smime: Enable legacy S/MIME compatibility - "true" or "false"
 
         Returns:
             Action result with success status and data/error
