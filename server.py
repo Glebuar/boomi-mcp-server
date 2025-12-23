@@ -971,6 +971,18 @@ if manage_trading_partner_action:
                     updates["disk_get_directory"] = disk_get_directory
                 if disk_send_directory:
                     updates["disk_send_directory"] = disk_send_directory
+                if disk_file_filter:
+                    updates["disk_file_filter"] = disk_file_filter
+                if disk_filter_match_type:
+                    updates["disk_filter_match_type"] = disk_filter_match_type
+                if disk_delete_after_read:
+                    updates["disk_delete_after_read"] = disk_delete_after_read
+                if disk_max_file_count:
+                    updates["disk_max_file_count"] = disk_max_file_count
+                if disk_create_directory:
+                    updates["disk_create_directory"] = disk_create_directory
+                if disk_write_option:
+                    updates["disk_write_option"] = disk_write_option
 
                 # FTP fields
                 if ftp_host:
@@ -987,6 +999,20 @@ if manage_trading_partner_action:
                     updates["ftp_ssl_mode"] = ftp_ssl_mode
                 if ftp_connection_mode:
                     updates["ftp_connection_mode"] = ftp_connection_mode
+                if ftp_transfer_type:
+                    updates["ftp_transfer_type"] = ftp_transfer_type
+                if ftp_get_action:
+                    updates["ftp_get_action"] = ftp_get_action
+                if ftp_send_action:
+                    updates["ftp_send_action"] = ftp_send_action
+                if ftp_max_file_count:
+                    updates["ftp_max_file_count"] = ftp_max_file_count
+                if ftp_file_to_move:
+                    updates["ftp_file_to_move"] = ftp_file_to_move
+                if ftp_move_to_directory:
+                    updates["ftp_move_to_directory"] = ftp_move_to_directory
+                if ftp_client_ssl_alias:
+                    updates["ftp_client_ssl_alias"] = ftp_client_ssl_alias
 
                 # SFTP fields
                 if sftp_host:
@@ -1003,6 +1029,36 @@ if manage_trading_partner_action:
                     updates["sftp_ssh_key_auth"] = sftp_ssh_key_auth
                 if sftp_known_host_entry:
                     updates["sftp_known_host_entry"] = sftp_known_host_entry
+                if sftp_ssh_key_path:
+                    updates["sftp_ssh_key_path"] = sftp_ssh_key_path
+                if sftp_ssh_key_password:
+                    updates["sftp_ssh_key_password"] = sftp_ssh_key_password
+                if sftp_dh_key_max_1024:
+                    updates["sftp_dh_key_max_1024"] = sftp_dh_key_max_1024
+                if sftp_get_action:
+                    updates["sftp_get_action"] = sftp_get_action
+                if sftp_send_action:
+                    updates["sftp_send_action"] = sftp_send_action
+                if sftp_max_file_count:
+                    updates["sftp_max_file_count"] = sftp_max_file_count
+                if sftp_file_to_move:
+                    updates["sftp_file_to_move"] = sftp_file_to_move
+                if sftp_move_to_directory:
+                    updates["sftp_move_to_directory"] = sftp_move_to_directory
+                if sftp_move_force_override:
+                    updates["sftp_move_force_override"] = sftp_move_force_override
+                if sftp_proxy_enabled:
+                    updates["sftp_proxy_enabled"] = sftp_proxy_enabled
+                if sftp_proxy_host:
+                    updates["sftp_proxy_host"] = sftp_proxy_host
+                if sftp_proxy_port:
+                    updates["sftp_proxy_port"] = sftp_proxy_port
+                if sftp_proxy_type:
+                    updates["sftp_proxy_type"] = sftp_proxy_type
+                if sftp_proxy_user:
+                    updates["sftp_proxy_user"] = sftp_proxy_user
+                if sftp_proxy_password:
+                    updates["sftp_proxy_password"] = sftp_proxy_password
 
                 # HTTP fields
                 if http_url:
@@ -1029,6 +1085,30 @@ if manage_trading_partner_action:
                     updates["http_follow_redirects"] = http_follow_redirects
                 if http_return_errors:
                     updates["http_return_errors"] = http_return_errors
+                if http_return_responses:
+                    updates["http_return_responses"] = http_return_responses
+                if http_cookie_scope:
+                    updates["http_cookie_scope"] = http_cookie_scope
+                if http_client_ssl_alias:
+                    updates["http_client_ssl_alias"] = http_client_ssl_alias
+                if http_trusted_cert_alias:
+                    updates["http_trusted_cert_alias"] = http_trusted_cert_alias
+                if http_request_profile:
+                    updates["http_request_profile"] = http_request_profile
+                if http_request_profile_type:
+                    updates["http_request_profile_type"] = http_request_profile_type
+                if http_response_profile:
+                    updates["http_response_profile"] = http_response_profile
+                if http_response_profile_type:
+                    updates["http_response_profile_type"] = http_response_profile_type
+                if http_oauth_token_url:
+                    updates["http_oauth_token_url"] = http_oauth_token_url
+                if http_oauth_client_id:
+                    updates["http_oauth_client_id"] = http_oauth_client_id
+                if http_oauth_client_secret:
+                    updates["http_oauth_client_secret"] = http_oauth_client_secret
+                if http_oauth_scope:
+                    updates["http_oauth_scope"] = http_oauth_scope
 
                 # AS2 fields
                 if as2_url:
@@ -1075,6 +1155,32 @@ if manage_trading_partner_action:
                     updates["as2_synchronous_mdn"] = as2_synchronous_mdn
                 if as2_fail_on_negative_mdn:
                     updates["as2_fail_on_negative_mdn"] = as2_fail_on_negative_mdn
+                if as2_subject:
+                    updates["as2_subject"] = as2_subject
+                if as2_multiple_attachments:
+                    updates["as2_multiple_attachments"] = as2_multiple_attachments
+                if as2_max_document_count:
+                    updates["as2_max_document_count"] = as2_max_document_count
+                if as2_attachment_option:
+                    updates["as2_attachment_option"] = as2_attachment_option
+                if as2_attachment_cache:
+                    updates["as2_attachment_cache"] = as2_attachment_cache
+                if as2_mdn_external_url:
+                    updates["as2_mdn_external_url"] = as2_mdn_external_url
+                if as2_mdn_use_external_url:
+                    updates["as2_mdn_use_external_url"] = as2_mdn_use_external_url
+                if as2_mdn_use_ssl:
+                    updates["as2_mdn_use_ssl"] = as2_mdn_use_ssl
+                if as2_mdn_client_ssl_cert:
+                    updates["as2_mdn_client_ssl_cert"] = as2_mdn_client_ssl_cert
+                if as2_mdn_ssl_cert:
+                    updates["as2_mdn_ssl_cert"] = as2_mdn_ssl_cert
+                if as2_reject_duplicates:
+                    updates["as2_reject_duplicates"] = as2_reject_duplicates
+                if as2_duplicate_check_count:
+                    updates["as2_duplicate_check_count"] = as2_duplicate_check_count
+                if as2_legacy_smime:
+                    updates["as2_legacy_smime"] = as2_legacy_smime
 
                 # MLLP fields (HL7)
                 if mllp_host:
@@ -1091,6 +1197,18 @@ if manage_trading_partner_action:
                     updates["mllp_send_timeout"] = mllp_send_timeout
                 if mllp_max_connections:
                     updates["mllp_max_connections"] = mllp_max_connections
+                if mllp_inactivity_timeout:
+                    updates["mllp_inactivity_timeout"] = mllp_inactivity_timeout
+                if mllp_max_retry:
+                    updates["mllp_max_retry"] = mllp_max_retry
+                if mllp_halt_timeout:
+                    updates["mllp_halt_timeout"] = mllp_halt_timeout
+                if mllp_use_client_ssl:
+                    updates["mllp_use_client_ssl"] = mllp_use_client_ssl
+                if mllp_client_ssl_alias:
+                    updates["mllp_client_ssl_alias"] = mllp_client_ssl_alias
+                if mllp_ssl_alias:
+                    updates["mllp_ssl_alias"] = mllp_ssl_alias
 
                 # OFTP fields
                 if oftp_host:
@@ -1105,6 +1223,20 @@ if manage_trading_partner_action:
                     updates["oftp_ssid_password"] = oftp_ssid_password
                 if oftp_compress:
                     updates["oftp_compress"] = oftp_compress
+                if oftp_ssid_auth:
+                    updates["oftp_ssid_auth"] = oftp_ssid_auth
+                if oftp_sfid_cipher:
+                    updates["oftp_sfid_cipher"] = oftp_sfid_cipher
+                if oftp_use_gateway:
+                    updates["oftp_use_gateway"] = oftp_use_gateway
+                if oftp_use_client_ssl:
+                    updates["oftp_use_client_ssl"] = oftp_use_client_ssl
+                if oftp_client_ssl_alias:
+                    updates["oftp_client_ssl_alias"] = oftp_client_ssl_alias
+                if oftp_sfid_sign:
+                    updates["oftp_sfid_sign"] = oftp_sfid_sign
+                if oftp_sfid_encrypt:
+                    updates["oftp_sfid_encrypt"] = oftp_sfid_encrypt
 
                 # EDIFACT fields
                 if edifact_interchange_id:
