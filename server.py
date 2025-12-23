@@ -750,6 +750,104 @@ if manage_trading_partner_action:
                     request_data["as2_username"] = as2_username
                 if as2_password:
                     request_data["as2_password"] = as2_password
+                if as2_signed:
+                    request_data["as2_signed"] = as2_signed
+                if as2_encrypted:
+                    request_data["as2_encrypted"] = as2_encrypted
+                if as2_compressed:
+                    request_data["as2_compressed"] = as2_compressed
+                if as2_encryption_algorithm:
+                    request_data["as2_encryption_algorithm"] = as2_encryption_algorithm
+                if as2_signing_digest_alg:
+                    request_data["as2_signing_digest_alg"] = as2_signing_digest_alg
+                if as2_request_mdn:
+                    request_data["as2_request_mdn"] = as2_request_mdn
+                if as2_mdn_signed:
+                    request_data["as2_mdn_signed"] = as2_mdn_signed
+                if as2_synchronous_mdn:
+                    request_data["as2_synchronous_mdn"] = as2_synchronous_mdn
+
+                # Pass MLLP fields flat
+                if mllp_host:
+                    request_data["mllp_host"] = mllp_host
+                if mllp_port:
+                    request_data["mllp_port"] = mllp_port
+                if mllp_use_ssl:
+                    request_data["mllp_use_ssl"] = mllp_use_ssl
+                if mllp_persistent:
+                    request_data["mllp_persistent"] = mllp_persistent
+                if mllp_receive_timeout:
+                    request_data["mllp_receive_timeout"] = mllp_receive_timeout
+                if mllp_send_timeout:
+                    request_data["mllp_send_timeout"] = mllp_send_timeout
+                if mllp_max_connections:
+                    request_data["mllp_max_connections"] = mllp_max_connections
+
+                # Pass OFTP fields flat
+                if oftp_host:
+                    request_data["oftp_host"] = oftp_host
+                if oftp_port:
+                    request_data["oftp_port"] = oftp_port
+                if oftp_tls:
+                    request_data["oftp_tls"] = oftp_tls
+                if oftp_ssid_code:
+                    request_data["oftp_ssid_code"] = oftp_ssid_code
+                if oftp_ssid_password:
+                    request_data["oftp_ssid_password"] = oftp_ssid_password
+                if oftp_compress:
+                    request_data["oftp_compress"] = oftp_compress
+
+                # Pass enhanced protocol fields
+                if ftp_ssl_mode:
+                    request_data["ftp_ssl_mode"] = ftp_ssl_mode
+                if ftp_connection_mode:
+                    request_data["ftp_connection_mode"] = ftp_connection_mode
+                if ftp_remote_directory:
+                    request_data["ftp_remote_directory"] = ftp_remote_directory
+                if sftp_ssh_key_auth:
+                    request_data["sftp_ssh_key_auth"] = sftp_ssh_key_auth
+                if sftp_known_host_entry:
+                    request_data["sftp_known_host_entry"] = sftp_known_host_entry
+                if sftp_remote_directory:
+                    request_data["sftp_remote_directory"] = sftp_remote_directory
+                if http_authentication_type:
+                    request_data["http_authentication_type"] = http_authentication_type
+                if http_connect_timeout:
+                    request_data["http_connect_timeout"] = http_connect_timeout
+                if http_read_timeout:
+                    request_data["http_read_timeout"] = http_read_timeout
+                if http_client_auth:
+                    request_data["http_client_auth"] = http_client_auth
+                if http_trust_server_cert:
+                    request_data["http_trust_server_cert"] = http_trust_server_cert
+                if http_method_type:
+                    request_data["http_method_type"] = http_method_type
+                if http_data_content_type:
+                    request_data["http_data_content_type"] = http_data_content_type
+                if http_follow_redirects:
+                    request_data["http_follow_redirects"] = http_follow_redirects
+                if http_return_errors:
+                    request_data["http_return_errors"] = http_return_errors
+                if as2_authentication_type:
+                    request_data["as2_authentication_type"] = as2_authentication_type
+                if as2_verify_hostname:
+                    request_data["as2_verify_hostname"] = as2_verify_hostname
+                if as2_data_content_type:
+                    request_data["as2_data_content_type"] = as2_data_content_type
+
+                # Pass standard-specific fields
+                if edifact_interchange_id:
+                    request_data["edifact_interchange_id"] = edifact_interchange_id
+                if edifact_interchange_id_qual:
+                    request_data["edifact_interchange_id_qual"] = edifact_interchange_id_qual
+                if hl7_sending_application:
+                    request_data["hl7_sending_application"] = hl7_sending_application
+                if hl7_sending_facility:
+                    request_data["hl7_sending_facility"] = hl7_sending_facility
+                if hl7_receiving_application:
+                    request_data["hl7_receiving_application"] = hl7_receiving_application
+                if hl7_receiving_facility:
+                    request_data["hl7_receiving_facility"] = hl7_receiving_facility
 
                 # Organization linking
                 if organization_id:
