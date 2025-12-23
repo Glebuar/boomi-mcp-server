@@ -749,6 +749,8 @@ if manage_trading_partner_action:
                     request_data["communication_protocols"] = protocols_list
 
                 # Pass disk fields flat
+                if disk_directory:
+                    request_data["disk_directory"] = disk_directory
                 if disk_get_directory:
                     request_data["disk_get_directory"] = disk_get_directory
                 if disk_send_directory:
@@ -1108,6 +1110,8 @@ if manage_trading_partner_action:
                     updates["communication_protocols"] = protocols_list
 
                 # Disk protocol fields (flat)
+                if disk_directory:
+                    updates["disk_directory"] = disk_directory
                 if disk_get_directory:
                     updates["disk_get_directory"] = disk_get_directory
                 if disk_send_directory:
@@ -1166,6 +1170,40 @@ if manage_trading_partner_action:
                     updates["sftp_password"] = sftp_password
                 if sftp_remote_directory:
                     updates["sftp_remote_directory"] = sftp_remote_directory
+                if sftp_ssh_key_auth:
+                    updates["sftp_ssh_key_auth"] = sftp_ssh_key_auth
+                if sftp_known_host_entry:
+                    updates["sftp_known_host_entry"] = sftp_known_host_entry
+                if sftp_ssh_key_path:
+                    updates["sftp_ssh_key_path"] = sftp_ssh_key_path
+                if sftp_ssh_key_password:
+                    updates["sftp_ssh_key_password"] = sftp_ssh_key_password
+                if sftp_dh_key_max_1024:
+                    updates["sftp_dh_key_max_1024"] = sftp_dh_key_max_1024
+                if sftp_get_action:
+                    updates["sftp_get_action"] = sftp_get_action
+                if sftp_send_action:
+                    updates["sftp_send_action"] = sftp_send_action
+                if sftp_max_file_count:
+                    updates["sftp_max_file_count"] = sftp_max_file_count
+                if sftp_file_to_move:
+                    updates["sftp_file_to_move"] = sftp_file_to_move
+                if sftp_move_to_directory:
+                    updates["sftp_move_to_directory"] = sftp_move_to_directory
+                if sftp_move_force_override:
+                    updates["sftp_move_force_override"] = sftp_move_force_override
+                if sftp_proxy_enabled:
+                    updates["sftp_proxy_enabled"] = sftp_proxy_enabled
+                if sftp_proxy_host:
+                    updates["sftp_proxy_host"] = sftp_proxy_host
+                if sftp_proxy_port:
+                    updates["sftp_proxy_port"] = sftp_proxy_port
+                if sftp_proxy_type:
+                    updates["sftp_proxy_type"] = sftp_proxy_type
+                if sftp_proxy_user:
+                    updates["sftp_proxy_user"] = sftp_proxy_user
+                if sftp_proxy_password:
+                    updates["sftp_proxy_password"] = sftp_proxy_password
 
                 # HTTP protocol fields (flat)
                 if http_url:
@@ -1180,6 +1218,42 @@ if manage_trading_partner_action:
                     updates["http_connect_timeout"] = http_connect_timeout
                 if http_read_timeout:
                     updates["http_read_timeout"] = http_read_timeout
+                if http_client_auth:
+                    updates["http_client_auth"] = http_client_auth
+                if http_trust_server_cert:
+                    updates["http_trust_server_cert"] = http_trust_server_cert
+                if http_method_type:
+                    updates["http_method_type"] = http_method_type
+                if http_data_content_type:
+                    updates["http_data_content_type"] = http_data_content_type
+                if http_follow_redirects:
+                    updates["http_follow_redirects"] = http_follow_redirects
+                if http_return_errors:
+                    updates["http_return_errors"] = http_return_errors
+                if http_return_responses:
+                    updates["http_return_responses"] = http_return_responses
+                if http_cookie_scope:
+                    updates["http_cookie_scope"] = http_cookie_scope
+                if http_client_ssl_alias:
+                    updates["http_client_ssl_alias"] = http_client_ssl_alias
+                if http_trusted_cert_alias:
+                    updates["http_trusted_cert_alias"] = http_trusted_cert_alias
+                if http_request_profile:
+                    updates["http_request_profile"] = http_request_profile
+                if http_request_profile_type:
+                    updates["http_request_profile_type"] = http_request_profile_type
+                if http_response_profile:
+                    updates["http_response_profile"] = http_response_profile
+                if http_response_profile_type:
+                    updates["http_response_profile_type"] = http_response_profile_type
+                if http_oauth_token_url:
+                    updates["http_oauth_token_url"] = http_oauth_token_url
+                if http_oauth_client_id:
+                    updates["http_oauth_client_id"] = http_oauth_client_id
+                if http_oauth_client_secret:
+                    updates["http_oauth_client_secret"] = http_oauth_client_secret
+                if http_oauth_scope:
+                    updates["http_oauth_scope"] = http_oauth_scope
 
                 # AS2 protocol fields (flat)
                 if as2_url:
@@ -1308,6 +1382,58 @@ if manage_trading_partner_action:
                     updates["oftp_sfid_sign"] = oftp_sfid_sign
                 if oftp_sfid_encrypt:
                     updates["oftp_sfid_encrypt"] = oftp_sfid_encrypt
+
+                # EDIFACT standard fields
+                if edifact_interchange_id:
+                    updates["edifact_interchange_id"] = edifact_interchange_id
+                if edifact_interchange_id_qual:
+                    updates["edifact_interchange_id_qual"] = edifact_interchange_id_qual
+                if edifact_syntax_id:
+                    updates["edifact_syntax_id"] = edifact_syntax_id
+                if edifact_syntax_version:
+                    updates["edifact_syntax_version"] = edifact_syntax_version
+                if edifact_test_indicator:
+                    updates["edifact_test_indicator"] = edifact_test_indicator
+
+                # HL7 standard fields
+                if hl7_sending_application:
+                    updates["hl7_sending_application"] = hl7_sending_application
+                if hl7_sending_facility:
+                    updates["hl7_sending_facility"] = hl7_sending_facility
+                if hl7_receiving_application:
+                    updates["hl7_receiving_application"] = hl7_receiving_application
+                if hl7_receiving_facility:
+                    updates["hl7_receiving_facility"] = hl7_receiving_facility
+
+                # RosettaNet standard fields
+                if rosettanet_partner_id:
+                    updates["rosettanet_partner_id"] = rosettanet_partner_id
+                if rosettanet_partner_location:
+                    updates["rosettanet_partner_location"] = rosettanet_partner_location
+                if rosettanet_global_usage_code:
+                    updates["rosettanet_global_usage_code"] = rosettanet_global_usage_code
+                if rosettanet_supply_chain_code:
+                    updates["rosettanet_supply_chain_code"] = rosettanet_supply_chain_code
+                if rosettanet_classification_code:
+                    updates["rosettanet_classification_code"] = rosettanet_classification_code
+
+                # TRADACOMS standard fields
+                if tradacoms_interchange_id:
+                    updates["tradacoms_interchange_id"] = tradacoms_interchange_id
+                if tradacoms_interchange_id_qualifier:
+                    updates["tradacoms_interchange_id_qualifier"] = tradacoms_interchange_id_qualifier
+
+                # ODETTE standard fields
+                if odette_interchange_id:
+                    updates["odette_interchange_id"] = odette_interchange_id
+                if odette_interchange_id_qual:
+                    updates["odette_interchange_id_qual"] = odette_interchange_id_qual
+                if odette_syntax_id:
+                    updates["odette_syntax_id"] = odette_syntax_id
+                if odette_syntax_version:
+                    updates["odette_syntax_version"] = odette_syntax_version
+                if odette_test_indicator:
+                    updates["odette_test_indicator"] = odette_test_indicator
 
                 # Organization linking
                 if organization_id:
