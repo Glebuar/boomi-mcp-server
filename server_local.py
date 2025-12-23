@@ -831,6 +831,24 @@ if manage_trading_partner_action:
                     request_data["as2_mdn_signed"] = as2_mdn_signed
                 if as2_synchronous_mdn:
                     request_data["as2_synchronous_mdn"] = as2_synchronous_mdn
+                if as2_authentication_type:
+                    request_data["as2_authentication_type"] = as2_authentication_type
+                if as2_verify_hostname:
+                    request_data["as2_verify_hostname"] = as2_verify_hostname
+                if as2_client_ssl_alias:
+                    request_data["as2_client_ssl_alias"] = as2_client_ssl_alias
+                if as2_encrypt_alias:
+                    request_data["as2_encrypt_alias"] = as2_encrypt_alias
+                if as2_sign_alias:
+                    request_data["as2_sign_alias"] = as2_sign_alias
+                if as2_mdn_alias:
+                    request_data["as2_mdn_alias"] = as2_mdn_alias
+                if as2_data_content_type:
+                    request_data["as2_data_content_type"] = as2_data_content_type
+                if as2_mdn_digest_alg:
+                    request_data["as2_mdn_digest_alg"] = as2_mdn_digest_alg
+                if as2_fail_on_negative_mdn:
+                    request_data["as2_fail_on_negative_mdn"] = as2_fail_on_negative_mdn
                 if as2_subject:
                     request_data["as2_subject"] = as2_subject
                 if as2_multiple_attachments:
