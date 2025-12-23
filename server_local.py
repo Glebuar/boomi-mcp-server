@@ -581,6 +581,7 @@ if manage_trading_partner_action:
                                     If not provided, creates partner with no communication configured
 
             # Protocol-specific fields (Note: Full protocol support coming in future update)
+            # DISK Protocol
             disk_directory: Main directory for Disk protocol
             disk_get_directory: Get/Receive directory for Disk protocol
             disk_send_directory: Send directory for Disk protocol
@@ -590,16 +591,27 @@ if manage_trading_partner_action:
             disk_max_file_count: Maximum files to retrieve per poll
             disk_create_directory: Create directory if not exists - "true" or "false"
             disk_write_option: Write option - unique, over, append, abort (default: unique)
+            # FTP Protocol
             ftp_host: FTP server hostname/IP
             ftp_port: FTP server port
             ftp_username: FTP username
+            ftp_get_action: Get action - actionget, actiongetdelete, actiongetmove
+            ftp_send_action: Send action - actionputrename, actionputappend, actionputerror, actionputoverwrite
+            ftp_connection_mode: Connection mode - passive, active
+            ftp_ssl_mode: SSL mode - none, implicit, explicit
+            # SFTP Protocol
             sftp_host: SFTP server hostname/IP
             sftp_port: SFTP server port
             sftp_username: SFTP username
+            sftp_get_action: Get action - actionget, actiongetdelete, actiongetmove
+            sftp_send_action: Send action - actionputrename, actionputappend, actionputerror, actionputoverwrite
+            # HTTP Protocol
             http_url: HTTP/HTTPS URL
+            # AS2 Protocol
             as2_url: AS2 endpoint URL
             as2_identifier: Local AS2 identifier
             as2_partner_identifier: Partner AS2 identifier
+            # OFTP Protocol
             oftp_host: OFTP server hostname/IP
             oftp_tls: Enable TLS for OFTP - "true" or "false"
             oftp_ssid_auth: Enable SSID authentication - "true" or "false"
@@ -643,7 +655,7 @@ if manage_trading_partner_action:
             as2_compressed: Compress AS2 messages - "true" or "false"
             as2_encryption_algorithm: Encryption algorithm - tripledes, rc2, aes128, aes192, aes256
             as2_signing_digest_alg: Signing digest algorithm - SHA1, SHA256, SHA384, SHA512
-            as2_data_content_type: AS2 content type
+            as2_data_content_type: AS2 content type - textplain, binary, edifact, edix12, applicationxml, textxml
             as2_request_mdn: Request MDN - "true" or "false"
             as2_mdn_signed: Signed MDN - "true" or "false"
             as2_mdn_digest_alg: MDN digest algorithm - SHA1, SHA256, SHA384, SHA512
